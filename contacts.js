@@ -1,3 +1,5 @@
+const _contactFile = 'contacts.n3';
+
 const N3 = require('n3');
 const fs = require('fs');
 const program = require('commander');
@@ -22,7 +24,7 @@ if (program.show) {
 
   // read contacts into store
   const parser = N3.Parser();
-  const rdfStream = fs.createReadStream('out.n3');
+  const rdfStream = fs.createReadStream(_contactFile);
   parser.parse(rdfStream, (error, quad, prefixes) => {
     if (quad) {
       store.addQuad(quad);
@@ -41,14 +43,16 @@ if (program.add) {
   // create new contact
   var newContact = quad(
     blankNode(),
-    namedNode('http://xmlns.com/foaf/0.1/givenName'),
+    namedNode('http://hiea.de/contact#givenName'),
     literal(program.add),
     defaultGraph(),
   );
 
   // read contacts into store and add new contact
+  debugger;
   const parser = N3.Parser();
-  const rdfStream = fs.createReadStream('out.n3');
+  const rdfStream = fs.createReadStream(_contactFile);
+  debugger;
   parser.parse(rdfStream, (error, quad, prefixes) => {
     if (quad) {
       store.addQuad(quad);
@@ -71,7 +75,7 @@ if (program.add) {
 if (program.remove) {
 
   const parser = N3.Parser();
-  const rdfStream = fs.createReadStream('out.n3');
+  const rdfStream = fs.createReadStream(_contactFile);
   parser.parse(rdfStream, (error, quad, prefixes) => {
     if (quad) {
       store.addQuad(quad);
@@ -97,13 +101,11 @@ if (program.gift) {
     console.log('Please provide also a contact name.');
   } else {
 
-  // initialize contact and gift
-  
-
   // get contacts
   const parser = N3.Parser();
-  const rdfStream = fs.createReadStream('out.n3');
+  const rdfStream = fs.createReadStream(_contactFile);
   parser.parse(rdfStream, (error, quad, prefixes) => {
+    debugger;
     if (quad) {
       store.addQuad(quad);
     } else { // finished
@@ -111,9 +113,8 @@ if (program.gift) {
       if (!contact) {
         contact = DataFactory.quad(
           blankNode(),
-          namedNode('http://xmlns.com/foaf/0.1/givenName'),
+          namedNode('http://hiea.de/contact#givenName'),
           literal(program.name),
-//TODO Überschreibt! Array/Liste/„komplexe“ Node?
           defaultGraph(),
         );
         store.addQuad(contact);
@@ -121,7 +122,7 @@ if (program.gift) {
       }
       gift = DataFactory.quad(
         contact.subject,
-        namedNode('http://xmlns.com/foaf/0.1/giftIdea'),
+        namedNode('http://hiea.de/contact#giftIdea'),
         literal(program.gift),
         defaultGraph(),
       );
@@ -131,19 +132,25 @@ if (program.gift) {
     }
   });
 
-
-
   }
 
 }
 
 
 
-
 function saveContacts() {
-  const writeStream = fs.createWriteStream('out.n3');
-  const writer = N3.Writer(writeStream, { end: false, prefixes: { c: 'http://example.org/cartoons#' } });
-  store.forEach(quad => writer.addQuad(quad));
+  const writeStream = fs.createWriteStream(_contactFile);
+  const writer = N3.Writer(writeStream, { end: false, prefixes: { c: 'http://hiea.de/contact#' } });
+
+  // set new blank node prefixes (otherwise concats endless b0_)
+  store.getSubjects().forEach(function(subject) {
+    var blankNodeId = store.createBlankNode(); // set unused blank node identifier
+    store.getQuads(subject, null, null).forEach(function(quad) {
+      quad.subject = blankNodeId;
+      // write
+      writer.addQuad(quad);
+    });
+  });
   writer.end();
 }
 
