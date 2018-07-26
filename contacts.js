@@ -1,8 +1,8 @@
-const _contactFile = 'contacts.n3';
-
 const N3 = require('n3');
 const fs = require('fs');
 const program = require('commander');
+
+const _contactFile = __dirname + '/contacts.n3';
 
 const { DataFactory } = N3;
 const store = N3.Store();
@@ -29,7 +29,6 @@ if (program.show) {
     if (quad) {
       store.addQuad(quad);
     } else { // finished
-      console.log('Contacts:');
       printContacts();
     }
   });
@@ -82,6 +81,9 @@ if (program.remove) {
     } else { // finished
       const removedContact = store.getQuads(null, null, literal(program.remove))[0];
       if (removedContact) {
+        store.forEach(function(gift) { // remove also associated gifts
+          store.removeQuad(gift);
+        }, removedContact.subject, namedNode('http://hiea.de/contact#giftIdea'), null);
         store.removeQuad(removedContact);
         console.log('Delete:');
         printContact(removedContact);
@@ -155,10 +157,22 @@ function saveContacts() {
 }
 
 function printContact(contact) {
-  var name = contact.object.value;
-  console.log(name);
+  // name
+  console.log(contact.object.value);
+
+  // gifts
+  var giftString = "";
+  store.forEach(function(gift) {
+    giftString += gift.object.value + ", ";
+  }, contact.subject, namedNode('http://hiea.de/contact#giftIdea'), null);
+  if (giftString != "") {
+    console.log("- gifts: " + giftString.substring(0, giftString.length - 2));
+  }
 }
 
 function printContacts() {
-  store.forEach(quad => printContact(quad));
+  store.forEach(function(contact) {
+    printContact(contact);
+    console.log('\r');
+  }, null, namedNode('http://hiea.de/contact#givenName'), null);
 }
