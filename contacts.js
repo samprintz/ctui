@@ -11,11 +11,16 @@ const { namedNode, blankNode, literal, defaultGraph, quad } = DataFactory;
 
 program
   .version('0.1.0')
-  .option('-s, --show', 'Show all contacts')
+  .option('-s, --show [name]', 'Show contact. If no name specified, show all contacts.')
   .option('-a, --add [name]', 'Add contact')
   .option('-r, --remove [name]', 'Remove contact')
   .option('-n, --name [name]', 'Show contact')
-  .option('-g, --gift [gift]', 'Add gift idea for contact')
+  .option('-g, --add-gift [gift]', 'Add gift idea for contact (option -n)')
+  .option('--rm-gift [gift]', 'Remove gift idea for contact (option -n)')
+  .option('-e, --add-email [email]', 'Add email for contact (option -n)')
+  .option('--rm-email [email]', 'Remove email for contact (option -n)')
+  .option('-t, --add-tag [tag]', 'Add tag for contact (option -n)')
+  .option('--rm-tag [tag]', 'Remove tag for contact (option -n)')
   .parse(process.argv);
 
 
@@ -29,7 +34,16 @@ if (program.show) {
     if (quad) {
       store.addQuad(quad);
     } else { // finished
-      printContacts();
+      if (typeof program.show === 'string') { // single contact
+        const contact = store.getQuads(null, null, literal(program.show))[0];
+        if (contact) {
+          printContact(contact);
+        } else {
+          console.log('„%s“ doesn\'t exist.', program.show);
+        }
+      } else { // all contacts
+        printContacts();
+      }
     }
   });
 
@@ -48,7 +62,6 @@ if (program.add) {
   );
 
   // read contacts into store and add new contact
-  debugger;
   const parser = N3.Parser();
   const rdfStream = fs.createReadStream(_contactFile);
   debugger;
@@ -97,7 +110,7 @@ if (program.remove) {
 
 
 
-if (program.gift) {
+if (program.addGift) {
   // name provided?
   if ({}.toString.call(program.name) === '[object Function]'){
     console.log('Please provide also a contact name.');
@@ -125,12 +138,12 @@ if (program.gift) {
       gift = DataFactory.quad(
         contact.subject,
         namedNode('http://hiea.de/contact#giftIdea'),
-        literal(program.gift),
+        literal(program.addGift),
         defaultGraph(),
       );
       store.addQuad(gift);
       saveContacts();
-      console.log('Add „' + program.gift + '“ as gift for „' + program.name + '“.');
+      console.log('Add „' + program.addGift + '“ as gift for „' + program.name + '“.');
     }
   });
 
@@ -139,6 +152,149 @@ if (program.gift) {
 }
 
 
+if (program.addEmail) {
+  // name provided?
+  if ({}.toString.call(program.name) === '[object Function]'){
+    console.log('Please provide also a contact name.');
+  } else {
+  // get contacts
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      var contact = store.getQuads(null, null, literal(program.name))[0];
+      if (!contact) {
+        contact = DataFactory.quad(
+          blankNode(),
+          namedNode('http://hiea.de/contact#givenName'),
+          literal(program.name),
+          defaultGraph(),
+        );
+        store.addQuad(contact);
+        console.log('„%s“ added.', program.name);
+      }
+      email = DataFactory.quad(
+        contact.subject,
+        namedNode('http://hiea.de/contact#email'),
+        literal(program.addEmail),
+        defaultGraph(),
+      );
+      store.addQuad(email);
+      saveContacts();
+      console.log('Add „' + program.addEmail + '“ as email for „' + program.name + '“.');
+    }
+  });
+  }
+}
+
+
+
+
+if (program.addTag) {
+  // name provided?
+  if ({}.toString.call(program.name) === '[object Function]'){
+    console.log('Please provide also a contact name.');
+  } else {
+  // get contacts
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      var contact = store.getQuads(null, null, literal(program.name))[0];
+      if (!contact) {
+        contact = DataFactory.quad(
+          blankNode(),
+          namedNode('http://hiea.de/contact#givenName'),
+          literal(program.name),
+          defaultGraph(),
+        );
+        store.addQuad(contact);
+        console.log('„%s“ added.', program.name);
+      }
+      tag = DataFactory.quad(
+        contact.subject,
+        namedNode('http://hiea.de/contact#tag'),
+        literal(program.addTag),
+        defaultGraph(),
+      );
+      store.addQuad(tag);
+      saveContacts();
+      console.log('„' + program.name + '“ tagged „' + program.addTag + '“.');
+    }
+  });
+  }
+}
+
+
+
+/* Removing attributes */
+
+if (program.rmGift) {
+
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      const removedGift = store.getQuads(null, namedNode('http://hiea.de/contact#giftIdea'), literal(program.rmGift))[0];
+      if (removedGift) {
+        store.removeQuad(removedGift);
+        console.log('„%s“ deleted.', program.rmGift);
+        saveContacts();
+      } else {
+        console.log('No gift „' + program.rmGift + '“ exists for „' + program.name + '“.');
+      }
+    }
+  });
+}
+
+if (program.rmEmail) {
+
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      const removedEmail = store.getQuads(null, namedNode('http://hiea.de/contact#email'), literal(program.rmEmail))[0];
+      if (removedEmail) {
+        store.removeQuad(removedEmail);
+        console.log('„%s“ deleted.', program.rmEmail);
+        saveContacts();
+      } else {
+        console.log('No email „' + program.rmEmail + '“ exists for „' + program.name + '“.');
+      }
+    }
+  });
+}
+if (program.rmTag) {
+
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      const removedTag = store.getQuads(null, namedNode('http://hiea.de/contact#tag'), literal(program.rmTag))[0];
+      if (removedTag) {
+        store.removeQuad(removedTag);
+        console.log('„%s“ deleted.', program.rmTag);
+        saveContacts();
+      } else {
+        console.log('No tag „' + program.rmTag + '“ exists for „' + program.name + '“.');
+      }
+    }
+  });
+}
+
+
+
+/* Save contacts */
 
 function saveContacts() {
   const writeStream = fs.createWriteStream(_contactFile);
@@ -156,6 +312,9 @@ function saveContacts() {
   writer.end();
 }
 
+
+/* Print contacts */
+
 function printContact(contact) {
   // name
   console.log(contact.object.value);
@@ -167,6 +326,20 @@ function printContact(contact) {
   }, contact.subject, namedNode('http://hiea.de/contact#giftIdea'), null);
   if (giftString != "") {
     console.log("- gifts: " + giftString.substring(0, giftString.length - 2));
+  }
+
+  // emails
+  store.forEach(function(email) {
+    console.log("- email: " + email.object.value);
+  }, contact.subject, namedNode('http://hiea.de/contact#email'), null);
+
+  // tags
+  var tagString = "";
+  store.forEach(function(tag) {
+    tagString += tag.object.value + ", ";
+  }, contact.subject, namedNode('http://hiea.de/contact#tag'), null);
+  if (tagString != "") {
+    console.log("- tags: " + tagString.substring(0, tagString.length - 2));
   }
 }
 
