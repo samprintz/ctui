@@ -15,12 +15,13 @@ program
   .option('-a, --add [name]', 'Add contact')
   .option('-r, --remove [name]', 'Remove contact')
   .option('-n, --name [name]', 'Show contact')
-  .option('-g, --add-gift [gift]', 'Add gift idea for contact (option -n)')
-  .option('--rm-gift [gift]', 'Remove gift idea for contact (option -n)')
-  .option('-e, --add-email [email]', 'Add email for contact (option -n)')
-  .option('--rm-email [email]', 'Remove email for contact (option -n)')
-  .option('-t, --add-tag [tag]', 'Add tag for contact (option -n)')
-  .option('--rm-tag [tag]', 'Remove tag for contact (option -n)')
+  .option('-g, --add-gift [gift]', 'Add gift idea for contact (requires -n)')
+  .option('--rm-gift [gift]', 'Remove gift idea for contact (requires -n)')
+  .option('--gifted [occassion]', 'Mark gift as gifted and note occassion. (requires -g and -n)')
+  .option('-e, --add-email [email]', 'Add email for contact (requires -n)')
+  .option('--rm-email [email]', 'Remove email for contact (requires -n)')
+  .option('-t, --add-tag [tag]', 'Add tag for contact (requires -n)')
+  .option('--rm-tag [tag]', 'Remove tag for contact (requires -n)')
   .parse(process.argv);
 
 
@@ -110,7 +111,7 @@ if (program.remove) {
 
 
 
-if (program.addGift) {
+if (program.addGift && program.gifted == null) { // prevent multiple actions, when gift is changed and -g specified
   // name provided?
   if ({}.toString.call(program.name) === '[object Function]'){
     console.log('Please provide also a contact name.');
@@ -230,6 +231,37 @@ if (program.addTag) {
 }
 
 
+/* Manipulating attributes */
+
+if (program.gifted) {
+  const parser = N3.Parser();
+  const rdfStream = fs.createReadStream(_contactFile);
+  parser.parse(rdfStream, (error, quad, prefixes) => {
+    if (quad) {
+      store.addQuad(quad);
+    } else { // finished
+      var name = store.getQuads(null, namedNode('http://hiea.de/contact#givenName'), literal(program.name))[0];
+      var gift = store.getQuads(null, namedNode('http://hiea.de/contact#giftIdea'), literal(program.addGift))[0];
+      if (name && gift) {
+        console.log(program.gifted);
+        store.removeQuad(gift);
+        gift = DataFactory.quad(
+          name.subject,
+          namedNode('http://hiea.de/contact#giftIdea'),
+          literal("<s>" + program.addGift + "</s> (" + program.gifted + ")"),
+          defaultGraph(),
+        );
+        store.addQuad(gift);
+        console.log('„' + program.addGift + '“ marked as gifted with comment „' + program.gifted + '“.');
+        saveContacts();
+      } else {
+        console.log('No gift „' + program.addGift + '“ exists for „' + program.name + '“.');
+      }
+    }
+  });
+}
+
+
 
 /* Removing attributes */
 
@@ -241,9 +273,10 @@ if (program.rmGift) {
     if (quad) {
       store.addQuad(quad);
     } else { // finished
-      const removedGift = store.getQuads(null, namedNode('http://hiea.de/contact#giftIdea'), literal(program.rmGift))[0];
-      if (removedGift) {
-        store.removeQuad(removedGift);
+      const name = store.getQuads(null, namedNode('http://hiea.de/contact#givenName'), literal(program.name))[0];
+      const gift = store.getQuads(null, namedNode('http://hiea.de/contact#giftIdea'), literal(program.addGift))[0];
+      if (name && gift) {
+        store.removeQuad(gift);
         console.log('„%s“ deleted.', program.rmGift);
         saveContacts();
       } else {
@@ -320,13 +353,9 @@ function printContact(contact) {
   console.log(contact.object.value);
 
   // gifts
-  var giftString = "";
   store.forEach(function(gift) {
-    giftString += gift.object.value + ", ";
+    console.log("- gift: " + gift.object.value);
   }, contact.subject, namedNode('http://hiea.de/contact#giftIdea'), null);
-  if (giftString != "") {
-    console.log("- gifts: " + giftString.substring(0, giftString.length - 2));
-  }
 
   // emails
   store.forEach(function(email) {
