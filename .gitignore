@@ -1,0 +1,6 @@
+contacts.n3
+/node_modules
+package-lock.json
+_contacts.n3
+todo.txt
+*-contacts_backup.n3
