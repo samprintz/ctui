@@ -3,6 +3,9 @@ from rdflib import URIRef
 from rdflib.namespace import RDF
 
 import urwid
+import curses
+
+import operator
 
 class MenuButton(urwid.Button):
     def __init__(self, caption, callback):
@@ -22,6 +25,7 @@ class SubMenu(urwid.WidgetWrap):
             urwid.AttrMap(line, 'line'),
             urwid.Divider()] + choices + [urwid.Divider()]))
         self.menu = urwid.AttrMap(listbox, 'options')
+        self.caption = caption
 
     def open_menu(self, button):
         top.open_box(self.menu)
@@ -42,31 +46,14 @@ def exit_program(key):
     raise urwid.ExitMainLoop()
 
 
-'''
-menu_top = SubMenu(u'Main Menu', [
-    SubMenu(u'Applications', [
-        SubMenu(u'Accessories', [
-            Choice(u'Text Editor'),
-            Choice(u'Terminal'),
-        ]),
-    ]),
-    SubMenu(u'System', [
-        SubMenu(u'Preferences', [
-            Choice(u'Appearance'),
-        ]),
-        Choice(u'Lock Screen'),
-    ]),
-])
-'''
-
 palette = [
     (None,  'light gray', 'black'),
-    ('heading', 'black', 'light gray'),
-    ('line', 'black', 'light gray'),
-    ('options', 'dark gray', 'black'),
-    ('focus heading', 'white', 'dark red'),
-    ('focus line', 'black', 'dark red'),
-    ('focus options', 'black', 'light gray'),
+    ('heading', 'light gray', 'black'),
+    ('line', 'black', 'black'),
+    ('options', 'light gray', 'black'),
+    ('focus heading', 'white', 'black'),
+    ('focus line', 'black', 'black'),
+    ('focus options', 'white', 'black'),
     ('selected', 'white', 'dark blue')]
 focus_map = {
     'heading': 'focus heading',
@@ -84,6 +71,9 @@ class HorizontalBoxes(urwid.Columns):
             self.options('given', 24)))
         self.focus_position = len(self.contents) - 1
 
+def navigation(key):
+    txt.set_text(repr(key))
+
 
 
 
@@ -98,17 +88,24 @@ g.parse("contacts.n3", format="n3")
 givenName = URIRef('http://hiea.de/contact#givenName')
 
 contact_menu = []
-#TODO sorting
 for s,p,o in g.triples( (None, givenName, None) ):
     # attributes
-    choices = []
+    # TODO make unique (giftIdea only once)
+    attributes = []
     for s2,p2,o2 in g.triples( (s, None, None) ):
-        p2 = p2.split("#",1)[1]
-        gn = Choice(p2)
-        choices.append(gn)
-        #TODO values
-    menu_entry = SubMenu(str(o), choices)
+        # values
+        values = []
+        for s3,p3,o3 in g.triples( (s, p2, None) ):
+            value = Choice(str(o3))
+            values.append(value)
+        values.sort(key=operator.attrgetter('caption'))
+        attribute_menu = SubMenu(str(p2.split("#",1)[1]), values)
+        attributes.append(attribute_menu)
+    attributes.sort(key=operator.attrgetter('caption'))
+    menu_entry = SubMenu(str(o), attributes)
     contact_menu.append(menu_entry)
+contact_menu.sort(key=operator.attrgetter('caption'))
+
 
 menu_top = SubMenu(u'Contacts', contact_menu)
 
@@ -132,7 +129,10 @@ menu_top = SubMenu(u'Main Menu', [
 
 top = HorizontalBoxes()
 top.open_box(menu_top.menu)
-urwid.MainLoop(urwid.Filler(top, valign='top', height=('relative', 100)), palette).run()
+txt = urwid.Text(u"Hello World")
+fill2 = urwid.Filler(txt, 'top')
+fill = urwid.Filler(top, valign='top', height=('relative', 100))
+urwid.MainLoop(fill, palette, unhandled_input=navigation).run()
 
 
 
