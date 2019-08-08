@@ -1,11 +1,55 @@
 from rdflib import Graph
 from rdflib import URIRef
+from rdflib import BNode
+from rdflib import Literal
 from rdflib.namespace import RDF
 
 import urwid
 import curses
 
 import operator
+
+path = 'test.n3'
+GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
+
+
+### N3 functions
+
+def loadFile(path):
+    g = Graph()
+    g.parse(path, format="n3")
+    return g
+
+def saveFile(path):
+    g.serialize(format='n3', indent=True, destination=path)
+
+
+def getContacts():
+    contacts = []
+    for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
+        contacts.append(str(o))
+        contacts.sort()
+    return contacts
+
+def containsContact(name):
+    return (None, GIVEN_NAME_REF, Literal(name)) in g
+
+def addContact(name):
+    if containsContact(name):
+        print(name, "already exitst.")
+    else:
+        g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
+        print(name, "added.")
+
+def removeContact(name):
+    if containsContact(name):
+        g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
+        print(name, "removed.")
+    else:
+        print(name, "doesn't exist.")
+
+
+### urwid
 
 class MenuButton(urwid.Button):
     def __init__(self, caption, callback):
@@ -72,23 +116,43 @@ class HorizontalBoxes(urwid.Columns):
         self.focus_position = len(self.contents) - 1
 
 def navigation(key):
-    txt.set_text(repr(key))
+    if key in keyCommands.keys():
+        keyCommands[key]()
 
+def exit():
+    raise urwid.ExitMainLoop()
 
+class Command(urwid.Filler):
+    def keypress(self, size, key):
+        if key != 'enter':
+            return super(Command, self).keypress(size, key)
+        name = self.original_widget.edit_text[4:]
+        self.original_widget = urwid.Text(u"Added %s." %name)
+        fill.set_focus('body')
 
+def add():
+    edit = urwid.Edit(caption=u":", edit_text=u"add ")
+    fill.footer = urwid.BoxAdapter(Command(edit), height=1)
+    fill.set_focus('footer')
 
+def remove():
+    return
 
+def edit():
+    return
 
+# TODO vim like navigation
+keyCommands = {
+        'q' : exit,
+        'Q' : exit,
+        'a' : add,
+        'h' : remove,
+        'e' : edit}
 
-g = Graph()
-g.parse("contacts.n3", format="n3")
-
-#for subject,predicate,obj in g:
-
-givenName = URIRef('http://hiea.de/contact#givenName')
+g = loadFile(path)
 
 contact_menu = []
-for s,p,o in g.triples( (None, givenName, None) ):
+for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
     # attributes
     # TODO make unique (giftIdea only once)
     attributes = []
@@ -109,31 +173,14 @@ contact_menu.sort(key=operator.attrgetter('caption'))
 
 menu_top = SubMenu(u'Contacts', contact_menu)
 
-'''
-menu_top = SubMenu(u'Main Menu', [
-    SubMenu(u'Applications', [
-        SubMenu(u'Accessories', [
-            Choice(u'Text Editor'),
-            Choice(u'Terminal'),
-        ]),
-    ]),
-    SubMenu(u'System', [
-        SubMenu(u'Preferences', [
-            Choice(u'Appearance'),
-        ]),
-        Choice(u'Lock Screen'),
-    ]),
-])
-'''
-
 
 top = HorizontalBoxes()
 top.open_box(menu_top.menu)
-txt = urwid.Text(u"Hello World")
-fill2 = urwid.Filler(txt, 'top')
-fill = urwid.Filler(top, valign='top', height=('relative', 100))
+#fill = urwid.Filler(top, valign='top', height=('relative', 100))
+fill = urwid.Frame(top)
 urwid.MainLoop(fill, palette, unhandled_input=navigation).run()
 
 
 
-#g.serialize(format='n3', indent=True, destination='test.n3')
+saveFile(path)
+
