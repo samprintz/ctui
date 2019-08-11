@@ -4,3 +4,5 @@ package-lock.json
 _contacts.n3
 todo.txt
 *-contacts_backup.n3
+orga/
+test.n3

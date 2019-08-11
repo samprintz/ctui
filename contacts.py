@@ -9,7 +9,7 @@ import curses
 
 import operator
 
-path = 'test.n3'
+PATH = 'test.n3'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 
 
@@ -36,10 +36,13 @@ def containsContact(name):
 
 def addContact(name):
     if containsContact(name):
-        print(name, "already exists.")
+        msg = [name, " already exists."]
+        return msg
     else:
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
-        print(name, "added.")
+        msg = [name, " added."]
+        saveFile(PATH)
+        return msg
 
 def removeContact(name):
     if containsContact(name):
@@ -126,7 +129,9 @@ class Command(urwid.Filler):
         if key != 'enter':
             return super(Command, self).keypress(size, key)
         name = self.original_widget.edit_text[4:]
-        self.original_widget = urwid.Text(u"Added %s." %name)
+        updateMenu()
+        msg = addContact(name)
+        self.original_widget = urwid.Text(msg)
         fill.set_focus('body')
 
 def add():
@@ -148,38 +153,41 @@ keyCommands = {
         'h' : remove,
         'e' : edit}
 
-g = loadFile(path)
+g = loadFile(PATH)
 
-contact_menu = []
-for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
-    # attributes
-    # TODO make unique (giftIdea only once)
-    attributes = []
-    for s2,p2,o2 in g.triples( (s, None, None) ):
-        # values
-        values = []
-        for s3,p3,o3 in g.triples( (s, p2, None) ):
-            value = Choice(str(o3))
-            values.append(value)
-        values.sort(key=operator.attrgetter('caption'))
-        attribute_menu = SubMenu(str(p2.split("#",1)[1]), values)
-        attributes.append(attribute_menu)
-    attributes.sort(key=operator.attrgetter('caption'))
-    menu_entry = SubMenu(str(o), attributes)
-    contact_menu.append(menu_entry)
-contact_menu.sort(key=operator.attrgetter('caption'))
+def loadMenu():
+    contact_menu = []
+    for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
+        # attributes
+        # TODO make unique (giftIdea only once)
+        attributes = []
+        for s2,p2,o2 in g.triples( (s, None, None) ):
+            # values
+            values = []
+            for s3,p3,o3 in g.triples( (s, p2, None) ):
+                value = Choice(str(o3))
+                values.append(value)
+            values.sort(key=operator.attrgetter('caption'))
+            attribute_menu = SubMenu(str(p2.split("#",1)[1]), values)
+            attributes.append(attribute_menu)
+        attributes.sort(key=operator.attrgetter('caption'))
+        menu_entry = SubMenu(str(o), attributes)
+        contact_menu.append(menu_entry)
+    contact_menu.sort(key=operator.attrgetter('caption'))
+    menu_top = SubMenu(u'Contacts', contact_menu)
+    return menu_top
+
+def updateMenu():
+    #TODO
+    return
+    
 
 
-menu_top = SubMenu(u'Contacts', contact_menu)
-
-
+menu_top = loadMenu()
 top = HorizontalBoxes()
 top.open_box(menu_top.menu)
 #fill = urwid.Filler(top, valign='top', height=('relative', 100))
 fill = urwid.Frame(top)
-urwid.MainLoop(fill, palette, unhandled_input=navigation).run()
-
-
-
-saveFile(path)
+loop = urwid.MainLoop(fill, palette, unhandled_input=navigation)
+loop.run()
 
