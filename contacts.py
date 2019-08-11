@@ -36,7 +36,7 @@ def containsContact(name):
 
 def addContact(name):
     if containsContact(name):
-        print(name, "already exitst.")
+        print(name, "already exists.")
     else:
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
         print(name, "added.")
@@ -56,16 +56,15 @@ class MenuButton(urwid.Button):
         super(MenuButton, self).__init__("")
         urwid.connect_signal(self, 'click', callback)
         self._w = urwid.AttrMap(urwid.SelectableIcon(
-            [u' ', caption], 1), None, 'selected')
+            caption, 100), None, 'selected')
             #[u'  \N{BULLET} ', caption], 2), None, 'selected')
 
 class SubMenu(urwid.WidgetWrap):
     def __init__(self, caption, choices):
-        super(SubMenu, self).__init__(MenuButton(
-            [caption, u"\N{HORIZONTAL ELLIPSIS}"], self.open_menu))
+        super(SubMenu, self).__init__(MenuButton(caption, self.open_menu))
         line = urwid.Divider(u'\N{LOWER ONE QUARTER BLOCK}')
         listbox = urwid.ListBox(urwid.SimpleFocusListWalker([
-            urwid.AttrMap(urwid.Text([u"\n  ", caption]), 'heading'),
+            urwid.AttrMap(urwid.Text([u"\n", caption]), 'heading'),
             urwid.AttrMap(line, 'line'),
             urwid.Divider()] + choices + [urwid.Divider()]))
         self.menu = urwid.AttrMap(listbox, 'options')
@@ -95,10 +94,10 @@ palette = [
     ('heading', 'light gray', 'black'),
     ('line', 'black', 'black'),
     ('options', 'light gray', 'black'),
-    ('focus heading', 'white', 'black'),
+    ('focus heading', 'light gray', 'black'),
     ('focus line', 'black', 'black'),
-    ('focus options', 'white', 'black'),
-    ('selected', 'white', 'dark blue')]
+    ('focus options', 'light gray', 'black'),
+    ('selected', 'black', 'light gray')]
 focus_map = {
     'heading': 'focus heading',
     'options': 'focus options',
