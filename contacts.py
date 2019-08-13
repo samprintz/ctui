@@ -62,6 +62,21 @@ class MenuButton(urwid.Button):
             caption, 100), None, 'selected')
             #[u'  \N{BULLET} ', caption], 2), None, 'selected')
 
+    def keypress(self, size, key):
+        if key == 'a':
+            add()
+        elif key == 'h':
+            name = str(self._w._original_widget.text)
+            remove(name)
+        elif key == 'e':
+            #TODO
+            name = self._w._original_widget.text
+            edit = urwid.Edit(caption=u":TODO: edit ", edit_text=name)
+            fill.footer = urwid.BoxAdapter(Command(edit), height=1)
+            return super(MenuButton, self).keypress(size, key)
+        else:
+            return super(MenuButton, self).keypress(size, key)
+
 class SubMenu(urwid.WidgetWrap):
     def __init__(self, caption, choices):
         super(SubMenu, self).__init__(MenuButton(caption, self.open_menu))
@@ -75,6 +90,23 @@ class SubMenu(urwid.WidgetWrap):
 
     def open_menu(self, button):
         top.open_box(self.menu)
+
+    def keypress(self, size, key):
+        if key == 't':
+            #TODO
+            #self.menu._original_widget.change_focus(size, 5)
+            #position = self.menu._original_widget._body.next_position
+            #self.menu._original_widget._body.set_focus(position)
+            #name = str(self.menu._original_widget._body.next_position)
+            #name = str(self.menu._original_widget.get_focus())
+            #edit = urwid.Edit(caption=u":", edit_text=name)
+            #fill.footer = urwid.BoxAdapter(Command(edit), height=5)
+            return super(SubMenu, self).keypress(size, key)
+        if key == 'r':
+            return super(SubMenu, self).keypress(size, key)
+        else:
+            return super(SubMenu, self).keypress(size, key)
+
 
 class Choice(urwid.WidgetWrap):
     def __init__(self, caption):
@@ -126,6 +158,9 @@ def exit():
 
 class Command(urwid.Filler):
     def keypress(self, size, key):
+        if key == 'esc':
+            fill.footer = None
+            fill.set_focus('body')
         if key != 'enter':
             return super(Command, self).keypress(size, key)
         args = self.original_widget.edit_text.split()
@@ -148,21 +183,17 @@ def add():
     fill.footer = urwid.BoxAdapter(Command(edit), height=1)
     fill.set_focus('footer')
 
-def remove():
-    edit = urwid.Edit(caption=u":", edit_text=u"remove ")
+def remove(name):
+    edit = urwid.Edit(caption=u":", edit_text="remove {}".format(name))
     fill.footer = urwid.BoxAdapter(Command(edit), height=1)
     fill.set_focus('footer')
 
-def edit():
+def edit(name):
     return
 
-# TODO vim like navigation
 keyCommands = {
         'q' : exit,
-        'Q' : exit,
-        'a' : add,
-        'h' : remove,
-        'e' : edit}
+        'Q' : exit}
 
 
 def loadMenu():
