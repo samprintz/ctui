@@ -11,6 +11,7 @@ import operator
 
 PATH = 'test.n3'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
+g = None
 
 
 ### N3 functions
@@ -36,20 +37,19 @@ def containsContact(name):
 
 def addContact(name):
     if containsContact(name):
-        msg = [name, " already exists."]
-        return msg
+        return [name, " already exists."]
     else:
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
-        msg = [name, " added."]
         saveFile(PATH)
-        return msg
+        return [name, " added."]
 
 def removeContact(name):
     if containsContact(name):
         g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
-        print(name, "removed.")
+        saveFile(PATH)
+        return [name, " removed."]
     else:
-        print(name, "doesn't exist.")
+        return [name, " doesn't exists."]
 
 
 ### urwid
@@ -128,9 +128,18 @@ class Command(urwid.Filler):
     def keypress(self, size, key):
         if key != 'enter':
             return super(Command, self).keypress(size, key)
-        name = self.original_widget.edit_text[4:]
-        updateMenu()
-        msg = addContact(name)
+        args = self.original_widget.edit_text.split()
+        command = args[0]
+        if command in ('add'):
+            name = args[1]
+            msg = addContact(name)
+            updateMenu()
+        elif command in ('remove', 'del', 'rm'):
+            name = args[1]
+            msg = removeContact(name)
+            updateMenu()
+        else:
+            msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
         fill.set_focus('body')
 
@@ -140,7 +149,9 @@ def add():
     fill.set_focus('footer')
 
 def remove():
-    return
+    edit = urwid.Edit(caption=u":", edit_text=u"remove ")
+    fill.footer = urwid.BoxAdapter(Command(edit), height=1)
+    fill.set_focus('footer')
 
 def edit():
     return
@@ -153,9 +164,10 @@ keyCommands = {
         'h' : remove,
         'e' : edit}
 
-g = loadFile(PATH)
 
 def loadMenu():
+    global g
+    g = loadFile(PATH)
     contact_menu = []
     for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
         # attributes
@@ -178,8 +190,11 @@ def loadMenu():
     return menu_top
 
 def updateMenu():
-    #TODO
-    return
+    menu_top = loadMenu()
+    top = HorizontalBoxes()
+    top.open_box(menu_top.menu)
+    fill.body = top
+    fill.set_focus('body')
     
 
 
