@@ -166,11 +166,11 @@ class Command(urwid.Filler):
         args = self.original_widget.edit_text.split()
         command = args[0]
         if command in ('add'):
-            name = args[1]
+            name = " ".join(args[1:])
             msg = addContact(name)
             updateMenu()
-        elif command in ('remove', 'del', 'rm'):
-            name = args[1]
+        elif command in ('remove', 'delete', 'rm', 'del'):
+            name = " ".join(args[1:])
             msg = removeContact(name)
             updateMenu()
         else:
