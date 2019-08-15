@@ -1,8 +1,5 @@
-from rdflib import Graph
-from rdflib import URIRef
-from rdflib import BNode
-from rdflib import Literal
-from rdflib.namespace import RDF
+from rdflib import *
+from rdflib.resource import *
 
 import urwid
 import curses
@@ -37,7 +34,7 @@ def containsContact(name):
 
 def addContact(name):
     if containsContact(name):
-        return [name, " already exists."]
+        return ["Error: ", name, " already exists."]
     else:
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
         saveFile(PATH)
@@ -49,7 +46,21 @@ def removeContact(name):
         saveFile(PATH)
         return [name, " removed."]
     else:
-        return [name, " doesn't exists."]
+        return ["Error: ", name, " doesn't exists."]
+
+def renameContact(old_name, new_name):
+    if containsContact(old_name):
+        if old_name == new_name:
+            return ["Name unchanged."]
+        triples = [s for s,p,o in g.triples((None, GIVEN_NAME_REF, Literal(old_name)))]
+        if len(triples) > 1:
+            return ["Error: Multiple persons with name ", old_name, " exist."]
+        person = Resource(g, triples[0])
+        person.set(GIVEN_NAME_REF, Literal(new_name))
+        saveFile(PATH)
+        return [old_name, " renamed to ", new_name, "."]
+    else:
+        return ["Error: ", old_name, " doesn't exists."]
 
 
 ### urwid
@@ -63,17 +74,18 @@ class MenuButton(urwid.Button):
             #[u'  \N{BULLET} ', caption], 2), None, 'selected')
 
     def keypress(self, size, key):
-        if key == 'a':
+        if key == 'i':
             add()
         elif key == 'h':
             name = str(self._w._original_widget.text)
             remove(name)
-        elif key == 'e':
-            #TODO
-            name = self._w._original_widget.text
-            edit = urwid.Edit(caption=u":TODO: edit ", edit_text=name)
-            fill.footer = urwid.BoxAdapter(Command(edit), height=1)
-            return super(MenuButton, self).keypress(size, key)
+        elif key == 'a':
+            name = str(self._w._original_widget.text)
+            rename(name)
+            #DEBUG:
+            #edit = urwid.Edit(caption=u":TODO: edit ", edit_text=name)
+            #fill.footer = urwid.BoxAdapter(Command(edit), height=1)
+            #return super(MenuButton, self).keypress(size, key)
         else:
             return super(MenuButton, self).keypress(size, key)
 
@@ -157,6 +169,9 @@ def exit():
     raise urwid.ExitMainLoop()
 
 class Command(urwid.Filler):
+    def __init__(self, original_widget, data=None):
+        super(Command, self).__init__(original_widget)
+        self.data = data
     def keypress(self, size, key):
         if key == 'esc':
             fill.footer = None
@@ -173,6 +188,11 @@ class Command(urwid.Filler):
             name = " ".join(args[1:])
             msg = removeContact(name)
             updateMenu()
+        elif command in ('rename', 'edit', 'rn'):
+            old_name = self.data['name']
+            new_name = " ".join(args[1:])
+            msg = renameContact(old_name, new_name)
+            updateMenu()
         else:
             msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
@@ -184,12 +204,15 @@ def add():
     fill.set_focus('footer')
 
 def remove(name):
-    edit = urwid.Edit(caption=u":", edit_text="remove {}".format(name))
+    edit = urwid.Edit(caption=u":", edit_text="delete {}".format(name))
     fill.footer = urwid.BoxAdapter(Command(edit), height=1)
     fill.set_focus('footer')
 
-def edit(name):
-    return
+def rename(name):
+    edit = urwid.Edit(caption=u":", edit_text="rename {}".format(name))
+    data = {'name': name}
+    fill.footer = urwid.BoxAdapter(Command(edit, data), height=1)
+    fill.set_focus('footer')
 
 keyCommands = {
         'q' : exit,
