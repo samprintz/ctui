@@ -6,6 +6,8 @@ import curses
 
 import operator
 
+import pudb
+
 PATH = 'test.n3'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 g = None
@@ -26,7 +28,7 @@ def getContacts():
     contacts = []
     for s,p,o in g.triples( (None, GIVEN_NAME_REF, None) ):
         contacts.append(str(o))
-        contacts.sort()
+        contacts.sort(key=operator.attrgetter('caption'))
     return contacts
 
 def containsContact(name):
@@ -38,12 +40,22 @@ def addContact(name):
     else:
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
         saveFile(PATH)
+        menu = top.contents[0][0].base_widget.body
+        menu.append(SubMenu(name, [SubMenu(u'givenName', [Choice(name)])]))
+        menu.sort(key=operator.attrgetter('caption'))
         return [name, " added."]
 
 def removeContact(name):
     if containsContact(name):
+        # update n3
         g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
         saveFile(PATH)
+
+        # update urwid
+        menu = top.contents[0][0].base_widget.body
+        contact = next((x for x in menu if x.caption == name), None) # find list item
+        if contact != None:
+            menu.remove(contact)
         return [name, " removed."]
     else:
         return ["Error: ", name, " doesn't exists."]
@@ -52,12 +64,29 @@ def renameContact(old_name, new_name):
     if containsContact(old_name):
         if old_name == new_name:
             return ["Name unchanged."]
+
         triples = [s for s,p,o in g.triples((None, GIVEN_NAME_REF, Literal(old_name)))]
+
         if len(triples) > 1:
             return ["Error: Multiple persons with name ", old_name, " exist."]
+
+        # update n3
         person = Resource(g, triples[0])
         person.set(GIVEN_NAME_REF, Literal(new_name))
         saveFile(PATH)
+
+        # update urwid
+        pu.db
+        menu = top.contents[0][0].base_widget.body
+        contact = next((x for x in menu if x.caption == old_name), None) # find list item
+        if contact != None:
+            #menu.remove(contact)
+            #menu.append(SubMenu(new_name, [SubMenu(u'givenName', [Choice(new_name)])]))
+            #TODO funktioniert noch nicht
+            contact.caption = new_name
+            #menu.append(contact)
+            #menu.sort(key=operator.attrgetter('caption'))
+        #return str(contact.menu)
         return [old_name, " renamed to ", new_name, "."]
     else:
         return ["Error: ", old_name, " doesn't exists."]
@@ -93,10 +122,7 @@ class SubMenu(urwid.WidgetWrap):
     def __init__(self, caption, choices):
         super(SubMenu, self).__init__(MenuButton(caption, self.open_menu))
         line = urwid.Divider(u'\N{LOWER ONE QUARTER BLOCK}')
-        listbox = urwid.ListBox(urwid.SimpleFocusListWalker([
-            urwid.AttrMap(urwid.Text([u"\n", caption]), 'heading'),
-            urwid.AttrMap(line, 'line'),
-            urwid.Divider()] + choices + [urwid.Divider()]))
+        listbox = urwid.ListBox(urwid.SimpleFocusListWalker(choices))
         self.menu = urwid.AttrMap(listbox, 'options')
         self.caption = caption
 
@@ -183,16 +209,16 @@ class Command(urwid.Filler):
         if command in ('add'):
             name = " ".join(args[1:])
             msg = addContact(name)
-            updateMenu()
+            #updateMenu()
         elif command in ('remove', 'delete', 'rm', 'del'):
             name = " ".join(args[1:])
             msg = removeContact(name)
-            updateMenu()
+            #updateMenu()
         elif command in ('rename', 'edit', 'rn'):
             old_name = self.data['name']
             new_name = " ".join(args[1:])
             msg = renameContact(old_name, new_name)
-            updateMenu()
+            #updateMenu()
         else:
             msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
@@ -244,6 +270,8 @@ def loadMenu():
     return menu_top
 
 def updateMenu():
+    #TODO Wenn ich die n3 verändert habe (z. B. durch add/rename/delete) sehe ich zwar die Änderung und kann weiterhin durch die oberste Menüebene navigieren, aber kann die Attribute der Kontakte nicht mehr sehen
+    # TODO Hinzufügen, Bearbeiten und Löschen von Attributen und deren Werte
     menu_top = loadMenu()
     top = HorizontalBoxes()
     top.open_box(menu_top.menu)
@@ -256,7 +284,9 @@ menu_top = loadMenu()
 top = HorizontalBoxes()
 top.open_box(menu_top.menu)
 #fill = urwid.Filler(top, valign='top', height=('relative', 100))
-fill = urwid.Frame(top)
+#fill = urwid.Frame(top)
+fill = urwid.Frame(None)
+fill.body = top
 loop = urwid.MainLoop(fill, palette, unhandled_input=navigation)
 loop.run()
 
