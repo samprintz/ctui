@@ -5,7 +5,7 @@ const program = require('commander');
 const _contactFile = __dirname + '/contacts.n3';
 
 const { DataFactory } = N3;
-const store = N3.Store();
+const store = new N3.Store();
 const { namedNode, blankNode, literal, defaultGraph, quad } = DataFactory;
 
 
@@ -33,7 +33,7 @@ program
 if (program.show) {
 
   // read contacts into store
-  const parser = N3.Parser();
+  const parser = new N3.Parser();
   const rdfStream = fs.createReadStream(_contactFile);
   parser.parse(rdfStream, (error, quad, prefixes) => {
     if (quad) {
