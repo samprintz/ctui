@@ -120,7 +120,8 @@ def reload_contact_list():
 def show_contact_details(contact):
     name = contact._w.original_widget.text
     fill.header.show_contact_name(name)
-    fill.body.open_contact_details(name)
+    if fill.body is not None:
+        fill.body.open_contact_details(name)
 
 
 def command_add():
@@ -197,9 +198,54 @@ class MyCommandLine(urwid.Filler):
                 msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
         fill.set_focus('body')
-    
 
-class MyContactDetails(urwid.ListBox):
+
+class MyListBox(urwid.ListBox):
+    def __init__(self, listwalker):
+        super(MyListBox, self).__init__(listwalker)
+        self.repeat_command = 0
+    def keypress(self, size, key):
+        if key == 't':
+            if self.repeat_command > 0:
+                self.jump_down(size, self.repeat_command)
+                self.repeat_command = 0
+            else:
+                super(MyListBox, self).keypress(size, 'down')
+        elif key == 'r':
+            if self.repeat_command > 0:
+                self.jump_up(size, self.repeat_command)
+                self.repeat_command = 0
+            else:
+                super(MyListBox, self).keypress(size, 'up')
+        elif key == 'G':
+            super(MyListBox, self).keypress(size, 'end')
+            super(MyListBox, self).keypress(size, 'end')
+        elif key == 'g':
+            super(MyListBox, self).keypress(size, 'home')
+        elif key == 'a':
+            command_rename(self.focus)
+        elif key == 'i':
+            command_add()
+        elif key == 'h':
+            command_delete(self.focus)
+        elif key == '/':
+            command_search()
+        elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            if self.repeat_command > 0:
+                self.repeat_command = int(str(self.repeat_command) + key)
+            else:
+                self.repeat_command = int(key)
+        else:
+            return super(MyListBox, self).keypress(size, key)
+    def jump_down(self, size, n):
+        for i in range(0, n):
+            super(MyListBox, self).keypress(size, 'down')
+    def jump_up(self, size, n):
+        for i in range(0, n):
+            super(MyListBox, self).keypress(size, 'up')
+
+
+class MyContactDetails(MyListBox):
     def __init__(self, contact):
         listwalker = urwid.SimpleFocusListWalker([])
         self.contact = contact
@@ -209,7 +255,11 @@ class MyContactDetails(urwid.ListBox):
         for c in get_contact_details(self.contact):
             a.append(MyContact(c, show_contact_details))
         self.body = urwid.SimpleFocusListWalker(a)
-
+    def keypress(self, size, key):
+        if key == 'd':
+            return super(MyContactDetails, self).keypress(size, 'left')
+        else:
+            return super(MyContactDetails, self).keypress(size, key)
 
 class MyContact(urwid.Button):
     def __init__(self, caption, callback):
@@ -226,11 +276,10 @@ class MyContact(urwid.Button):
             new_name, 100), None, 'selected')
 
 
-class MyContactList(urwid.ListBox):
+class MyContactList(MyListBox):
     def __init__(self):
         listwalker = urwid.SimpleFocusListWalker([])
         super(MyContactList, self).__init__(listwalker)
-        self.repeat_command = 0
     #TODO: saubere Positionsreaktionen auf rename, add und delete
     def load_contacts(self, renamed_contact=None):
         focus_pos = 0
@@ -241,6 +290,7 @@ class MyContactList(urwid.ListBox):
         for c in get_contact_list():
             a.append(MyContact(c, show_contact_details))
         self.body = urwid.SimpleFocusListWalker(a)
+        urwid.connect_signal(self.body, "modified", self.show_contact)
         if focus_contact:
             focus_pos = self.get_contact_position(focus_contact)
         if renamed_contact:
@@ -249,6 +299,11 @@ class MyContactList(urwid.ListBox):
         if focus_pos == None:
             focus_pos = len(self.body) - 1
         self.set_focus(focus_pos)
+    def keypress(self, size, key):
+        if key == 'n':
+            return super(MyContactList, self).keypress(size, 'right')
+        else:
+            return super(MyContactList, self).keypress(size, key)
     def get_contact_position(self, name):
         pos = 0
         for entry in self.body:
@@ -260,45 +315,8 @@ class MyContactList(urwid.ListBox):
         pos = self.get_contact_position(name)
         if pos is not None:
             self.set_focus(pos)
-    def keypress(self, size, key):
-        if key == 't':
-            if self.repeat_command > 0:
-                self.jump_down(size, self.repeat_command)
-                self.repeat_command = 0
-            else:
-                return super(MyContactList, self).keypress(size, 'down')
-        elif key == 'r':
-            if self.repeat_command > 0:
-                self.jump_up(size, self.repeat_command)
-                self.repeat_command = 0
-            else:
-                return super(MyContactList, self).keypress(size, 'up')
-        elif key == 'G':
-            return super(MyContactList, self).keypress(size, 'end')
-        elif key == 'g':
-            return super(MyContactList, self).keypress(size, 'home')
-        elif key == 'a':
-            command_rename(self.focus)
-        elif key == 'i':
-            command_add()
-        elif key == 'h':
-            command_delete(self.focus)
-        elif key == '/':
-            command_search()
-        elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-            if self.repeat_command > 0:
-                self.repeat_command = int(str(self.repeat_command) + key)
-            else:
-                self.repeat_command = int(key)
-        else:
-            return super(MyContactList, self).keypress(size, key)
-    def jump_down(self, size, n):
-        for i in range(0, n):
-            super(MyContactList, self).keypress(size, 'down')
-    def jump_up(self, size, n):
-        for i in range(0, n):
-            super(MyContactList, self).keypress(size, 'up')
-
+    def show_contact(self):
+        show_contact_details(self.focus)
 
 
 class MyColumns(urwid.Columns):
