@@ -2,10 +2,13 @@ from rdflib import *
 from rdflib.resource import *
 import operator
 import pudb
+import pyperclip
 import urwid
 
 PATH = 'test.n3'
+NAMESPACE = 'http://hiea.de/contact#'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
+GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
 NAV_WIDTH = 24
 DETAILS_WIDTH = 48
 
@@ -38,19 +41,39 @@ def save_file(path):
 def contains_contact(name):
     return (None, GIVEN_NAME_REF, Literal(name)) in g
 
+def contains_attribute(name, key, value):
+    attribute_ref = URIRef(NAMESPACE + key)
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+    return (s, attribute_ref, Literal(value)) in g
+
 def get_contact_list():
     contacts = []
     for o in g.objects(None, GIVEN_NAME_REF):
         contacts.append(str(o))
     return sorted(contacts)
 
-def get_contact_details(name):
+def get_contact_info(name):
     details = []
     s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
     for p,o in g.predicate_objects(s):
         p_string = p.split('#',1)[1]
-        if p_string == 'givenName': continue
-        details.append(p_string + ': ' + str(o))
+        #if p_string == 'givenName': continue
+        if p_string == 'giftIdea': continue
+        #details.append(p_string + ': ' + str(o))
+        details.append([p_string, str(o)])
+    return sorted(details)
+
+def has_gifts(name):
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+    return (s, GIFTIDEA_REF, None) in g
+
+def get_contact_gifts(name):
+    details = []
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+    for p,o in g.predicate_objects(s):
+        p_string = p.split('#',1)[1]
+        if p_string == 'giftIdea':
+            details.append(str(o))
     return sorted(details)
 
 
@@ -106,6 +129,46 @@ def search_contact(name):
     return ""
 
 
+def add_attribute(c, key, value):
+    attribute_ref = URIRef(NAMESPACE + key)
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+    # update n3
+    g.add((s, attribute_ref, Literal(value)) )
+    save_file(PATH)
+    # reload urwid
+    fill.body.contents[0][0].base_widget.load_contacts()
+    return ["Attribute ", key, "=", value, " added."]
+
+def rename_attribute(c, old_value, new_value):
+    if old_value == new_value:
+        return ["Value unchanged."]
+    else:
+        attribute_ref = URIRef(NAMESPACE + c.key)
+        s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+        # update n3
+        g.remove((s, attribute_ref, Literal(old_value)))
+        save_file(PATH)
+        resource = Resource(g, s)
+        resource.set(attribute_ref, Literal(new_value))
+        save_file(PATH)
+        # reload urwid
+        fill.body.contents[0][0].base_widget.load_contacts(c.contact, True)
+        return [c.key, " changed to ", new_value, "."]
+
+def delete_attribute(c, key, value):
+    if contains_attribute(c.contact, key, value):
+        attribute_ref = URIRef(NAMESPACE + key)
+        s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+        # update n3
+        g.remove((s, attribute_ref, Literal(value)))
+        save_file(PATH)
+        # update urwid
+        fill.body.contents[0][0].base_widget.load_contacts()
+        return ["Attribute ", key, "=", value, " deleted."]
+    else:
+        return ["Error: ", c.contact, " doesn't own attribute ", key, "=", value, "."]
+
+
 
 # urwid functions
 
@@ -124,20 +187,31 @@ def show_contact_details(contact):
         fill.body.open_contact_details(name)
 
 
-def command_add():
-    MyCommandLine('add')
+def command_add_contact():
+    fill.open_console('add')
 
-def command_rename(executing_widget):
+def command_rename_contact(executing_widget):
     data = {'name': str(executing_widget._w.original_widget.text)}
-    MyCommandLine('rename', executing_widget, data)
+    fill.open_console('rename', executing_widget, data)
 
-def command_delete(executing_widget):
+def command_delete_contact(executing_widget):
     data = {'name': str(executing_widget._w.original_widget.text)}
-    MyCommandLine('delete', executing_widget, data)
+    fill.open_console('delete', executing_widget, data)
 
-def command_search():
-    MyCommandLine('search')
+def command_search_contact():
+    fill.open_console('search')
 
+def command_add_attribute(c):
+    data = {'name': c.contact, 'key': c.key, 'value': c.value}
+    fill.open_console('add-attribute', c, data)
+
+def command_rename_attribute(c):
+    data = {'name': c.contact, 'key': c.key, 'value': c.value}
+    fill.open_console('rename-attribute', c, data)
+
+def command_delete_attribute(c):
+    data = {'name': c.contact, 'key': c.key, 'value': c.value}
+    fill.open_console('delete-attribute', c, data)
 
 
 
@@ -146,32 +220,40 @@ def command_search():
 
 class MyHeader(urwid.Padding):
     def __init__(self, contact_name=None):
-        super(MyHeader, self).__init__(urwid.Text(''), align='left', left=NAV_WIDTH)
+        super(MyHeader, self).__init__(urwid.Text(''), align='left', left=NAV_WIDTH+1)
     def set_path(self, path):
         self.base_widget.set_text(path)
     def show_contact_name(self, name):
         self.set_path(name)
 
 class MyCommandLine(urwid.Filler):
-    def __init__(self, command=None, executing_widget=None, data=None):
-        super(MyCommandLine, self).__init__(None)
-        self.executing_widget = executing_widget
+    def __init__(self):
+        super(MyCommandLine, self).__init__(urwid.Text(""))
+        self.command = ""
+    def open_console(self, command, executing_widget=None, data=None):
         self.command = command
+        self.executing_widget = executing_widget
         self.data = data
-
         if command in ('add'):
             self.body = urwid.Edit(caption=u":", edit_text="{} "
                     .format(command))
         elif command in ('search'):
             self.body = urwid.Edit(caption=u"/")
+        elif command == 'add-attribute':
+            self.body = urwid.Edit(caption=u":", edit_text="{} "
+                    .format(command))
+        elif command == 'rename-attribute':
+            self.body = urwid.Edit(caption=u":", edit_text="{} {}"
+                    .format(command, data['value']))
+        elif command == 'delete-attribute':
+            self.body = urwid.Edit(caption=u":", edit_text="{} {} {}"
+                    .format(command, data['key'], data["value"]))
         else:
         #if command in ('rename', 'edit', 'rn', 'remove', 'delete', 'rm', 'del'):
             self.body = urwid.Edit(caption=u":", edit_text="{} {}"
                     .format(command, data['name']))
-
-        fill.footer = urwid.BoxAdapter(self, height=1)
-        fill.set_focus('footer')
-
+    def show_message(self, message):
+        self.body = urwid.Text(message)
     def keypress(self, size, key):
         if key == 'esc':
             fill.footer = None
@@ -194,6 +276,18 @@ class MyCommandLine(urwid.Filler):
             elif command in ('remove', 'delete', 'rm', 'del'):
                 name = " ".join(args[1:])
                 msg = delete_contact(self.executing_widget, name)
+            elif command in ('add-attribute'):
+                key = args[1]
+                value = " ".join(args[2:])
+                msg = add_attribute(self.executing_widget, key, value)
+            elif command in ('rename-attribute'):
+                old_value = self.data['value']
+                new_value = " ".join(args[1:])
+                msg = rename_attribute(self.executing_widget, old_value, new_value)
+            elif command in ('delete-attribute'):
+                key = args[1]
+                value = " ".join(args[2:])
+                msg = delete_attribute(self.executing_widget, key, value)
             else:
                 msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
@@ -222,14 +316,6 @@ class MyListBox(urwid.ListBox):
             super(MyListBox, self).keypress(size, 'end')
         elif key == 'g':
             super(MyListBox, self).keypress(size, 'home')
-        elif key == 'a':
-            command_rename(self.focus)
-        elif key == 'i':
-            command_add()
-        elif key == 'h':
-            command_delete(self.focus)
-        elif key == '/':
-            command_search()
         elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
             if self.repeat_command > 0:
                 self.repeat_command = int(str(self.repeat_command) + key)
@@ -252,14 +338,43 @@ class MyContactDetails(MyListBox):
         super(MyContactDetails, self).__init__(listwalker)
     def load_contacts_details(self):
         a = []
-        for c in get_contact_details(self.contact):
-            a.append(MyContact(c, show_contact_details))
+        a.append(urwid.Divider())
+        for c in get_contact_info(self.contact):
+            c_string = c[0] + ': ' + c[1]
+            a.append(MyContactAttribute(c_string, show_contact_details, self.contact, c[0], c[1]))
+        if has_gifts(self.contact):
+            a.append(urwid.Divider())
+            a.append(urwid.Text(u"Gift ideas:"))
+            for c in get_contact_gifts(self.contact):
+                a.append(MyContactAttribute(c, show_contact_details, self.contact, "giftIdea", c))
         self.body = urwid.SimpleFocusListWalker(a)
     def keypress(self, size, key):
         if key == 'd':
             return super(MyContactDetails, self).keypress(size, 'left')
         else:
             return super(MyContactDetails, self).keypress(size, key)
+
+class MyContactAttribute(urwid.Button):
+    def __init__(self, caption, callback, contact, key, value):
+        super(MyContactAttribute, self).__init__(caption)
+        self.contact = contact
+        self.key = key
+        self.value = value
+        # remove the arrows of the default button style
+        self._w = urwid.AttrMap(urwid.SelectableIcon(
+            caption, 100), None, 'selected')
+    def keypress(self, size, key):
+        if key == 'y':
+            pyperclip.copy(self.value)
+            fill.show_message("Copied \"" + self.value + "\" to clipboard.")
+        elif key == 'a':
+            command_rename_attribute(self)
+        elif key == 'i':
+            command_add_attribute(self)
+        elif key == 'h':
+            command_delete_attribute(self)
+        else:
+            return super(MyContactAttribute, self).keypress(size, key)
 
 class MyContact(urwid.Button):
     def __init__(self, caption, callback):
@@ -268,12 +383,6 @@ class MyContact(urwid.Button):
         # remove the arrows of the default button style
         self._w = urwid.AttrMap(urwid.SelectableIcon(
             caption, 100), None, 'selected')
-    def rename(self, new_name):
-        super(MyContact, self).__init__(new_name) 
-        urwid.connect_signal(self, 'click', show_contact_details)
-        # remove the arrows of the default button style
-        self._w = urwid.AttrMap(urwid.SelectableIcon(
-            new_name, 100), None, 'selected')
 
 
 class MyContactList(MyListBox):
@@ -281,7 +390,7 @@ class MyContactList(MyListBox):
         listwalker = urwid.SimpleFocusListWalker([])
         super(MyContactList, self).__init__(listwalker)
     #TODO: saubere Positionsreaktionen auf rename, add und delete
-    def load_contacts(self, renamed_contact=None):
+    def load_contacts(self, renamed_contact=None, focus_details=False):
         focus_pos = 0
         focus_contact = None
         if self.body:
@@ -299,9 +408,18 @@ class MyContactList(MyListBox):
         if focus_pos == None:
             focus_pos = len(self.body) - 1
         self.set_focus(focus_pos)
+        #when details were edited
     def keypress(self, size, key):
         if key == 'n':
             return super(MyContactList, self).keypress(size, 'right')
+        elif key == 'a':
+            command_rename_contact(self.focus)
+        elif key == 'i':
+            command_add_contact()
+        elif key == 'h':
+            command_delete_contact(self.focus)
+        elif key == '/':
+            command_search_contact()
         else:
             return super(MyContactList, self).keypress(size, key)
     def get_contact_position(self, name):
@@ -341,14 +459,16 @@ class MyFrame(urwid.Frame):
     def __init__(self):
         super(MyFrame, self).__init__(None)
         self.header = MyHeader()
+        self.footer = urwid.BoxAdapter(MyCommandLine(), height=1)
     def set_body(self):
         index_columns = MyColumns()
         index_columns.show_contact_index()
         self.body = index_columns
-    def set_footer(self, footer):
-        self.footer = footer
-    def set_header(self, header):
-        self.header = header
+    def open_console(self, command, executing_widget=None, data=None):
+        self.footer.open_console(command, executing_widget, data)
+        fill.set_focus('footer')
+    def show_message(self, message):
+        self.footer.show_message(message)
 
 
 g = load_file(PATH)
