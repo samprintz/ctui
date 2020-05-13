@@ -25,18 +25,13 @@ DETAILS_WIDTH = 48
 
 palette = [
     (None,  'light gray', 'black'),
-    ('heading', 'black', 'light gray'),
-    ('line', 'black', 'light gray'),
     ('options', 'light gray', 'black'),
-    ('focus heading', 'white', 'dark red'),
-    ('focus line', 'black', 'dark red'),
     ('focus options', 'black', 'light gray'),
-    ('selected', 'black', 'light gray')]
+    ('selected', 'black', 'light gray'),
+    ('status_bar', 'light gray', 'black')]
 
 focus_map = {
-    'heading': 'focus heading',
-    'options': 'focus options',
-    'line': 'focus line'}
+    'options': 'focus options'}
 
 
 ### N3 functions
@@ -58,9 +53,20 @@ def contains_attribute(name, key, value):
     return (s, attribute_ref, Literal(value)) in g
 
 def get_contact_list():
+    contacts = get_contact_list_n3() + get_contact_list_of_notes()
+    return sorted(set(contacts))
+
+def get_contact_list_n3():
     contacts = []
     for o in g.objects(None, GIVEN_NAME_REF):
         contacts.append(str(o))
+    return sorted(contacts)
+
+def get_contact_list_of_notes():
+    contacts = []
+    for dirname in os.listdir(NOTES_PATH):
+        if dirname.endswith('.txt'): continue
+        contacts.append(dirname.replace('_', ' '))
     return sorted(contacts)
 
 def get_contact_info(contact):
@@ -97,7 +103,7 @@ def get_contact_notes(contact):
     for filename in os.listdir(dirname):
         date = filename.replace('.txt', '')
         content = open(dirname + '/' + filename, "r").read()
-        notes[date] = content
+        notes[date] = content.strip()
     return notes
 
 
@@ -243,15 +249,15 @@ def show_or_exit(key):
     if key in ('q', 'Q'):
         raise urwid.ExitMainLoop()
 
-#TODO
-def reload_contact_list():
-    pass
+def reload_contact_list(focused_contact=None, focused_attr=None):
+    fill.reload_contact_list(focused_contact, focused_attr)
 
 def show_contact_details(contact):
-    fill.header.show_contact_name(contact.name)
-    if fill.body is not None:
-        fill.body.open_contact_details(contact)
+    fill.show_contact_details(contact)
 
+def show_attributes_meta(note):
+    date = datetime.strftime(datetime.strptime(note.date, '%Y%m%d'), '%Y-%m-%d')
+    fill.footer.show_meta(date)
 
 def command_add_contact(contact_obj):
     fill.invoke_console('add', contact_obj)
@@ -285,7 +291,7 @@ def command_delete_attribute(contact_obj, attr_obj):
             'value': attr_obj.value}
     fill.invoke_console('delete-attribute', contact_obj, attr_obj, data)
 
-def command_add_note(contact_obj, attr_obj):
+def command_add_note(contact_obj):
     data = {'date': datetime.strftime(date.today(), "%Y%m%d")}
     fill.invoke_console('add-note', contact_obj, None, data)
 
@@ -342,6 +348,8 @@ class MyCommandLine(urwid.Filler):
         self.body = urwid.Text(message)
     def show_console(self, caption, edit_text=None):
         self.body = urwid.Edit(caption, edit_text)
+    def show_meta(self, meta):
+        self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
     def keypress(self, size, key):
         if key == 'esc':
             fill.init_footer()
@@ -448,29 +456,35 @@ class MyContactDetails(MyListBox):
     def load_contacts_details(self):
         a = []
         a.append(urwid.Divider())
-        for c in get_contact_info(self.contact):
-            c_string = c[0] + ': ' + c[1]
-            a.append(MyContactAttribute(c_string, show_contact_details, self.contact, c[0], c[1]))
-        if has_gifts(self.contact):
-            a.append(urwid.Divider())
-            a.append(urwid.Text(u"Gift ideas:"))
-            for c in get_contact_gifts(self.contact):
-                a.append(MyContactAttribute(c, show_contact_details, self.contact, "giftIdea", c))
+        if contains_contact(self.contact.name):
+            for c in get_contact_info(self.contact):
+                c_string = c[0] + ': ' + c[1]
+                a.append(MyContactAttribute(c_string, show_contact_details,
+                    self.contact, c[0], c[1]))
+            if has_gifts(self.contact):
+                a.append(urwid.Divider())
+                a.append(urwid.Text(u"Gift ideas:"))
+                for c in get_contact_gifts(self.contact):
+                    a.append(MyContactAttribute(c, show_contact_details, self.contact, "giftIdea", c))
         if has_notes(self.contact):
             a.append(urwid.Divider())
             a.append(urwid.Text(u"Notes:"))
             for key, value in get_contact_notes(self.contact).items():
                 date_object = datetime.strptime(key, '%Y%m%d')
                 date = datetime.strftime(date_object, '%d-%m-%Y')
-                a.append(MyContactNote(date, show_contact_details, self.contact, key, value))
-
-
+                a.append(MyContactNote(value, show_contact_details, self.contact, key, value))
         self.body = urwid.SimpleFocusListWalker(a)
+        urwid.connect_signal(self.body, 'modified', self.show_attributes_meta)
     def keypress(self, size, key):
         if key == 'd':
             return super(MyContactDetails, self).keypress(size, 'left')
         else:
             return super(MyContactDetails, self).keypress(size, key)
+    def show_attributes_meta(self):
+        if isinstance(self.focus, MyContactNote):
+            show_attributes_meta(self.focus)
+        else:
+            fill.init_footer()
 
 class MyContactAttribute(urwid.Button):
     def __init__(self, caption, callback, contact_obj, key, value):
@@ -482,9 +496,7 @@ class MyContactAttribute(urwid.Button):
         self._w = urwid.AttrMap(urwid.SelectableIcon(
             caption, 100), None, 'selected')
     def keypress(self, size, key):
-        if key == 'j':
-            command_add_note(self.contact_obj, self)
-        elif key == 'i':
+        if key == 'i':
             command_add_attribute(self.contact_obj, self)
         elif key == 'a':
             command_edit_attribute(self.contact_obj, self)
@@ -506,9 +518,7 @@ class MyContactNote(urwid.Button):
         self._w = urwid.AttrMap(urwid.SelectableIcon(
             caption, 100), None, 'selected')
     def keypress(self, size, key):
-        if key == 'j':
-            command_add_note(self.contact_obj, self)
-        elif key == 'i':
+        if key == 'i':
             command_add_attribute(self.contact_obj, self)
         elif key == 'e':
             command_edit_note(self.contact_obj, self)
@@ -542,7 +552,7 @@ class MyContactList(MyListBox):
         for c in get_contact_list():
             a.append(MyContact(c, show_contact_details))
         self.body = urwid.SimpleFocusListWalker(a)
-        urwid.connect_signal(self.body, "modified", self.show_contact)
+        urwid.connect_signal(self.body, 'modified', self.show_contact)
         if focus_contact:
             focus_pos = self.get_contact_position(focus_contact)
         if renamed_contact:
@@ -583,6 +593,8 @@ class MyContactList(MyListBox):
 class MyColumns(urwid.Columns):
     def __init__(self):
         super(MyColumns, self).__init__([], dividechars=1)
+        self.focused_contact = None
+        self.focused_attribute = None
     def show_contact_index(self):
         contact_list = MyContactList()
         contact_list.load_contacts()
@@ -590,12 +602,20 @@ class MyColumns(urwid.Columns):
             self.options('given', NAV_WIDTH)))
         self.focus_position = 0
     def open_contact_details(self, contact):
+        self.focused_contact = contact
         if len(self.contents) > 1:
             del self.contents[1]
         contact_list = MyContactDetails(contact)
         contact_list.load_contacts_details()
         self.contents.append((urwid.AttrMap(contact_list, 'options', focus_map),
             self.options('given', DETAILS_WIDTH)))
+    def keypress(self, size, key):
+        if key == 'ctrl r':
+            reload_contact_list(self.focused_contact, self.focused_attribute)
+        elif key == 'j':
+            command_add_note(self.focused_contact)
+        else:
+            return super(MyColumns, self).keypress(size, key)
 
 
 class MyFrame(urwid.Frame):
@@ -614,6 +634,13 @@ class MyFrame(urwid.Frame):
         fill.set_focus('footer')
     def show_message(self, message):
         self.footer.show_message(message)
+    def reload_contact_list(self, focused_contact, focused_attr):
+        self.body.contents[0][0].base_widget.load_contacts()
+    def show_contact_details(self, contact):
+        self.header.show_contact_name(contact.name)
+        if self.body is not None:
+            self.body.open_contact_details(contact)
+
 
 
 g = load_file(CONTACTS_PATH)
