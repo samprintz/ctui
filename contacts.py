@@ -1,6 +1,6 @@
 from rdflib import *
 from rdflib.resource import *
-from datetime import datetime
+from datetime import date,datetime
 import operator
 import os
 import pudb
@@ -60,9 +60,9 @@ def get_contact_list():
         contacts.append(str(o))
     return sorted(contacts)
 
-def get_contact_info(name):
+def get_contact_info(contact):
     details = []
-    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     for p,o in g.predicate_objects(s):
         p_string = p.split('#',1)[1]
         #if p_string == 'givenName': continue
@@ -71,25 +71,25 @@ def get_contact_info(name):
         details.append([p_string, str(o)])
     return sorted(details)
 
-def has_gifts(name):
-    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+def has_gifts(contact):
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     return (s, GIFTIDEA_REF, None) in g
 
-def get_contact_gifts(name):
+def get_contact_gifts(contact):
     details = []
-    s = next(g.subjects(GIVEN_NAME_REF, Literal(name)))
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     for p,o in g.predicate_objects(s):
         p_string = p.split('#',1)[1]
         if p_string == 'giftIdea':
             details.append(str(o))
     return sorted(details)
 
-def has_notes(name):
-    dirname = NOTES_PATH + name.replace(' ', '_')
+def has_notes(contact):
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
     return os.path.isdir(dirname)
 
-def get_contact_notes(name):
-    dirname = NOTES_PATH + name.replace(' ', '_')
+def get_contact_notes(contact):
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
     notes = dict()
     for filename in os.listdir(dirname):
         date = filename.replace('.txt', '')
@@ -101,7 +101,13 @@ def get_contact_notes(name):
 
 # "backend" functions / operations
 
-def rename_contact(current_contact, old_name, new_name):
+def rename_contact(contact, old_name, new_name):
+    # rename notes directory
+    if has_notes(contact):
+        dirname = NOTES_PATH + contact.name.replace(' ', '_')
+        new_dirname = NOTES_PATH + new_name.replace(' ', '_')
+        os.rename(dirname, new_dirname)
+    # update N3
     if old_name == new_name:
         return ["Name unchanged."]
     if contains_contact(new_name):
@@ -122,6 +128,7 @@ def rename_contact(current_contact, old_name, new_name):
             return ["Error: ", old_name, " doesn't exists."]
 
 
+
 def add_contact(name):
     if contains_contact(name):
         return ["Error: ", name, " already exists."]
@@ -134,7 +141,7 @@ def add_contact(name):
         return [name, " added."]
 
 
-def delete_contact(current_contact, name):
+def delete_contact(contact, name):
     if contains_contact(name):
         # update n3
         g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
@@ -150,22 +157,22 @@ def search_contact(name):
     return ""
 
 
-def add_attribute(c, key, value):
+def add_attribute(contact, key, value):
     attribute_ref = URIRef(NAMESPACE + key)
-    s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+    s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     # update n3
-    g.add((s, attribute_ref, Literal(value)) )
+    g.add((s, attribute_ref, Literal(value)))
     save_file(CONTACTS_PATH)
     # reload urwid
     fill.body.contents[0][0].base_widget.load_contacts()
     return ["Attribute ", key, "=", value, " added."]
 
-def rename_attribute(c, old_value, new_value):
+def edit_attribute(contact, attribute, old_value, new_value):
     if old_value == new_value:
         return ["Value unchanged."]
     else:
-        attribute_ref = URIRef(NAMESPACE + c.key)
-        s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+        attribute_ref = URIRef(NAMESPACE + attribute.key)
+        s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
         # update n3
         g.remove((s, attribute_ref, Literal(old_value)))
         save_file(CONTACTS_PATH)
@@ -173,21 +180,25 @@ def rename_attribute(c, old_value, new_value):
         resource.set(attribute_ref, Literal(new_value))
         save_file(CONTACTS_PATH)
         # reload urwid
-        fill.body.contents[0][0].base_widget.load_contacts(c.contact, True)
-        return [c.key, " changed to ", new_value, "."]
+        fill.body.contents[0][0].base_widget.load_contacts(contact.name, True)
+        return [attribute.key, " changed to ", new_value, "."]
 
-def delete_attribute(c, key, value):
-    if contains_attribute(c.contact, key, value):
+def delete_attribute(contact, attribute, key, value):
+    if contains_attribute(contact.name, key, value):
         attribute_ref = URIRef(NAMESPACE + key)
-        s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
+        s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
         # update n3
         g.remove((s, attribute_ref, Literal(value)))
         save_file(CONTACTS_PATH)
         # update urwid
         fill.body.contents[0][0].base_widget.load_contacts()
-        return ["Attribute ", key, "=", value, " deleted."]
+        return [key, "=", value, " deleted."]
     else:
-        return ["Error: ", c.contact, " doesn't own attribute ", key, "=", value, "."]
+        return ["Error: ", contact.name, " doesn't own attribute ", key, "=", value, "."]
+
+def add_note(contact, attribute, date):
+    #TODO
+    return ["Note added."]
 
 
 
@@ -202,37 +213,46 @@ def reload_contact_list():
     pass
 
 def show_contact_details(contact):
-    name = contact._w.original_widget.text
-    fill.header.show_contact_name(name)
+    fill.header.show_contact_name(contact.name)
     if fill.body is not None:
-        fill.body.open_contact_details(name)
+        fill.body.open_contact_details(contact)
 
 
-def command_add_contact():
-    fill.open_console('add')
+def command_add_contact(contact_obj):
+    fill.invoke_console('add', contact_obj)
 
-def command_rename_contact(executing_widget):
-    data = {'name': str(executing_widget._w.original_widget.text)}
-    fill.open_console('rename', executing_widget, data)
+def command_rename_contact(contact_obj):
+    data = {'name': str(contact_obj._w.original_widget.text)}
+    fill.invoke_console('rename', contact_obj, None, data)
 
-def command_delete_contact(executing_widget):
-    data = {'name': str(executing_widget._w.original_widget.text)}
-    fill.open_console('delete', executing_widget, data)
+def command_delete_contact(contact_obj):
+    data = {'name': str(contact_obj._w.original_widget.text)}
+    fill.invoke_console('delete', contact_obj, None, data)
 
-def command_search_contact():
-    fill.open_console('search')
+def command_search_contact(contact_obj):
+    fill.invoke_console('search', contact_obj)
 
-def command_add_attribute(c):
-    data = {'name': c.contact, 'key': c.key, 'value': c.value}
-    fill.open_console('add-attribute', c, data)
+def command_add_attribute(contact_obj, attr_obj):
+    data = {'name': contact_obj.name,
+            'key': attr_obj.key,
+            'value': attr_obj.value}
+    fill.invoke_console('add-attribute', contact_obj, attr_obj, data)
 
-def command_rename_attribute(c):
-    data = {'name': c.contact, 'key': c.key, 'value': c.value}
-    fill.open_console('rename-attribute', c, data)
+def command_edit_attribute(contact_obj, attr_obj):
+    data = {'name': contact_obj.name,
+            'key': attr_obj.key,
+            'value': attr_obj.value}
+    fill.invoke_console('edit-attribute', contact_obj, attr_obj, data)
 
-def command_delete_attribute(c):
-    data = {'name': c.contact, 'key': c.key, 'value': c.value}
-    fill.open_console('delete-attribute', c, data)
+def command_delete_attribute(contact_obj, attr_obj):
+    data = {'name': contact_obj.name,
+            'key': attr_obj.key,
+            'value': attr_obj.value}
+    fill.invoke_console('delete-attribute', contact_obj, attr_obj, data)
+
+def command_add_note(contact_obj, attr_obj):
+    data = {'date': datetime.strftime(date.today(), "%Y%m%d")}
+    fill.invoke_console('add-note', contact_obj, None, data)
 
 
 # urwid classes
@@ -250,33 +270,34 @@ class MyCommandLine(urwid.Filler):
     def __init__(self):
         super(MyCommandLine, self).__init__(urwid.Text(""))
         self.command = ""
-    def open_console(self, command, executing_widget=None, data=None):
+    def invoke_console(self, command, contact_obj, attr_obj=None, data=None):
         self.command = command
-        self.executing_widget = executing_widget
+        self.contact_obj = contact_obj
+        self.attr_obj = attr_obj
         self.data = data
-        if command in ('add'):
-            self.body = urwid.Edit(caption=u":", edit_text="{} "
-                    .format(command))
-        elif command in ('search'):
-            self.body = urwid.Edit(caption=u"/")
-        elif command == 'add-attribute':
-            self.body = urwid.Edit(caption=u":", edit_text="{} "
-                    .format(command))
-        elif command == 'rename-attribute':
-            self.body = urwid.Edit(caption=u":", edit_text="{} {}"
-                    .format(command, data['value']))
-        elif command == 'delete-attribute':
-            self.body = urwid.Edit(caption=u":", edit_text="{} {} {}"
-                    .format(command, data['key'], data["value"]))
+        if command in ('search'):
+            self.show_console('/')
+        elif command in ('add'):
+            self.show_console(':', "{} ".format(command))
+        elif command in ('rename', 'edit', 'rn', 'remove', 'delete', 'rm', 'del'):
+            self.show_console(':', "{} {}".format(command, data['name']))
+        elif command in ('add-attribute'):
+            self.show_console(':', "{} ".format(command))
+        elif command in ('edit-attribute'):
+            self.show_console(':', "{} {}".format(command, data['value']))
+        elif command in ('delete-attribute'):
+            self.show_console(':', "{} {} {}".format(command, data['key'], data['value']))
+        elif command in ('add-note'):
+            self.show_console('date=', "{}".format(data['date']))
         else:
-        #if command in ('rename', 'edit', 'rn', 'remove', 'delete', 'rm', 'del'):
-            self.body = urwid.Edit(caption=u":", edit_text="{} {}"
-                    .format(command, data['name']))
+            self.show_console(':', "{} ".format(command))
     def show_message(self, message):
         self.body = urwid.Text(message)
+    def show_console(self, caption, edit_text=None):
+        self.body = urwid.Edit(caption, edit_text)
     def keypress(self, size, key):
         if key == 'esc':
-            fill.footer = None
+            fill.init_footer()
             fill.set_focus('body')
         if key != 'enter':
             return super(MyCommandLine, self).keypress(size, key)
@@ -284,6 +305,13 @@ class MyCommandLine(urwid.Filler):
         if self.command == 'search':
             name = " ".join(args[0:])
             msg = search_contact(name)
+        elif self.command in ('add-note'):
+            date = " ".join(args[0:])
+            try:
+                date_object = datetime.strptime(date, '%Y%m%d')
+                msg = add_note(self.contact_obj, self.attr_obj, date)
+            except ValueError:
+                msg = [date, " not a valid Date."]
         else:
             command = args[0]
             if command in ('add'):
@@ -292,22 +320,22 @@ class MyCommandLine(urwid.Filler):
             elif command in ('rename', 'edit', 'rn'):
                 old_name = self.data['name']
                 new_name = " ".join(args[1:])
-                msg = rename_contact(self.executing_widget, old_name, new_name)
+                msg = rename_contact(self.contact_obj, old_name, new_name)
             elif command in ('remove', 'delete', 'rm', 'del'):
                 name = " ".join(args[1:])
-                msg = delete_contact(self.executing_widget, name)
+                msg = delete_contact(self.contact_obj, name)
             elif command in ('add-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
-                msg = add_attribute(self.executing_widget, key, value)
-            elif command in ('rename-attribute'):
+                msg = add_attribute(self.contact_obj, key, value)
+            elif command in ('edit-attribute'):
                 old_value = self.data['value']
                 new_value = " ".join(args[1:])
-                msg = rename_attribute(self.executing_widget, old_value, new_value)
+                msg = edit_attribute(self.contact_obj, self.attr_obj, old_value, new_value)
             elif command in ('delete-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
-                msg = delete_attribute(self.executing_widget, key, value)
+                msg = delete_attribute(self.contact_obj, self.attr_obj, key, value)
             else:
                 msg = 'Not a valid command.'
         self.original_widget = urwid.Text(msg)
@@ -352,9 +380,9 @@ class MyListBox(urwid.ListBox):
 
 
 class MyContactDetails(MyListBox):
-    def __init__(self, contact):
+    def __init__(self, contact_obj):
         listwalker = urwid.SimpleFocusListWalker([])
-        self.contact = contact
+        self.contact = contact_obj
         super(MyContactDetails, self).__init__(listwalker)
     def load_contacts_details(self):
         a = []
@@ -384,24 +412,47 @@ class MyContactDetails(MyListBox):
             return super(MyContactDetails, self).keypress(size, key)
 
 class MyContactAttribute(urwid.Button):
-    def __init__(self, caption, callback, contact, key, value):
+    def __init__(self, caption, callback, contact_obj, key, value):
         super(MyContactAttribute, self).__init__(caption)
-        self.contact = contact
+        self.contact_obj = contact_obj
         self.key = key
         self.value = value
         # remove the arrows of the default button style
         self._w = urwid.AttrMap(urwid.SelectableIcon(
             caption, 100), None, 'selected')
     def keypress(self, size, key):
-        if key == 'y':
+        if key == 'j':
+            command_add_note(self.contact_obj, self)
+        elif key == 'i':
+            command_add_attribute(self.contact_obj, self)
+        elif key == 'a':
+            command_edit_attribute(self.contact_obj, self)
+        elif key == 'h':
+            command_delete_attribute(self.contact_obj, self)
+        elif key == 'y':
             pyperclip.copy(self.value)
             fill.show_message("Copied \"" + self.value + "\" to clipboard.")
-        elif key == 'a':
-            command_rename_attribute(self)
+        else:
+            return super(MyContactAttribute, self).keypress(size, key)
+
+class MyContactNote(urwid.Button):
+    def __init__(self, caption, callback, contact_obj, date, text):
+        super(MyContactAttribute, self).__init__(caption)
+        self.contact_obj = contact_obj
+        self.date = date
+        self.text = text
+        # remove the arrows of the default button style
+        self._w = urwid.AttrMap(urwid.SelectableIcon(
+            caption, 100), None, 'selected')
+    def keypress(self, size, key):
+        if key == 'j':
+            command_add_note(self.contact_obj, self)
         elif key == 'i':
-            command_add_attribute(self)
+            command_add_attribute(self.contact_obj, self)
+        elif key == 'e':
+            command_edit_note(self.contact_obj, self)
         elif key == 'h':
-            command_delete_attribute(self)
+            command_delete_note(self.contact_obj, self)
         else:
             return super(MyContactAttribute, self).keypress(size, key)
 
@@ -409,6 +460,8 @@ class MyContact(urwid.Button):
     def __init__(self, caption, callback):
         super(MyContact, self).__init__(caption)
         urwid.connect_signal(self, 'click', callback)
+        self.name = caption
+        #name = contact._w.original_widget.text
         # remove the arrows of the default button style
         self._w = urwid.AttrMap(urwid.SelectableIcon(
             caption, 100), None, 'selected')
@@ -444,11 +497,11 @@ class MyContactList(MyListBox):
         elif key == 'a':
             command_rename_contact(self.focus)
         elif key == 'i':
-            command_add_contact()
+            command_add_contact(self.focus)
         elif key == 'h':
             command_delete_contact(self.focus)
         elif key == '/':
-            command_search_contact()
+            command_search_contact(self.focus)
         else:
             return super(MyContactList, self).keypress(size, key)
     def get_contact_position(self, name):
@@ -488,13 +541,15 @@ class MyFrame(urwid.Frame):
     def __init__(self):
         super(MyFrame, self).__init__(None)
         self.header = MyHeader()
+        self.init_footer()
+    def init_footer(self):
         self.footer = urwid.BoxAdapter(MyCommandLine(), height=1)
     def set_body(self):
         index_columns = MyColumns()
         index_columns.show_contact_index()
         self.body = index_columns
-    def open_console(self, command, executing_widget=None, data=None):
-        self.footer.open_console(command, executing_widget, data)
+    def invoke_console(self, command, contact_obj, attribute_obj=None, data=None):
+        self.footer.invoke_console(command, contact_obj, attribute_obj, data)
         fill.set_focus('footer')
     def show_message(self, message):
         self.footer.show_message(message)
