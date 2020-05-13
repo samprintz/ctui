@@ -1,6 +1,7 @@
 from rdflib import *
 from rdflib.resource import *
 from datetime import date,datetime
+from subprocess import call
 import operator
 import os
 import pudb
@@ -12,6 +13,8 @@ CONTACTS_FILE = 'test.n3'
 NOTES_DIR = 'Menschen/'
 CONTACTS_PATH = RUN_DIR + CONTACTS_FILE
 NOTES_PATH = RUN_DIR + NOTES_DIR
+
+EDITOR = os.environ.get('EDITOR','vim')
 
 NAMESPACE = 'http://hiea.de/contact#'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
@@ -197,8 +200,40 @@ def delete_attribute(contact, attribute, key, value):
         return ["Error: ", contact.name, " doesn't own attribute ", key, "=", value, "."]
 
 def add_note(contact, attribute, date):
-    #TODO
-    return ["Note added."]
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
+    if not has_notes(contact):
+        os.makedirs(dirname)
+    filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+    path = dirname + '/' + filename
+    try:
+        call([EDITOR, path])
+        fill.body.contents[0][0].base_widget.load_contacts()
+        return "Note added."
+    except OSError:
+        return "Error: Note not created."
+
+def edit_note(contact, attribute, date):
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
+    filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+    path = dirname + '/' + filename
+    try:
+        call([EDITOR, path])
+        fill.body.contents[0][0].base_widget.load_contacts()
+        return "Note edited."
+    except OSError:
+        return "Error: Note can't be edited."
+
+def delete_note(contact, attribute, date):
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
+    filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+    path = dirname + '/' + filename
+    try:
+        os.remove(path)
+        fill.body.contents[0][0].base_widget.load_contacts()
+        return "Note deleted."
+    except OSError:
+        return "Error: Note can't be deleted."
+
 
 
 
@@ -254,6 +289,14 @@ def command_add_note(contact_obj, attr_obj):
     data = {'date': datetime.strftime(date.today(), "%Y%m%d")}
     fill.invoke_console('add-note', contact_obj, None, data)
 
+def command_edit_note(contact_obj, attr_obj):
+    data = {'date': attr_obj.date}
+    fill.invoke_console('edit-note', contact_obj, attr_obj, data)
+
+def command_delete_note(contact_obj, attr_obj):
+    data = {'date': attr_obj.date}
+    fill.invoke_console('delete-note', contact_obj, attr_obj, data)
+
 
 # urwid classes
 
@@ -289,6 +332,10 @@ class MyCommandLine(urwid.Filler):
             self.show_console(':', "{} {} {}".format(command, data['key'], data['value']))
         elif command in ('add-note'):
             self.show_console('date=', "{}".format(data['date']))
+        elif command in ('edit-note'):
+            self.show_console(':', "{} {}".format(command, data['date']))
+        elif command in ('delete-note'):
+            self.show_console(':', "{} {}".format(command, data['date']))
         else:
             self.show_console(':', "{} ".format(command))
     def show_message(self, message):
@@ -309,7 +356,21 @@ class MyCommandLine(urwid.Filler):
             date = " ".join(args[0:])
             try:
                 date_object = datetime.strptime(date, '%Y%m%d')
-                msg = add_note(self.contact_obj, self.attr_obj, date)
+                msg = add_note(self.contact_obj, self.attr_obj, date_object)
+            except ValueError:
+                msg = [date, " not a valid Date."]
+        elif self.command in ('edit-note'):
+            date = " ".join(args[1:])
+            try:
+                date_object = datetime.strptime(date, '%Y%m%d')
+                msg = edit_note(self.contact_obj, self.attr_obj, date_object)
+            except ValueError:
+                msg = [date, " not a valid Date."]
+        elif self.command in ('delete-note'):
+            date = " ".join(args[1:])
+            try:
+                date_object = datetime.strptime(date, '%Y%m%d')
+                msg = delete_note(self.contact_obj, self.attr_obj, date_object)
             except ValueError:
                 msg = [date, " not a valid Date."]
         else:
@@ -401,7 +462,7 @@ class MyContactDetails(MyListBox):
             for key, value in get_contact_notes(self.contact).items():
                 date_object = datetime.strptime(key, '%Y%m%d')
                 date = datetime.strftime(date_object, '%d-%m-%Y')
-                a.append(MyContactAttribute(date, show_contact_details, self.contact, key, value))
+                a.append(MyContactNote(date, show_contact_details, self.contact, key, value))
 
 
         self.body = urwid.SimpleFocusListWalker(a)
@@ -437,7 +498,7 @@ class MyContactAttribute(urwid.Button):
 
 class MyContactNote(urwid.Button):
     def __init__(self, caption, callback, contact_obj, date, text):
-        super(MyContactAttribute, self).__init__(caption)
+        super(MyContactNote, self).__init__(caption)
         self.contact_obj = contact_obj
         self.date = date
         self.text = text
@@ -454,7 +515,7 @@ class MyContactNote(urwid.Button):
         elif key == 'h':
             command_delete_note(self.contact_obj, self)
         else:
-            return super(MyContactAttribute, self).keypress(size, key)
+            return super(MyContactNote, self).keypress(size, key)
 
 class MyContact(urwid.Button):
     def __init__(self, caption, callback):
