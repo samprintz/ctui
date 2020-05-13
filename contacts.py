@@ -1,14 +1,22 @@
 from rdflib import *
 from rdflib.resource import *
+from datetime import datetime
 import operator
+import os
 import pudb
 import pyperclip
 import urwid
 
-PATH = 'test.n3'
+RUN_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
+CONTACTS_FILE = 'test.n3'
+NOTES_DIR = 'Menschen/'
+CONTACTS_PATH = RUN_DIR + CONTACTS_FILE
+NOTES_PATH = RUN_DIR + NOTES_DIR
+
 NAMESPACE = 'http://hiea.de/contact#'
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
+
 NAV_WIDTH = 24
 DETAILS_WIDTH = 48
 
@@ -76,6 +84,19 @@ def get_contact_gifts(name):
             details.append(str(o))
     return sorted(details)
 
+def has_notes(name):
+    dirname = NOTES_PATH + name.replace(' ', '_')
+    return os.path.isdir(dirname)
+
+def get_contact_notes(name):
+    dirname = NOTES_PATH + name.replace(' ', '_')
+    notes = dict()
+    for filename in os.listdir(dirname):
+        date = filename.replace('.txt', '')
+        content = open(dirname + '/' + filename, "r").read()
+        notes[date] = content
+    return notes
+
 
 
 # "backend" functions / operations
@@ -93,7 +114,7 @@ def rename_contact(current_contact, old_name, new_name):
             # update n3
             person = Resource(g, triples[0])
             person.set(GIVEN_NAME_REF, Literal(new_name))
-            save_file(PATH)
+            save_file(CONTACTS_PATH)
             # reload urwid
             fill.body.contents[0][0].base_widget.load_contacts(new_name)
             return [old_name, " renamed to ", new_name, "."]
@@ -107,7 +128,7 @@ def add_contact(name):
     else:
         # update n3
         g.add( (BNode(), GIVEN_NAME_REF, Literal(name)) )
-        save_file(PATH)
+        save_file(CONTACTS_PATH)
         # reload urwid
         fill.body.contents[0][0].base_widget.load_contacts()
         return [name, " added."]
@@ -117,7 +138,7 @@ def delete_contact(current_contact, name):
     if contains_contact(name):
         # update n3
         g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
-        save_file(PATH)
+        save_file(CONTACTS_PATH)
         # update urwid
         fill.body.contents[0][0].base_widget.load_contacts()
         return [name, " deleted."]
@@ -134,7 +155,7 @@ def add_attribute(c, key, value):
     s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
     # update n3
     g.add((s, attribute_ref, Literal(value)) )
-    save_file(PATH)
+    save_file(CONTACTS_PATH)
     # reload urwid
     fill.body.contents[0][0].base_widget.load_contacts()
     return ["Attribute ", key, "=", value, " added."]
@@ -147,10 +168,10 @@ def rename_attribute(c, old_value, new_value):
         s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
         # update n3
         g.remove((s, attribute_ref, Literal(old_value)))
-        save_file(PATH)
+        save_file(CONTACTS_PATH)
         resource = Resource(g, s)
         resource.set(attribute_ref, Literal(new_value))
-        save_file(PATH)
+        save_file(CONTACTS_PATH)
         # reload urwid
         fill.body.contents[0][0].base_widget.load_contacts(c.contact, True)
         return [c.key, " changed to ", new_value, "."]
@@ -161,7 +182,7 @@ def delete_attribute(c, key, value):
         s = next(g.subjects(GIVEN_NAME_REF, Literal(c.contact)))
         # update n3
         g.remove((s, attribute_ref, Literal(value)))
-        save_file(PATH)
+        save_file(CONTACTS_PATH)
         # update urwid
         fill.body.contents[0][0].base_widget.load_contacts()
         return ["Attribute ", key, "=", value, " deleted."]
@@ -212,7 +233,6 @@ def command_rename_attribute(c):
 def command_delete_attribute(c):
     data = {'name': c.contact, 'key': c.key, 'value': c.value}
     fill.open_console('delete-attribute', c, data)
-
 
 
 # urwid classes
@@ -347,6 +367,15 @@ class MyContactDetails(MyListBox):
             a.append(urwid.Text(u"Gift ideas:"))
             for c in get_contact_gifts(self.contact):
                 a.append(MyContactAttribute(c, show_contact_details, self.contact, "giftIdea", c))
+        if has_notes(self.contact):
+            a.append(urwid.Divider())
+            a.append(urwid.Text(u"Notes:"))
+            for key, value in get_contact_notes(self.contact).items():
+                date_object = datetime.strptime(key, '%Y%m%d')
+                date = datetime.strftime(date_object, '%d-%m-%Y')
+                a.append(MyContactAttribute(date, show_contact_details, self.contact, key, value))
+
+
         self.body = urwid.SimpleFocusListWalker(a)
     def keypress(self, size, key):
         if key == 'd':
@@ -471,7 +500,7 @@ class MyFrame(urwid.Frame):
         self.footer.show_message(message)
 
 
-g = load_file(PATH)
+g = load_file(CONTACTS_PATH)
 
 fill = MyFrame()
 fill.set_body()
