@@ -6,6 +6,7 @@ import operator
 import os
 import pudb
 import pyperclip
+import shutil
 import urwid
 
 RUN_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
@@ -74,7 +75,7 @@ def get_contact_info(contact):
     s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     for p,o in g.predicate_objects(s):
         p_string = p.split('#',1)[1]
-        #if p_string == 'givenName': continue
+        if p_string == 'givenName': continue
         if p_string == 'giftIdea': continue
         #details.append(p_string + ': ' + str(o))
         details.append([p_string, str(o)])
@@ -93,9 +94,13 @@ def get_contact_gifts(contact):
             details.append(str(o))
     return sorted(details)
 
-def has_notes(contact):
+def has_notes_directory(contact):
     dirname = NOTES_PATH + contact.name.replace(' ', '_')
     return os.path.isdir(dirname)
+
+def has_notes(contact):
+    dirname = NOTES_PATH + contact.name.replace(' ', '_')
+    return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
 
 def get_contact_notes(contact):
     dirname = NOTES_PATH + contact.name.replace(' ', '_')
@@ -112,7 +117,7 @@ def get_contact_notes(contact):
 
 def rename_contact(contact, old_name, new_name):
     # rename notes directory
-    if has_notes(contact):
+    if has_notes_directory(contact):
         dirname = NOTES_PATH + contact.name.replace(' ', '_')
         new_dirname = NOTES_PATH + new_name.replace(' ', '_')
         os.rename(dirname, new_dirname)
@@ -137,7 +142,6 @@ def rename_contact(contact, old_name, new_name):
             return ["Error: ", old_name, " doesn't exists."]
 
 
-
 def add_contact(name):
     if contains_contact(name):
         return ["Error: ", name, " already exists."]
@@ -150,16 +154,21 @@ def add_contact(name):
         return [name, " added."]
 
 
-def delete_contact(contact, name):
-    if contains_contact(name):
-        # update n3
-        g.remove( (None, GIVEN_NAME_REF, Literal(name)) )
+def delete_contact(contact):
+    exists = False
+    if contains_contact(contact.name):
+        g.remove( (None, GIVEN_NAME_REF, Literal(contact.name)) )
         save_file(CONTACTS_PATH)
-        # update urwid
+        exists = True
+    if has_notes_directory(contact):
+        dirname = NOTES_PATH + contact.name.replace(' ', '_')
+        shutil.rmtree(dirname, ignore_errors=False)
+        exists = True
+    if exists:
         fill.body.contents[0][0].base_widget.load_contacts()
-        return [name, " deleted."]
+        return [contact.name, " deleted."]
     else:
-        return ["Error: ", name, " doesn't exists."]
+        return ["Error: ", contact.name, " doesn't exists."]
 
 def search_contact(name):
     fill.body.contents[0][0].base_widget.jump_to_contact(name)
@@ -167,6 +176,8 @@ def search_contact(name):
 
 
 def add_attribute(contact, key, value):
+    if not contains_contact(contact.name): # in case just notes exist
+        add_contact(contact.name)
     attribute_ref = URIRef(NAMESPACE + key)
     s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
     # update n3
@@ -178,7 +189,7 @@ def add_attribute(contact, key, value):
 
 def edit_attribute(contact, attribute, old_value, new_value):
     if old_value == new_value:
-        return ["Value unchanged."]
+        return ["Attribute unchanged."]
     else:
         attribute_ref = URIRef(NAMESPACE + attribute.key)
         s = next(g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
@@ -191,6 +202,11 @@ def edit_attribute(contact, attribute, old_value, new_value):
         # reload urwid
         fill.body.contents[0][0].base_widget.load_contacts(contact.name, True)
         return [attribute.key, " changed to ", new_value, "."]
+
+#def set_gift_given(contact, gift):
+#    new_value = "x " + gift.value
+#    edit_attribute(contact, gift, gift.value, new_value)
+#    return ""
 
 def delete_attribute(contact, attribute, key, value):
     if contains_attribute(contact.name, key, value):
@@ -207,7 +223,7 @@ def delete_attribute(contact, attribute, key, value):
 
 def add_note(contact, attribute, date):
     dirname = NOTES_PATH + contact.name.replace(' ', '_')
-    if not has_notes(contact):
+    if not has_notes_directory(contact):
         os.makedirs(dirname)
     filename = datetime.strftime(date, "%Y%m%d") + ".txt"
     path = dirname + '/' + filename
@@ -285,6 +301,16 @@ def command_edit_attribute(contact_obj, attr_obj):
             'value': attr_obj.value}
     fill.invoke_console('edit-attribute', contact_obj, attr_obj, data)
 
+def command_set_gift_given(contact_obj, attr_obj):
+    data = {'value': attr_obj.value,
+            'new_value': "x " + attr_obj.value}
+    fill.invoke_console('set-gift-given', contact_obj, attr_obj, data)
+
+def command_set_gift_not_given(contact_obj, attr_obj):
+    data = {'value': attr_obj.value,
+            'new_value': attr_obj.value[2:]}
+    fill.invoke_console('set-gift-not-given', contact_obj, attr_obj, data)
+
 def command_delete_attribute(contact_obj, attr_obj):
     data = {'name': contact_obj.name,
             'key': attr_obj.key,
@@ -324,6 +350,12 @@ class MyCommandLine(urwid.Filler):
         self.contact_obj = contact_obj
         self.attr_obj = attr_obj
         self.data = data
+        # commands without console interaction
+#        if command in ('set-gift-given'):
+#            msg = set_gift_given(self.contact_obj, self.attr_obj)
+#            self.original_widget = urwid.Text(msg)
+#            fill.set_focus('body')
+        # commands with console interaction
         if command in ('search'):
             self.show_console('/')
         elif command in ('add'):
@@ -334,6 +366,10 @@ class MyCommandLine(urwid.Filler):
             self.show_console(':', "{} ".format(command))
         elif command in ('edit-attribute'):
             self.show_console(':', "{} {}".format(command, data['value']))
+        elif command in ('set-gift-given'):
+            self.show_console(':', "{} {}".format('edit-attribute', data['new_value']))
+        elif command in ('set-gift-not-given'):
+            self.show_console(':', "{} {}".format('edit-attribute', data['new_value']))
         elif command in ('delete-attribute'):
             self.show_console(':', "{} {} {}".format(command, data['key'], data['value']))
         elif command in ('add-note'):
@@ -346,7 +382,7 @@ class MyCommandLine(urwid.Filler):
             self.show_console(':', "{} ".format(command))
     def show_message(self, message):
         self.body = urwid.Text(message)
-    def show_console(self, caption, edit_text=None):
+    def show_console(self, caption, edit_text=''):
         self.body = urwid.Edit(caption, edit_text)
     def show_meta(self, meta):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
@@ -360,27 +396,27 @@ class MyCommandLine(urwid.Filler):
         if self.command == 'search':
             name = " ".join(args[0:])
             msg = search_contact(name)
-        elif self.command in ('add-note'):
+        elif self.command == 'add-note':
             date = " ".join(args[0:])
             try:
                 date_object = datetime.strptime(date, '%Y%m%d')
                 msg = add_note(self.contact_obj, self.attr_obj, date_object)
             except ValueError:
-                msg = [date, " not a valid Date."]
-        elif self.command in ('edit-note'):
+                msg = [date, " not a valid date."]
+        elif self.command == 'edit-note':
             date = " ".join(args[1:])
             try:
                 date_object = datetime.strptime(date, '%Y%m%d')
                 msg = edit_note(self.contact_obj, self.attr_obj, date_object)
             except ValueError:
-                msg = [date, " not a valid Date."]
-        elif self.command in ('delete-note'):
+                msg = [date, " not a valid date."]
+        elif self.command == 'delete-note':
             date = " ".join(args[1:])
             try:
                 date_object = datetime.strptime(date, '%Y%m%d')
                 msg = delete_note(self.contact_obj, self.attr_obj, date_object)
             except ValueError:
-                msg = [date, " not a valid Date."]
+                msg = [date, " not a valid date."]
         else:
             command = args[0]
             if command in ('add'):
@@ -392,7 +428,7 @@ class MyCommandLine(urwid.Filler):
                 msg = rename_contact(self.contact_obj, old_name, new_name)
             elif command in ('remove', 'delete', 'rm', 'del'):
                 name = " ".join(args[1:])
-                msg = delete_contact(self.contact_obj, name)
+                msg = delete_contact(self.contact_obj)
             elif command in ('add-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
@@ -455,6 +491,8 @@ class MyContactDetails(MyListBox):
         super(MyContactDetails, self).__init__(listwalker)
     def load_contacts_details(self):
         a = []
+        a.append(MyContactAttribute(self.contact.name, show_contact_details,
+            self.contact, "givenName", self.contact.name))
         a.append(urwid.Divider())
         if contains_contact(self.contact.name):
             for c in get_contact_info(self.contact):
@@ -462,17 +500,21 @@ class MyContactDetails(MyListBox):
                 a.append(MyContactAttribute(c_string, show_contact_details,
                     self.contact, c[0], c[1]))
             if has_gifts(self.contact):
-                a.append(urwid.Divider())
-                a.append(urwid.Text(u"Gift ideas:"))
+                if len(a) > 2:
+                    a.append(urwid.Divider())
+                a.append(urwid.Text(u"GESCHENKE"))
                 for c in get_contact_gifts(self.contact):
-                    a.append(MyContactAttribute(c, show_contact_details, self.contact, "giftIdea", c))
-        if has_notes(self.contact):
+                    a.append(MyContactGift(c, show_contact_details,
+                        self.contact, c))
+        if len(a) > 2:
             a.append(urwid.Divider())
-            a.append(urwid.Text(u"Notes:"))
+        if has_notes(self.contact):
+            a.append(urwid.Text(u"NOTIZEN"))
             for key, value in get_contact_notes(self.contact).items():
                 date_object = datetime.strptime(key, '%Y%m%d')
                 date = datetime.strftime(date_object, '%d-%m-%Y')
-                a.append(MyContactNote(value, show_contact_details, self.contact, key, value))
+                a.append(MyContactNote(value, show_contact_details,
+                    self.contact, key, value))
         self.body = urwid.SimpleFocusListWalker(a)
         urwid.connect_signal(self.body, 'modified', self.show_attributes_meta)
     def keypress(self, size, key):
@@ -494,7 +536,7 @@ class MyContactAttribute(urwid.Button):
         self.value = value
         # remove the arrows of the default button style
         self._w = urwid.AttrMap(urwid.SelectableIcon(
-            caption, 100), None, 'selected')
+            caption, len(key)+len(value)+3), None, 'selected')
     def keypress(self, size, key):
         if key == 'i':
             command_add_attribute(self.contact_obj, self)
@@ -508,6 +550,20 @@ class MyContactAttribute(urwid.Button):
         else:
             return super(MyContactAttribute, self).keypress(size, key)
 
+class MyContactGift(MyContactAttribute):
+    def __init__(self, caption, callback, contact_obj, value):
+        super(MyContactGift, self).__init__(caption, callback, contact_obj, 'giftIdea', value)
+        # remove the arrows of the default button style
+        self._w = urwid.AttrMap(urwid.SelectableIcon(
+            caption, len(value)+1), None, 'selected')
+    def keypress(self, size, key):
+        if key == 'x':
+            command_set_gift_given(self.contact_obj, self)
+        elif key == 'X':
+            command_set_gift_not_given(self.contact_obj, self)
+        else:
+            return super(MyContactGift, self).keypress(size, key)
+
 class MyContactNote(urwid.Button):
     def __init__(self, caption, callback, contact_obj, date, text):
         super(MyContactNote, self).__init__(caption)
@@ -516,7 +572,7 @@ class MyContactNote(urwid.Button):
         self.text = text
         # remove the arrows of the default button style
         self._w = urwid.AttrMap(urwid.SelectableIcon(
-            caption, 100), None, 'selected')
+            caption, len(text)+1), None, 'selected')
     def keypress(self, size, key):
         if key == 'i':
             command_add_attribute(self.contact_obj, self)
@@ -562,6 +618,7 @@ class MyContactList(MyListBox):
             focus_pos = len(self.body) - 1
         self.set_focus(focus_pos)
         #when details were edited
+        #TODO if details are shown: refresh the attributes, gifts and notes of the focus
     def keypress(self, size, key):
         if key == 'n':
             return super(MyContactList, self).keypress(size, 'right')
@@ -608,7 +665,7 @@ class MyColumns(urwid.Columns):
         contact_list = MyContactDetails(contact)
         contact_list.load_contacts_details()
         self.contents.append((urwid.AttrMap(contact_list, 'options', focus_map),
-            self.options('given', DETAILS_WIDTH)))
+            self.options('weight', 1, True)))
     def keypress(self, size, key):
         if key == 'ctrl r':
             reload_contact_list(self.focused_contact, self.focused_attribute)
@@ -637,7 +694,7 @@ class MyFrame(urwid.Frame):
     def reload_contact_list(self, focused_contact, focused_attr):
         self.body.contents[0][0].base_widget.load_contacts()
     def show_contact_details(self, contact):
-        self.header.show_contact_name(contact.name)
+        #self.header.show_contact_name(contact.name)
         if self.body is not None:
             self.body.open_contact_details(contact)
 
