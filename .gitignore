@@ -1,9 +1,5 @@
-contacts.n3
-/node_modules
-package-lock.json
-_contacts.n3
-todo.txt
-*-contacts_backup.n3
+config
 orga/
-test.n3
-graph_ex.py
+archiv/
+sample/__pycache__
+sample/test*
