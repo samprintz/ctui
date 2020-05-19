@@ -61,31 +61,35 @@ class Core:
     def get_contact(self, name):
         pass
 
+    def search_contact(self, name):
+        self.frame.contact_list.jump_to_contact(name)
+        return ""
+
     def add_contact(self, contact):
         if self.contains_contact(contact):
-            return ["Error: ", contact.name, " already exists."]
+            return "Error: {} already exists.".format(contact.name)
         self.rdfstore.add_contact(contact)
-        return [contact.name, " added."]
+        return "{} added.".format(contact.name)
 
     def rename_contact(self, contact, new_name):
         if not self.contains_contact(contact):
-            return ["Error: ", contact.name, " doesn't exists."]
+            return "Error: {} doesn't exist.".format(contact.name)
         if contact.name == new_name:
-            return ["Name unchanged."]
+            return "Name unchanged."
         if self.contains_contact_name(new_name):
-            return ["Error: ", new_name, " already exists."]
+            return "Error: {} already exists.".format(new_name)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.rename_contact(contact, new_name)
         if self.notesstore.contains_contact(contact):
             self.notesstore.rename_contact(contact, new_name)
-        return [contact.name, " renamed to ", new_name, "."]
+        return "{} renamed to {}.".format(contact.name, new_name)
 
     def delete_contact(self, contact):
         if not self.contains_contact(contact):
-            return ["Error: ", contact.name, " doesn't exists."]
+            return "Error: {} doesn't exists.".format(contact.name)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.delete_contact(contact)
         if self.notesstore.contains_contact(contact):
             self.notesstore.delete_contact(contact)
-        return [contact.name, " deleted."]
+        return "{} deleted.".format(contact.name)
 

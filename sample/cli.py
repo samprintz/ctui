@@ -1,6 +1,7 @@
 from objects import *
 import core
 import pudb
+from enum import Enum
 
 """
 Vim-like console that serves as main user interface for data-manipulation (esp. create, update, delete).
@@ -8,46 +9,53 @@ Vim-like console that serves as main user interface for data-manipulation (esp. 
 class CLI:
     def __init__(self, core):
         self.core = core
+        self.mode = None
 
 
     def handle(self, args):
-        command = args[0]
-        if command in ('add-contact'):
-            name = " ".join(args[1:])
-            contact = Contact(name, self.core)
-            msg = self.core.add_contact(contact)
-            self.contact = contact # to focus it when refreshing contact list
-        elif command in ('rename-contact'):
-            contact = self.contact
-            new_name = " ".join(args[1:])
-            msg = self.core.rename_contact(contact, new_name)
-            contact.name = new_name # TODO
-            self.contact = contact # to focus it when refreshing contact list
-        elif command in ('delete-contact'):
-            name = " ".join(args[1:])
-            contact = Contact(name, self.core)
-            msg = self.core.delete_contact(contact)
-            self.contact = None # to focus other when refreshing contact list
-        elif command in ('add-attribute'):
-            key = args[1]
-            value = " ".join(args[2:])
-            attribute = Attribute(key, value)
-            msg = self.contact.add_attribute(attribute)
-        elif command in ('edit-attribute'):
-            key = args[1]
-            value = " ".join(args[2:])
-            new_attr = Attribute(key, value)
-            old_attr = self.attribute
-            msg = self.contact.edit_attribute(old_attr, new_attr)
-        elif command in ('delete-attribute'):
-            key = args[1]
-            value = " ".join(args[2:])
-            attribute = Attribute(key, value)
-            msg = self.contact.delete_attribute(attribute)
-        else:
-            msg = 'Not a valid command.'
+        if self.mode is Mode.SEARCH:
+            name = " ".join(args[0:])
+            msg = self.core.search_contact(name)
 
-        self.core.frame.refresh_contact_list(self.contact, self.pos)
+        else:
+            command = args[0]
+            if command in ('add-contact'):
+                name = " ".join(args[1:])
+                contact = Contact(name, self.core)
+                msg = self.core.add_contact(contact)
+                self.contact = contact # to focus it when refreshing contact list
+            elif command in ('rename-contact'):
+                contact = self.contact
+                new_name = " ".join(args[1:])
+                msg = self.core.rename_contact(contact, new_name)
+                contact.name = new_name # TODO
+                self.contact = contact # to focus it when refreshing contact list
+            elif command in ('delete-contact'):
+                name = " ".join(args[1:])
+                contact = Contact(name, self.core)
+                msg = self.core.delete_contact(contact)
+                self.contact = None # to focus other when refreshing contact list
+            elif command in ('add-attribute'):
+                key = args[1]
+                value = " ".join(args[2:])
+                attribute = Attribute(key, value)
+                msg = self.contact.add_attribute(attribute)
+            elif command in ('edit-attribute'):
+                key = args[1]
+                value = " ".join(args[2:])
+                new_attr = Attribute(key, value)
+                old_attr = self.attribute
+                msg = self.contact.edit_attribute(old_attr, new_attr)
+            elif command in ('delete-attribute'):
+                key = args[1]
+                value = " ".join(args[2:])
+                attribute = Attribute(key, value)
+                msg = self.contact.delete_attribute(attribute)
+            else:
+                msg = 'Not a valid command.'
+
+            self.core.frame.refresh_contact_list(self.contact, self.pos)
+
         self.core.frame.set_focus('body')
         self.core.frame.console.show_message(msg)
 
@@ -68,9 +76,12 @@ class CLI:
     def delete_contact(self, contact, pos):
         self.contact = contact
         self.pos = pos
-        command = 'rename-contact {}'.format(contact.name)
         command = 'delete-contact {}'.format(contact.name)
         self.core.frame.console.show_console(command)
+
+    def search_contact(self):
+        self.mode = Mode.SEARCH
+        self.core.frame.console.show_search()
 
     # attributes
 
@@ -119,3 +130,8 @@ class CLI:
     def edit_note(contact, note):
         pass
 
+
+class Mode(Enum):
+    SEARCH = 'search'
+    CONSOLE = 'console'
+    INPUT = 'input'
