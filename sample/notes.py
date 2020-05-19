@@ -1,4 +1,6 @@
 import os
+import shutil
+import pudb #TODO
 
 
 """
@@ -32,9 +34,35 @@ class NotesStore:
         dirname = self.path + contact.name.replace(' ', '_')
         return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
 
-    def has_directory(self, contact):
-        dirname = self.path + contact.name.replace(' ', '_')
+    def contains_contact(self, contact):
+        return self.contains_contact_name(contact.name)
+
+    def contains_contact_name(self, name):
+        dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
+
+    def add_contact(self, contact):
+        pass
+
+    def rename_contact(self, contact, new_name):
+        assert self.contains_contact(contact)
+        assert contact.name != new_name
+        assert not self.contains_contact_name(new_name)
+        try:
+            dirname = self.path + contact.name.replace(' ', '_')
+            new_dirname = self.path + new_name.replace(' ', '_')
+            os.rename(dirname, new_dirname)
+        except Exception:
+            raise Exception #TODO
+
+    def delete_contact(self, contact):
+        assert self.contains_contact(contact)
+        try:
+            dirname = self.path + contact.name.replace(' ', '_')
+            shutil.rmtree(dirname, ignore_errors=False)
+            return True
+        except Exception:
+            return Exception #TODO
 
     def add_note(self, contact, note):
         pass

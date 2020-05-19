@@ -2,6 +2,9 @@ from datetime import date,datetime
 import urwid
 import pudb
 
+from objects import *
+import cli
+
 
 class ContactLoop(urwid.MainLoop):
     def __init__(self, frame, config):
@@ -19,10 +22,11 @@ class ContactFrame(urwid.Frame):
         super(ContactFrame, self).__init__(None)
         self.config = config
         self.core = core
+        self.set_footer()
 
     def set_contact_list(self, contact_list):
         focus_map = self.config['display']['focus_map']
-        self.body = ContactFrameColumns(contact_list, self, self.config)
+        self.body = ContactFrameColumns(contact_list, self.core, self.config)
         self.set_contact_details()
 
     def set_contact_details(self):
@@ -32,13 +36,27 @@ class ContactFrame(urwid.Frame):
             del self.body.contents[1]
         self.body.set_contact_details(contact)
 
-    def refresh_contact_list(self):
-        focused_contact = self.get_focused_contact()
+    def refresh_contact_list(self, focused_contact=None, position=None):
+        last_focused_contact = self.get_focused_contact()
 
         contact_list = self.core.get_all_contacts()
         self.set_contact_list(contact_list)
 
-        self.set_focused_contact(focused_contact)
+        # contact added or renamed: focus (new) contact / same contact
+        if focused_contact is not None: # 
+            pos = self.body.contents[0][0].base_widget.get_contact_position(focused_contact)
+        else:
+            # contact deleted: focus previous contact
+            if position is not None:
+                if position == 0: # if first contact: jump to first
+                    pos = 0
+                else: # generally: focus previous
+                    pos = position - 1
+            # list refresh (ctrl+r): focus contact that was focused before refresh
+            else:
+                pos = self.body.contents[0][0].base_widget.get_contact_position(last_focused_contact)
+
+        self.set_focused_contact_by_position(pos)
 
     def set_contact_detail_meta(self, meta):
         pass
@@ -46,10 +64,13 @@ class ContactFrame(urwid.Frame):
         #self.set_footer(text)
 
     def set_footer(self):
-        pass
+        self.footer = urwid.BoxAdapter(Console(self.core), height=1)
+        self.console = self.footer.original_widget
 
     def clear_footer(self):
-        pass
+        self.footer = urwid.BoxAdapter(Console(self.core), height=1)
+        self.console = self.footer.original_widget
+        self.set_focus('body')
 
     def set_header(self):
         pass
@@ -62,42 +83,45 @@ class ContactFrame(urwid.Frame):
         pos = self.body.contents[0][0].base_widget.get_contact_position(contact)
         self.body.contents[0][0].base_widget.set_focus(pos)
 
+    def set_focused_contact_by_position(self, pos):
+        self.body.contents[0][0].base_widget.set_focus(pos)
+
 
 
 class ContactFrameColumns(urwid.Columns):
-    def __init__(self, contact_list, frame, config):
-        self.frame = frame
+    def __init__(self, contact_list, core, config):
+        self.core = core
         self.focus_map = config['display']['focus_map']
         self.nav_width = config['display']['nav_width']
         super(ContactFrameColumns, self).__init__([], dividechars=1)
         self.set_contact_list(contact_list)
 
     def set_contact_list(self, contact_list):
-        self.contents.append((urwid.AttrMap(ContactList(contact_list, self.frame),
+        self.contents.append((urwid.AttrMap(ContactList(contact_list, self.core),
             'options', self.focus_map), self.options('given', self.nav_width)))
 
     def set_contact_details(self, contact):
-        self.contents.append((urwid.AttrMap(ContactDetails(contact, self.frame),
+        self.contents.append((urwid.AttrMap(ContactDetails(contact, self.core),
             'options', self.focus_map), self.options('weight', 1, True)))
-#        contact_details = ContactDetails(contact, self.frame),
-#        attr_map = urwid.AttrMap(contact_details, 'options', self.focus_map)
-#        self.contents.append((attr_map, self.options('weight', 1, True)))
 
     def keypress(self, size, key):
         if key == 'ctrl r':
-            self.frame.refresh_contact_list()
+            self.core.frame.refresh_contact_list()
         else:
             return super(ContactFrameColumns, self).keypress(size, key)
 
     
 
 class CustListBox(urwid.ListBox):
-    def __init__(self, listwalker):
+    def __init__(self, listwalker, core):
         super(CustListBox, self).__init__(listwalker)
         self.repeat_command = 0
+        self.core = core
 
     def keypress(self, size, key):
-        if key == 't':
+        if key == '/':
+            self.core.cli.search_contact()
+        elif key == 't':
             if self.repeat_command > 0:
                 self.jump_down(size, self.repeat_command)
                 self.repeat_command = 0
@@ -132,20 +156,22 @@ class CustListBox(urwid.ListBox):
 
 
 class ContactList(CustListBox):
-    def __init__(self, contact_list, frame):
+    def __init__(self, contact_list, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        self.frame = frame
-        super(ContactList, self).__init__(listwalker)
+        super(ContactList, self).__init__(listwalker, core)
+        self.core = core
         self.set(contact_list)
 
     def set(self, contact_list):
         a = []
+        pos = 0
         for c in contact_list:
-            entry = ContactEntry(c)
-            urwid.connect_signal(entry, 'click', self.frame.set_contact_details) #TODO in ListEntry
+            entry = ContactEntry(c, pos, self.core)
+            urwid.connect_signal(entry, 'click', self.core.frame.set_contact_details) #TODO in ListEntry
             a.append(entry)
+            pos = pos + 1
         self.body = urwid.SimpleFocusListWalker(a)
-        urwid.connect_signal(self.body, 'modified', self.frame.set_contact_details)
+        urwid.connect_signal(self.body, 'modified', self.core.frame.set_contact_details)
 
     def get_focus(self):
         return self.focus
@@ -166,28 +192,29 @@ class ContactList(CustListBox):
 
 
 class ContactDetails(CustListBox):
-    def __init__(self, contact, frame):
+    def __init__(self, contact, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        self.frame = frame
-        super(ContactDetails, self).__init__(listwalker)
+        super(ContactDetails, self).__init__(listwalker, core)
+        self.core = core
         self.set(contact)
 
     def set(self, contact):
         entries = []
 
-        entries.append(AttributeEntry(contact, "givenName", contact.name))
+        entries.append(AttributeEntry(contact,
+            Attribute("givenName", contact.name), self.core))
         entries.append(urwid.Divider())
 
         if contact.attributes is not None:
             for a in contact.attributes:
-                entries.append(AttributeEntry(contact, a[0], a[1]))
+                entries.append(AttributeEntry(contact, Attribute(a[0], a[1]), self.core))
 
         if contact.gifts is not None:
             if len(entries) > 2:
                 entries.append(urwid.Divider())
             entries.append(urwid.Text(u"GESCHENKE"))
             for a in contact.gifts:
-                entries.append(GiftEntry(contact, a))
+                entries.append(GiftEntry(contact, Gift(a), self.core))
 
         if contact.notes is not None:
             if len(entries) > 2:
@@ -196,7 +223,7 @@ class ContactDetails(CustListBox):
             for d, content in contact.notes.items():
                 date_obj = datetime.strptime(d, '%Y%m%d')
                 date = datetime.strftime(date_obj, '%d-%m-%Y')
-                entries.append(NoteEntry(contact, date, content))
+                entries.append(NoteEntry(contact, Note(date, content), self.core))
 
         self.body = urwid.SimpleFocusListWalker(entries)
         urwid.connect_signal(self.body, 'modified', self.show_meta)
@@ -209,9 +236,9 @@ class ContactDetails(CustListBox):
 
     def show_meta(self):
         if isinstance(self.focus, NoteEntry):
-            self.frame.set_contact_detail_meta(self.focus.date)
+            self.core.frame.set_contact_detail_meta(self.focus.date)
         else:
-            self.frame.clear_footer()
+            self.core.frame.clear_footer()
 
     def keypress(self, size, key):
         if key == 'd':
@@ -221,50 +248,90 @@ class ContactDetails(CustListBox):
 
 
 class ListEntry(urwid.Button):
-    def __init__(self, caption):
-        super(ListEntry, self).__init__(caption)
+    def __init__(self, label, core):
+        super(ListEntry, self).__init__(label)
+        self.core = core
+        cursor_pos = len(label) + 1
         self._w = urwid.AttrMap(urwid.SelectableIcon(
-            caption, 100), None, 'selected')  #TODO cursor position
+            label, cursor_pos), None, 'selected')
 
 
 class ContactEntry(ListEntry):
-    def __init__(self, contact):
-        super(ContactEntry, self).__init__(contact.name)
+    def __init__(self, contact, pos, core):
+        super(ContactEntry, self).__init__(contact.name, core)
         self.contact = contact
+        self.pos = pos
+
+    def keypress(self, size, key):
+        if key == 'a':
+            self.core.cli.rename_contact(self.contact, self.pos)
+        elif key == 'i':
+            self.core.cli.add_contact(self.pos)
+        elif key == 'h':
+            self.core.cli.delete_contact(self.contact, self.pos)
+        else:
+            return super(ContactEntry, self).keypress(size, key)
 
 
 class DetailEntry(ListEntry):
-    def __init__(self, contact, label):
-        super(DetailEntry, self).__init__(label)
+    def __init__(self, contact, label, core):
+        super(DetailEntry, self).__init__(label, core)
         self.contact = contact
 
 
 class AttributeEntry(DetailEntry):
-    def __init__(self, contact, key, value):
-        label = key + ': ' + value
-        super(AttributeEntry, self).__init__(contact, label)
+    def __init__(self, contact, attribute, core):
+        label = attribute.key + ': ' + attribute.value
+        super(AttributeEntry, self).__init__(contact, label, core)
+        self.attribute = attribute
 
     def keypress(self, size, key):
         if key == 'i':
-            command_add_attribute(self.contact, self)
+            self.core.cli.add_attribute(self.contact)
         elif key == 'a':
-            command_edit_attribute(self.contact, self)
+            self.core.cli.edit_attribute(self.contact, self.attribute)
         elif key == 'h':
-            command_delete_attribute(self.contact, self)
+            self.core.cli.delete_attribute(self.contact, self.attribute)
         elif key == 'y':
             pyperclip.copy(self.value)
-            fill.show_message("Copied \"" + self.value + "\" to clipboard.")
+            self.core.frame.show_message("Copied \"" + self.attribute.value + "\" to clipboard.")
         else:
             return super(ListEntry, self).keypress(size, key)
 
 class GiftEntry(DetailEntry):
-    def __init__(self, contact, gift):
-        super(GiftEntry, self).__init__(contact, gift)
+    def __init__(self, contact, gift, core):
+        super(GiftEntry, self).__init__(contact, gift.name, core)
+        self.gift = gift
 
 class NoteEntry(DetailEntry):
-    def __init__(self, contact, date, note):
-        self.date = date
-        super(NoteEntry, self).__init__(contact, note)
+    def __init__(self, contact, note, core):
+        super(NoteEntry, self).__init__(contact, note.content, core)
+        self.note = note
 
-class Console():
-    pass
+class Console(urwid.Filler):
+    def __init__(self, core):
+        super(Console, self).__init__(urwid.Text(""))
+        self.core = core
+
+    def show_console(self, command=''):
+        self.body = urwid.Edit(":", command)
+        self.core.frame.set_focus('footer')
+
+    def show_message(self, message):
+        self.body = urwid.Text(message)
+
+    def show_input(self, request):
+        self.body = urwid.Edit("{}?".format(request))
+
+    def show_search(self):
+        self.body = urwid.Edit("/")
+
+    def keypress(self, size, key):
+        if key == 'esc':
+            self.core.frame.clear_footer()
+        if key != 'enter':
+            return super(Console, self).keypress(size, key)
+
+        args = self.original_widget.edit_text.split()
+        return self.core.cli.handle(args)
+
