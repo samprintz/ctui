@@ -20,8 +20,9 @@ class Core:
 
     def __init__(self, config, test=False):
         self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
-        self.notesstore = notes.NotesStore(config['path']['notes_dir'])
+        self.notesstore = notes.NotesStore(config['path']['notes_dir'], config['editor'])
         self.cli = cli.CLI(self)
+        self.last_keypress = None
         contacts = self.get_all_contacts()
 
         self.frame = tui.ContactFrame(config, self)

@@ -1,7 +1,10 @@
-from objects import *
-import core
-import pudb
+from datetime import date,datetime
 from enum import Enum
+import pudb #TODO
+
+import core
+from objects import *
+
 
 """
 Vim-like console that serves as main user interface for data-manipulation (esp. create, update, delete).
@@ -9,6 +12,8 @@ Vim-like console that serves as main user interface for data-manipulation (esp. 
 class CLI:
     def __init__(self, core):
         self.core = core
+        self.contact = None
+        self.pos = None
         self.mode = None
 
 
@@ -51,6 +56,28 @@ class CLI:
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.delete_attribute(attribute)
+            elif command in ('add-gift'):
+                name = " ".join(args[1:])
+                gift = Gift(name)
+                msg = self.contact.add_gift(gift)
+            elif command in ('edit-gift'):
+                name = " ".join(args[1:])
+                new_gift = Gift(name)
+                old_gift = self.gift
+                msg = self.contact.edit_gift(old_gift, new_gift)
+            elif command in ('delete-gift'):
+                name = " ".join(args[1:])
+                gift = Gift(name)
+                msg = self.contact.delete_gift(gift)
+            elif command in ('add-note'):
+                date_str = " ".join(args[1:])
+                msg = self.contact.add_note(date_str)
+            elif command in ('edit-note'):
+                date_str = " ".join(args[1:])
+                msg = self.contact.edit_note(date_str)
+            elif command in ('delete-note'):
+                date_str = " ".join(args[1:])
+                msg = self.contact.delete_note(date_str)
             else:
                 msg = 'Not a valid command.'
 
@@ -104,34 +131,62 @@ class CLI:
 
     # gifts
 
-    def add_gift(contact, gift):
-        pass
+    def add_gift(self, contact):
+        self.contact = contact
+        command = 'add-gift '
+        self.core.frame.console.show_console(command)
 
-    def edit_gift(contact, gift):
-        pass
+    def edit_gift(self, contact, gift):
+        self.contact = contact
+        self.gift = gift
+        command = 'edit-gift {}'.format(gift.name)
+        self.core.frame.console.show_console(command)
 
-    def delete_gift(contact, gift):
-        pass
+    def delete_gift(self, contact, gift):
+        self.contact = contact
+        self.gift = gift
+        command = 'delete-gift {}'.format(gift.name)
+        self.core.frame.console.show_console(command)
 
-    def mark_gifted(contact, gift):
-        pass
+    def mark_gifted(self, contact, gift):
+        self.contact = contact
+        self.gift = gift
+        new_name = "x " + gift.name[2:]
+        command = 'edit-gift {}'.format(new_name)
+        self.core.frame.console.show_console(command)
 
-    def unmark_gifted(contact, gift):
-        pass
+    def unmark_gifted(self, contact, gift):
+        self.contact = contact
+        self.gift = gift
+        new_name = gift.name[2:]
+        command = 'edit-gift {}'.format(new_name)
+        self.core.frame.console.show_console(command)
 
     # notes
 
-    def add_note(contact, note):
-        pass
+    def add_note(self, contact):
+        self.contact = contact
+        date_str = datetime.strftime(date.today(), "%Y%m%d")
+        command = 'add-note {}'.format(date_str)
+        self.core.frame.console.show_console(command)
 
-    def delete_note(contact, note):
-        pass
+    def edit_note(self, contact, note):
+        self.contact = contact
+        self.note = note
+        date_str = datetime.strftime(note.date, "%Y%m%d")
+        command = 'edit-note {}'.format(date_str)
+        self.core.frame.console.show_console(command)
 
-    def edit_note(contact, note):
-        pass
+    def delete_note(self, contact, note):
+        self.contact = contact
+        self.note = note
+        date_str = datetime.strftime(note.date, "%Y%m%d")
+        command = 'delete-note {}'.format(date_str)
+        self.core.frame.console.show_console(command)
 
 
 class Mode(Enum):
     SEARCH = 'search'
     CONSOLE = 'console'
     INPUT = 'input'
+

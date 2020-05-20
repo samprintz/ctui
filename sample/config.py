@@ -11,6 +11,7 @@ def load_config(path):
             'rdf': {
                 'namespace': cfg.get('rdf', 'namespace')
                 },
+            'editor': 'vim',
             'display': {
                 'nav_width': cfg.getint('display', 'nav_width'),
                 'palette': [

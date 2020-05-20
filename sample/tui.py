@@ -36,7 +36,7 @@ class ContactFrame(urwid.Frame):
         if len(self.body.contents) > 1:
             del self.body.contents[1]
         self.body.set_contact_details(contact)
-        #self.contact_details = self.body.contents[0][1].base_widget
+        self.contact_details = self.body.contents[1][0].base_widget
 
     def refresh_contact_list(self, focused_contact=None, position=None):
         last_focused_contact = self.contact_list.get_focused_contact()
@@ -109,32 +109,50 @@ class CustListBox(urwid.ListBox):
         self.core = core
 
     def keypress(self, size, key):
-        if key == '/':
-            self.core.cli.search_contact()
-        elif key == 't':
-            if self.repeat_command > 0:
-                self.jump_down(size, self.repeat_command)
-                self.repeat_command = 0
+        if key == 'esc':
+            self.core.last_keypress = None
+        if self.core.last_keypress == 'i':
+            focused_contact = self.core.frame.contact_list.get_focused_contact()
+            if key == 'i':
+                self.core.last_keypress = None
+                self.core.cli.add_attribute(focused_contact)
+            elif key == 'g':
+                self.core.last_keypress = None
+                self.core.cli.add_gift(focused_contact)
+            elif key == 'n':
+                self.core.last_keypress = None
+                self.core.cli.add_note(focused_contact)
             else:
-                super(CustListBox, self).keypress(size, 'down')
-        elif key == 'r':
-            if self.repeat_command > 0:
-                self.jump_up(size, self.repeat_command)
-                self.repeat_command = 0
-            else:
-                super(CustListBox, self).keypress(size, 'up')
-        elif key == 'G':
-            super(CustListBox, self).keypress(size, 'end')
-            super(CustListBox, self).keypress(size, 'end')
-        elif key == 'g':
-            super(CustListBox, self).keypress(size, 'home')
-        elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-            if self.repeat_command > 0:
-                self.repeat_command = int(str(self.repeat_command) + key)
-            else:
-                self.repeat_command = int(key)
+                self.core.last_keypress = None
         else:
-            return super(CustListBox, self).keypress(size, key)
+            if key == 'i':
+                self.core.last_keypress = 'i'
+            elif key == '/':
+                self.core.cli.search_contact()
+            elif key == 't':
+                if self.repeat_command > 0:
+                    self.jump_down(size, self.repeat_command)
+                    self.repeat_command = 0
+                else:
+                    super(CustListBox, self).keypress(size, 'down')
+            elif key == 'r':
+                if self.repeat_command > 0:
+                    self.jump_up(size, self.repeat_command)
+                    self.repeat_command = 0
+                else:
+                    super(CustListBox, self).keypress(size, 'up')
+            elif key == 'G':
+                super(CustListBox, self).keypress(size, 'end')
+                super(CustListBox, self).keypress(size, 'end')
+            elif key == 'g':
+                super(CustListBox, self).keypress(size, 'home')
+            elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                if self.repeat_command > 0:
+                    self.repeat_command = int(str(self.repeat_command) + key)
+                else:
+                    self.repeat_command = int(key)
+            else:
+                return super(CustListBox, self).keypress(size, key)
 
     def jump_down(self, size, n):
         for i in range(0, n):
@@ -198,8 +216,15 @@ class ContactList(CustListBox):
             self.set_focus(pos)
 
     def keypress(self, size, key):
-        if key == 'n':
-            return super(ContactList, self).keypress(size, 'right')
+        if self.core.last_keypress is None:
+            if key == 'n':
+                # if has details
+                if self.core.frame.contact_details.number_of_details() > 0:
+                    return super(ContactList, self).keypress(size, 'right')
+                else:
+                    return super(ContactList, self).keypress(size, key)
+            else:
+                return super(ContactList, self).keypress(size, key)
         else:
             return super(ContactList, self).keypress(size, key)
 
@@ -212,13 +237,7 @@ class ContactDetails(CustListBox):
         self.set(contact)
 
     def set(self, contact):
-        entries = []
-
-        name_entry = AttributeEntry(contact,
-            Attribute("givenName", contact.name), self.core)
-        name_entry.set_label(contact.name)
-        entries.append(name_entry)
-        entries.append(urwid.Divider())
+        entries = [urwid.Text(contact.name), urwid.Divider()]
 
         if contact.attributes is not None:
             for a in contact.attributes:
@@ -236,24 +255,21 @@ class ContactDetails(CustListBox):
                 entries.append(urwid.Divider())
             entries.append(urwid.Text(u"NOTIZEN"))
             for d, content in contact.notes.items():
-                date_obj = datetime.strptime(d, '%Y%m%d')
-                date = datetime.strftime(date_obj, '%d-%m-%Y')
+                date = datetime.strptime(d, '%Y%m%d')
                 entries.append(NoteEntry(contact, Note(date, content), self.core))
 
         self.body = urwid.SimpleFocusListWalker(entries)
         urwid.connect_signal(self.body, 'modified', self.show_meta)
 
-    def hide(self):
-        pass
-
-    def set_focus(self, contact):
-        pass
-
     def show_meta(self):
         if isinstance(self.focus, NoteEntry):
-            self.core.frame.set_contact_detail_meta(self.focus.date)
+            date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
+            self.core.frame.set_contact_detail_meta(date)
         else:
             self.core.frame.clear_footer()
+
+    def number_of_details(self):
+        return len(self.body) - 2
 
     def keypress(self, size, key):
         if key == 'd':
@@ -282,12 +298,15 @@ class ContactEntry(ListEntry):
         self.pos = pos
 
     def keypress(self, size, key):
-        if key == 'a':
-            self.core.cli.rename_contact(self.contact, self.pos)
-        elif key == 'i':
-            self.core.cli.add_contact(self.pos)
-        elif key == 'h':
-            self.core.cli.delete_contact(self.contact, self.pos)
+        if self.core.last_keypress is None:
+            if key == 'a':
+                self.core.cli.rename_contact(self.contact, self.pos)
+            elif key == 'I':
+                self.core.cli.add_contact(self.pos)
+            elif key == 'h':
+                self.core.cli.delete_contact(self.contact, self.pos)
+            else:
+                return super(ContactEntry, self).keypress(size, key)
         else:
             return super(ContactEntry, self).keypress(size, key)
 
@@ -305,15 +324,14 @@ class AttributeEntry(DetailEntry):
         self.attribute = attribute
 
     def keypress(self, size, key):
-        if key == 'i':
-            self.core.cli.add_attribute(self.contact)
-        elif key == 'a':
+        if key == 'a':
             self.core.cli.edit_attribute(self.contact, self.attribute)
         elif key == 'h':
             self.core.cli.delete_attribute(self.contact, self.attribute)
         elif key == 'y':
             pyperclip.copy(self.value)
-            self.core.frame.show_message("Copied \"" + self.attribute.value + "\" to clipboard.")
+            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+            self.core.frame.show_message(msg)
         else:
             return super(ListEntry, self).keypress(size, key)
 
@@ -322,10 +340,26 @@ class GiftEntry(DetailEntry):
         super(GiftEntry, self).__init__(contact, gift.name, core)
         self.gift = gift
 
+    def keypress(self, size, key):
+        if key == 'a':
+            self.core.cli.edit_gift(self.contact, self.gift)
+        elif key == 'h':
+            self.core.cli.delete_gift(self.contact, self.gift)
+        else:
+            return super(GiftEntry, self).keypress(size, key)
+
 class NoteEntry(DetailEntry):
     def __init__(self, contact, note, core):
         super(NoteEntry, self).__init__(contact, note.content, core)
         self.note = note
+
+    def keypress(self, size, key):
+        if key == 'a':
+            self.core.cli.edit_note(self.contact, self.note)
+        elif key == 'h':
+            self.core.cli.delete_note(self.contact, self.note)
+        else:
+            return super(NoteEntry, self).keypress(size, key)
 
 class Console(urwid.Filler):
     def __init__(self, core):

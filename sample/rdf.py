@@ -115,7 +115,9 @@ class RDFStore:
 
     def edit_attribute(self, contact, old_attr, new_attr):
         if old_attr.value == new_attr.value:
-            return ["Attribute unchanged."]
+            return "Attribute unchanged."
+        #if old_attr.key == "givenName":
+        #    self.core.rename_contact(contact, new_attr.value)
         try:
             attribute_ref = URIRef(self.namespace + new_attr.key)
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))

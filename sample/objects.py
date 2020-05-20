@@ -35,33 +35,27 @@ class Contact:
         return self.core.rdfstore.get_gifts(self)
 
     def add_gift(self, gift):
-        pass
+        return self.core.rdfstore.add_gift(self, gift)
 
-    def edit_gift(self, gift):
-        pass
+    def edit_gift(self, old_gift, new_gift):
+        return self.core.rdfstore.edit_gift(self, old_gift, new_gift)
 
     def delete_gift(self, gift):
-        pass
-
-    def mark_gifted(self, gift):
-        pass
-
-    def unmark_gifted(self, gift):
-        pass
+        return self.core.rdfstore.delete_gift(self, gift)
 
     # notes
 
     def get_notes(self):
         return self.core.notesstore.get_notes(self)
 
-    def add_note(self, note):
-        pass
+    def add_note(self, date_str):
+        return self.core.notesstore.add_note(self, date_str)
 
-    def delete_note(self, note):
-        pass
+    def edit_note(self, date_str):
+        return self.core.notesstore.edit_note(self, date_str)
 
-    def edit_note(self, note):
-        pass
+    def delete_note(self, date_str):
+        return self.core.notesstore.delete_note(self, date_str)
 
 
 class Attribute:
