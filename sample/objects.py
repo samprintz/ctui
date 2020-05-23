@@ -10,6 +10,7 @@ class Contact:
         self.gifts = gifts
         self.notes = notes
 
+
     def get_details(self):
         self.attributes = self.get_attributes()
         self.gifts = self.get_gifts()
@@ -18,12 +19,12 @@ class Contact:
 
     # attributes
 
-    def get_attributes(self):
-        return self.core.rdfstore.get_attributes(self)
-
-
     def has_attributes(self):
         return self.core.rdfstore.has_attributes(self)
+
+
+    def get_attributes(self):
+        return self.core.rdfstore.get_attributes(self)
 
 
     def has_attribute(self, attribute):
@@ -51,15 +52,23 @@ class Contact:
     def delete_attribute(self, attribute):
         if not self.has_attribute(attribute):
             return "Error: {} doesn't own attribute {}={}.".format(
-                    self.name, old_attr.key, old_attr.value)
+                    self.name, attribute.key, attribute.value)
 
         return self.core.rdfstore.delete_attribute(self, attribute)
 
 
     # gifts
 
+    def has_gifts(self):
+        return self.core.rdfstore.has_gifts(self)
+
+
     def get_gifts(self):
         return self.core.rdfstore.get_gifts(self)
+
+
+    def has_gift(self, gift):
+        return self.core.rdfstore.has_gift(self, gift)
 
 
     def add_gift(self, gift):
@@ -67,10 +76,21 @@ class Contact:
 
 
     def edit_gift(self, old_gift, new_gift):
+        if not self.has_gift(old_gift):
+            return "Error: {} doesn't own gift {}.".format(
+                    self.name, old_gift.name)
+
+        if old_gift.name == new_gift.name:
+            return "Warning: Gift unchanged."
+
         return self.core.rdfstore.edit_gift(self, old_gift, new_gift)
 
 
     def delete_gift(self, gift):
+        if not self.has_gift(gift):
+            return "Error: {} doesn't own gift {}.".format(
+                    self.name, gift.name)
+
         return self.core.rdfstore.delete_gift(self, gift)
 
 
