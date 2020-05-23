@@ -64,7 +64,8 @@ class RDFStore:
     def delete_contact(self, contact):
         assert self.contains_contact(contact)
         try:
-            self.g.remove((None, GIVEN_NAME_REF, Literal(contact.name)))
+            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+            self.g.remove((s, None, None))
             self.save_file(self.path)
             return True
         except Exception:
@@ -108,40 +109,38 @@ class RDFStore:
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
             self.g.add((s, attribute_ref, Literal(attribute.value)))
             self.save_file(self.path)
-            return ["Attribute ", attribute.key, "=", attribute.value, " added."]
+            return "Attribute {}={} added.".format(attribute.key, attribute.value)
         except Exception as e:
-            return str(e)
+            raise e #TODO
 
 
     def edit_attribute(self, contact, old_attr, new_attr):
-        if old_attr.value == new_attr.value:
-            return "Attribute unchanged."
-        #if old_attr.key == "givenName":
-        #    self.core.rename_contact(contact, new_attr.value)
+        assert self.has_attribute(contact, old_attr)
+        assert old_attr.value != new_attr.value
         try:
-            attribute_ref = URIRef(self.namespace + new_attr.key)
+            old_attr_ref = URIRef(self.namespace + old_attr.key)
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-            self.g.remove((s, attribute_ref, Literal(old_attr.value)))
+            self.g.remove((s, old_attr_ref, Literal(old_attr.value)))
             self.save_file(self.path)
             resource = Resource(self.g, s)
-            resource.set(attribute_ref, Literal(new_attr.value))
+            new_attr_ref = URIRef(self.namespace + new_attr.key)
+            resource.set(new_attr_ref, Literal(new_attr.value))
             self.save_file(self.path)
             return [new_attr.key, " changed to ", new_attr.value, "."]
+            return "{} changed to {}.".format(new_attr.key, new_attr.value)
         except Exception as e:
-            return str(e)
+            raise e #TODO
 
     def delete_attribute(self, contact, attribute):
-        if not self.has_attribute(contact, attribute):
-            return ["Error: ", contact.name, " doesn't own attribute ",
-                    attribute.key, "=", attribute.value, "."]
+        assert self.has_attribute(contact, old_attr)
         try:
             attribute_ref = URIRef(self.namespace + attribute.key)
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
             self.g.remove((s, attribute_ref, Literal(attribute.value)))
             self.save_file(self.path)
-            return [attribute.key, "=", attribute.value, " deleted."]
+            return "{}={} deleted".format(attribute.key, attribute.value)
         except Exception as e:
-            return str(e)
+            raise e #TODO
 
     # gifts
 

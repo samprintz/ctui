@@ -57,6 +57,8 @@ class ContactFrame(urwid.Frame):
             # list refresh (ctrl+r): focus contact that was focused before refresh
             else:
                 pos = self.contact_list.get_contact_position(last_focused_contact)
+                if pos is None: # if in tests no contact was focused before
+                    pos = 0
 
         self.contact_list.set_focus_position(pos)
 
@@ -354,8 +356,10 @@ class NoteEntry(DetailEntry):
         self.note = note
 
     def keypress(self, size, key):
-        if key == 'a':
+        if key == 'enter':
             self.core.cli.edit_note(self.contact, self.note)
+        elif key == 'a':
+            self.core.cli.rename_note(self.contact, self.note)
         elif key == 'h':
             self.core.cli.delete_note(self.contact, self.note)
         else:

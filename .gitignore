@@ -4,3 +4,4 @@ archiv/
 orga/
 sample/__pycache__
 sample/test*
+.ycm_extra_conf.py

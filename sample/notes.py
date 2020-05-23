@@ -10,9 +10,12 @@ Store for interaction with the directory with notes about the contacts.
 """
 class NotesStore:
 
-    def __init__(self, path, editor_name):
+    def __init__(self, path):
         self.path = path
-        self.editor = os.environ.get('EDITOR', editor_name)
+
+
+    def get_notes_path(self, contact):
+        return self.path + contact.name.replace(' ', '_')
 
 
     def get_all_contact_names(self):
@@ -23,25 +26,6 @@ class NotesStore:
         return sorted(contact_names)
 
 
-    def get_notes(self, contact):
-        dirname = self.path + contact.name.replace(' ', '_')
-        notes = dict()
-        try:
-            for filename in os.listdir(dirname):
-                date = filename.replace('.txt', '')
-                with open(dirname + '/' + filename, "r") as f:
-                    content = f.read()
-                    notes[date] = content.strip()
-            return notes
-        except FileNotFoundError:
-            return None
-
-
-    def has_notes(self, contact):
-        dirname = self.path + contact.name.replace(' ', '_')
-        return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
-
-
     def contains_contact(self, contact):
         return self.contains_contact_name(contact.name)
 
@@ -49,13 +33,6 @@ class NotesStore:
     def contains_contact_name(self, name):
         dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
-
-
-    def contains_note(self, contact, date):
-        dirname = self.path + contact.name.replace(' ', '_')
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
-        return os.path.isfile(path)
 
 
     def add_contact(self, contact):
@@ -91,15 +68,49 @@ class NotesStore:
             return "Couldn't delete directory \"{}\".".format(dirname)
 
 
-    def add_note(self, contact, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+    def has_notes(self, contact):
+        dirname = self.path + contact.name.replace(' ', '_')
+        return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
 
-        if self.contains_note(contact, date):
-            #return "Note for {} already exists."
-            return self.edit_note(contact, date_str)
+
+    def get_notes(self, contact):
+        dirname = self.path + contact.name.replace(' ', '_')
+        notes = dict()
+        try:
+            for filename in os.listdir(dirname):
+                date = filename.replace('.txt', '')
+                with open(dirname + '/' + filename, "r") as f:
+                    content = f.read()
+                    notes[date] = content.strip()
+            return notes
+        except FileNotFoundError:
+            return None
+
+
+    def contains_note(self, contact, date):
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path = dirname + '/' + filename
+        return os.path.isfile(path)
+
+
+    def get_note(self, contact, date):
+        assert self.contains_note(contact, date)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path = dirname + '/' + filename
+
+        try:
+            with open(path, "r") as f:
+                content = f.read()
+                return content.strip()
+        except OSError:
+            return "Couldn't read note"
+
+
+    def add_note(self, contact, date, content):
+        assert not self.contains_note(contact, date)
 
         if not self.contains_contact(contact):
             self.add_contact(contact)
@@ -109,41 +120,33 @@ class NotesStore:
         path = dirname + '/' + filename
 
         try:
-            call([self.editor, path])
+            with open(path, 'w') as f:
+                f.write(content)
             return "Note added."
         except OSError:
             return "Error: Note not created."
 
 
-    def edit_note(self, contact, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
-        if not self.contains_note(contact, date):
-            #return "Note for doesn't exist."
-            return self.add_note(contact, date_str)
+    def rename_note(self, contact, note, new_date):
+        assert note.date != new_date
+        assert self.contains_note(contact, note.date)
+        assert not self.contains_note(contact, new_date)
 
         dirname = self.path + contact.name.replace(' ', '_')
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
+        old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
+        old_path = dirname + '/' + old_filename
+        new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt"
+        new_path = dirname + '/' + new_filename
 
         try:
-            call([self.editor, path])
-            return "Note edited."
+            os.rename(old_path, new_path)
+            return "Note renamed."
         except OSError:
-            return "Error: Note not edited."
+            return "Error: Note not renamed."
 
 
-    def delete_note(self, contact, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
-        if not self.contains_note(contact, date):
-            return "Error: No note for \"{}\".".format(date_str)
+    def delete_note(self, contact, date):
+        assert self.contains_note(contact, date)
 
         dirname = self.path + contact.name.replace(' ', '_')
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
@@ -157,4 +160,20 @@ class NotesStore:
             return "Note deleted."
         except OSError:
             return "Error: Note not deleted."
+
+
+    def edit_note(self, contact, date, new_content):
+        assert self.contains_contact(contact)
+        assert self.contains_note(contact, date)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path = dirname + '/' + filename
+
+        try:
+            with open(path, 'w') as f:
+                f.write(new_content)
+            return "Note edited."
+        except OSError:
+            return "Error: Note not edited."
 

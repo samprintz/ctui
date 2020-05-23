@@ -72,12 +72,15 @@ class CLI:
             elif command in ('add-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.add_note(date_str)
-            elif command in ('edit-note'):
+            elif command in ('rename-note'):
                 date_str = " ".join(args[1:])
-                msg = self.contact.edit_note(date_str)
+                msg = self.contact.rename_note(self.note, date_str)
             elif command in ('delete-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.delete_note(date_str)
+            elif command in ('edit-note'):
+                date_str = " ".join(args[1:])
+                msg = self.contact.edit_note(date_str)
             else:
                 msg = 'Not a valid command.'
 
@@ -170,11 +173,11 @@ class CLI:
         command = 'add-note {}'.format(date_str)
         self.core.frame.console.show_console(command)
 
-    def edit_note(self, contact, note):
+    def rename_note(self, contact, note):
         self.contact = contact
         self.note = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
-        command = 'edit-note {}'.format(date_str)
+        command = 'rename-note {}'.format(date_str)
         self.core.frame.console.show_console(command)
 
     def delete_note(self, contact, note):
@@ -183,6 +186,14 @@ class CLI:
         date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'delete-note {}'.format(date_str)
         self.core.frame.console.show_console(command)
+
+    def edit_note(self, contact, note):
+        self.contact = contact
+        self.note = note
+        date_str = datetime.strftime(note.date, "%Y%m%d")
+        args = 'edit-note {}'.format(date_str).split()
+        self.core.cli.handle(args)
+
 
 
 class Mode(Enum):
