@@ -29,6 +29,7 @@ class Core:
 
         self.frame = tui.ContactFrame(config, self)
         self.frame.set_contact_list(contacts)
+        self.frame.watch_focus()
 
         if not test:
             loop = tui.ContactLoop(self.frame, config)

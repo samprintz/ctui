@@ -11,6 +11,12 @@ class Contact:
         self.notes = notes
 
 
+    def has_details(self):
+        return self.core.rdfstore.has_attributes(self) or \
+                self.core.rdfstore.has_gifts(self) or \
+                self.core.notesstore.has_notes(self)
+
+
     def get_details(self):
         self.attributes = self.get_attributes()
         self.gifts = self.get_gifts()

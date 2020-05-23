@@ -13,6 +13,7 @@ class CLI:
     def __init__(self, core):
         self.core = core
         self.contact = None
+        self.detail = None
         self.pos = None
         self.mode = None
 
@@ -21,6 +22,7 @@ class CLI:
         if self.mode is Mode.SEARCH:
             name = " ".join(args[0:])
             msg = self.core.search_contact(name)
+            self.mode = None
 
         else:
             command = args[0]
@@ -45,46 +47,57 @@ class CLI:
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.add_attribute(attribute)
+                self.detail = attribute
             elif command in ('edit-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
                 new_attr = Attribute(key, value)
-                old_attr = self.attribute
+                old_attr = self.detail
                 msg = self.contact.edit_attribute(old_attr, new_attr)
+                self.detail = new_attr
             elif command in ('delete-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.delete_attribute(attribute)
+                self.detail = None
             elif command in ('add-gift'):
                 name = " ".join(args[1:])
                 gift = Gift(name)
                 msg = self.contact.add_gift(gift)
+                self.detail = gift
             elif command in ('edit-gift'):
                 name = " ".join(args[1:])
                 new_gift = Gift(name)
-                old_gift = self.gift
+                old_gift = self.detail
                 msg = self.contact.edit_gift(old_gift, new_gift)
+                self.detail = gift
             elif command in ('delete-gift'):
                 name = " ".join(args[1:])
                 gift = Gift(name)
                 msg = self.contact.delete_gift(gift)
+                self.detail = None
             elif command in ('add-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.add_note(date_str)
+                self.detail = Note(None, None) #TODO
             elif command in ('rename-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.rename_note(self.note, date_str)
+                self.detail = Note(None, None) #TODO
             elif command in ('delete-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.delete_note(date_str)
+                self.detail = None
             elif command in ('edit-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.edit_note(date_str)
+                self.detail = Note(None, None) #TODO
             else:
                 msg = 'Not a valid command.'
 
-            self.core.frame.refresh_contact_list(self.contact, self.pos)
+            #self.core.frame.refresh_contact_list(self.contact, self.pos)
+            self.core.frame.refresh_contact_list(self.contact, self.detail)
 
         self.core.frame.set_focus('body')
         self.core.frame.console.show_message(msg)
@@ -122,13 +135,13 @@ class CLI:
 
     def edit_attribute(self, contact, attribute):
         self.contact = contact
-        self.attribute = attribute
+        self.detail = attribute
         command = 'edit-attribute {} {}'.format(attribute.key, attribute.value)
         self.core.frame.console.show_console(command)
 
     def delete_attribute(self, contact, attribute):
         self.contact = contact
-        self.attribute = attribute
+        self.detail = attribute
         command = 'delete-attribute {} {}'.format(attribute.key, attribute.value)
         self.core.frame.console.show_console(command)
 
@@ -141,26 +154,26 @@ class CLI:
 
     def edit_gift(self, contact, gift):
         self.contact = contact
-        self.gift = gift
+        self.detail = gift
         command = 'edit-gift {}'.format(gift.name)
         self.core.frame.console.show_console(command)
 
     def delete_gift(self, contact, gift):
         self.contact = contact
-        self.gift = gift
+        self.detail = gift
         command = 'delete-gift {}'.format(gift.name)
         self.core.frame.console.show_console(command)
 
     def mark_gifted(self, contact, gift):
         self.contact = contact
-        self.gift = gift
+        self.detail = gift
         new_name = "x " + gift.name[2:]
         command = 'edit-gift {}'.format(new_name)
         self.core.frame.console.show_console(command)
 
     def unmark_gifted(self, contact, gift):
         self.contact = contact
-        self.gift = gift
+        self.detail = gift
         new_name = gift.name[2:]
         command = 'edit-gift {}'.format(new_name)
         self.core.frame.console.show_console(command)
@@ -175,21 +188,21 @@ class CLI:
 
     def rename_note(self, contact, note):
         self.contact = contact
-        self.note = note
+        self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'rename-note {}'.format(date_str)
         self.core.frame.console.show_console(command)
 
     def delete_note(self, contact, note):
         self.contact = contact
-        self.note = note
+        self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'delete-note {}'.format(date_str)
         self.core.frame.console.show_console(command)
 
     def edit_note(self, contact, note):
         self.contact = contact
-        self.note = note
+        self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
         args = 'edit-note {}'.format(date_str).split()
         self.core.cli.handle(args)

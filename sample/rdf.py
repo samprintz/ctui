@@ -150,9 +150,8 @@ class RDFStore:
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
             self.g.remove((s, old_attr_ref, Literal(old_attr.value)))
             self.save_file(self.path)
-            resource = Resource(self.g, s)
             new_attr_ref = URIRef(self.namespace + new_attr.key)
-            resource.set(new_attr_ref, Literal(new_attr.value))
+            self.g.add((s, new_attr_ref, Literal(new_attr.value)))
             self.save_file(self.path)
             return [new_attr.key, " changed to ", new_attr.value, "."]
             return "{} changed to {}.".format(new_attr.key, new_attr.value)
@@ -177,7 +176,7 @@ class RDFStore:
 
     def has_gifts(self, contact):
         s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-        return (s, GIFTIDEA_REF, None) in g
+        return (s, GIFTIDEA_REF, None) in self.g
 
 
     def get_gifts(self, contact):
@@ -203,18 +202,18 @@ class RDFStore:
 
     def add_gift(self, contact, gift):
         attr = Attribute("giftIdea", gift.name)
-        self.add_attribute(contact, attr)
+        return self.add_attribute(contact, attr)
 
 
     def edit_gift(self, contact, old_gift, new_gift):
         old_attr = Attribute("giftIdea", old_gift.name)
         new_attr = Attribute("giftIdea", new_gift.name)
-        self.edit_attribute(contact, old_attr, new_attr)
+        return self.edit_attribute(contact, old_attr, new_attr)
 
 
     def delete_gift(self, contact, gift):
         attr = Attribute("giftIdea", gift.name)
-        self.delete_attribute(contact, attr)
+        return self.delete_attribute(contact, attr)
 
 
     def mark_gifted(self, contact, gift):

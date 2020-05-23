@@ -23,6 +23,13 @@ class ContactFrame(urwid.Frame):
         self.config = config
         self.core = core
         self.set_footer()
+        self.first_detail_pos = 2
+        self.current_contact = None
+        self.current_contact_pos = None
+        self.current_detail = None
+        self.current_detail_pos = None
+        self.new_contact_focus = None
+        self.new_detail_focus = None
 
     def set_contact_list(self, contact_list):
         focus_map = self.config['display']['focus_map']
@@ -38,29 +45,74 @@ class ContactFrame(urwid.Frame):
         self.body.set_contact_details(contact)
         self.contact_details = self.body.contents[1][0].base_widget
 
-    def refresh_contact_list(self, focused_contact=None, position=None):
-        last_focused_contact = self.contact_list.get_focused_contact()
+    #def refresh_contact_list(self, focused_contact=None, position=None):
+        #last_focused_contact = self.contact_list.get_focused_contact()
+    def refresh_contact_list(self, new_contact=None, new_detail=None):
 
+        self.new_contact_focus = new_contact
+        self.new_detail_focus = new_detail
         contact_list = self.core.get_all_contacts()
         self.set_contact_list(contact_list)
+        self.update_focus()
 
-        # contact added or renamed: focus (new) contact / same contact
-        if focused_contact is not None: # 
-            pos = self.contact_list.get_contact_position(focused_contact)
+#        # contact added or renamed: focus (new) contact / same contact
+#        if focused_contact is not None: #
+#            pos = self.contact_list.get_contact_position(focused_contact)
+#        else:
+#            # contact deleted: focus previous contact
+#            if position is not None:
+#                if position == 0: # if first contact: jump to first
+#                    pos = 0
+#                else: # generally: focus previous
+#                    pos = position - 1
+#            # list refresh (ctrl+r): focus contact that was focused before refresh
+#            else:
+#                pos = self.contact_list.get_contact_position(last_focused_contact)
+#                if pos is None: # if in tests no contact was focused before
+#                    pos = 0
+#
+#        self.contact_list.set_focus_position(pos)
+
+    def update_focus(self):
+
+        # added/edited contact
+        if self.new_contact_focus is not None:
+            contact_pos = self.contact_list.get_contact_position(self.new_contact_focus)
+            detail_pos = self.current_detail_pos
+
+        # added/edited detail
+        elif self.new_detail_focus is not None:
+            contact_pos = self.current_contact_pos
+            detail_pos = self.contact_details.get_detail_position(self.new_detail_focus)
+
+        # deleted contact
+        elif self.contact_list.get_contact_position(self.current_contact) is None:
+            contact_pos = max(0, self.current_contact_pos - 1) # previous or first
+            detail_pos = self.first_detail_pos
+
+        # deleted detail
+        elif self.contact_details.get_detail_position(self.current_detail) is None:
+            contact_pos = self.current_contact_pos
+            detail_pos = max(self.first_detail_pos, self.current_detail_pos - 1) # previous or first
+
         else:
-            # contact deleted: focus previous contact
-            if position is not None:
-                if position == 0: # if first contact: jump to first
-                    pos = 0
-                else: # generally: focus previous
-                    pos = position - 1
-            # list refresh (ctrl+r): focus contact that was focused before refresh
-            else:
-                pos = self.contact_list.get_contact_position(last_focused_contact)
-                if pos is None: # if in tests no contact was focused before
-                    pos = 0
+            contact_pos = self.current_contact_pos
+            detail_pos = self.current_detail_pos
 
-        self.contact_list.set_focus_position(pos)
+        self.contact_list.set_focus_position(contact_pos)
+
+        # if contact doesn't have detail, don't focus details
+        if self.contact_list.get_focused_contact().has_details():
+            self.contact_details.set_focus_position(detail_pos)
+
+
+    def watch_focus(self):
+        self.current_contact = self.contact_list.get_focused_contact()
+        self.current_contact_pos = self.contact_list.get_focus_position()
+        self.current_detail = self.contact_details.get_focused_detail()
+        self.current_detail_pos = self.contact_details.get_focus_position()
+        hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
+        self.console.show_meta(hiea)
 
     def set_header(self):
         pass
@@ -69,15 +121,13 @@ class ContactFrame(urwid.Frame):
         self.footer = urwid.BoxAdapter(Console(self.core), height=1)
         self.console = self.footer.original_widget
 
-    def set_contact_detail_meta(self, meta):
-        pass
-        #text = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
-        #self.set_footer(text)
-
     def clear_footer(self):
         self.footer = urwid.BoxAdapter(Console(self.core), height=1)
         self.console = self.footer.original_widget
         self.set_focus('body')
+
+    def details_focused(self):
+        return self.body.get_focus_column() == 1
 
 
 class ContactFrameColumns(urwid.Columns):
@@ -111,6 +161,8 @@ class CustListBox(urwid.ListBox):
         self.core = core
 
     def keypress(self, size, key):
+        self.core.frame.watch_focus()
+
         if key == 'esc':
             self.core.last_keypress = None
         if self.core.last_keypress == 'i':
@@ -240,38 +292,67 @@ class ContactDetails(CustListBox):
 
     def set(self, contact):
         entries = [urwid.Text(contact.name), urwid.Divider()]
+        pos = len(entries)
 
         if contact.attributes is not None:
             for a in contact.attributes:
-                entries.append(AttributeEntry(contact, Attribute(a[0], a[1]), self.core))
+                entries.append(AttributeEntry(contact, Attribute(a[0], a[1]), pos, self.core))
+                pos = pos + 1
 
         if contact.gifts is not None:
             if len(entries) > 2:
                 entries.append(urwid.Divider())
+                pos = pos + 1
             entries.append(urwid.Text(u"GESCHENKE"))
+            pos = pos + 1
             for a in contact.gifts:
-                entries.append(GiftEntry(contact, Gift(a), self.core))
+                entries.append(GiftEntry(contact, Gift(a), pos, self.core))
+                pos = pos + 1
 
         if contact.notes is not None:
             if len(entries) > 2:
                 entries.append(urwid.Divider())
+                pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN"))
+            pos = pos + 1
             for d, content in contact.notes.items():
                 date = datetime.strptime(d, '%Y%m%d')
-                entries.append(NoteEntry(contact, Note(date, content), self.core))
+                entries.append(NoteEntry(contact, Note(date, content), pos, self.core))
+                pos = pos + 1
 
         self.body = urwid.SimpleFocusListWalker(entries)
         urwid.connect_signal(self.body, 'modified', self.show_meta)
 
     def show_meta(self):
-        if isinstance(self.focus, NoteEntry):
-            date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
-            self.core.frame.set_contact_detail_meta(date)
-        else:
-            self.core.frame.clear_footer()
+        pass
+        #if self.core.frame.details_focused() is True:
+        #    if type(self.focus) is NoteEntry:
+        #        date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
+        #        self.core.frame.console.show_meta(date)
+        #    elif isinstance(self.focus, DetailEntry):
+        #        self.core.frame.console.show_meta(str(self.focus.pos))
+        #else:
+        #    self.core.frame.clear_footer()
 
     def number_of_details(self):
         return len(self.body) - 2
+
+    def get_focused_detail(self):
+        return self.focus
+
+    def get_focus_position(self):
+        return self.focus_position
+
+    def set_focus_position(self, pos):
+        self.focus_position = pos
+
+    def get_detail_position(self, detail):
+        pos = 0
+        for entry in self.body:
+            if entry is detail:
+                return pos
+            pos = pos + 1
+        return None
 
     def keypress(self, size, key):
         if key == 'd':
@@ -281,9 +362,10 @@ class ContactDetails(CustListBox):
 
 
 class ListEntry(urwid.Button):
-    def __init__(self, label, core):
+    def __init__(self, label, pos, core):
         super(ListEntry, self).__init__(label)
         self.core = core
+        self.pos = pos
         self.set_label(label)
 
     def set_label(self, label):
@@ -295,9 +377,8 @@ class ListEntry(urwid.Button):
 
 class ContactEntry(ListEntry):
     def __init__(self, contact, pos, core):
-        super(ContactEntry, self).__init__(contact.name, core)
+        super(ContactEntry, self).__init__(contact.name, pos, core)
         self.contact = contact
-        self.pos = pos
 
     def keypress(self, size, key):
         if self.core.last_keypress is None:
@@ -314,22 +395,23 @@ class ContactEntry(ListEntry):
 
 
 class DetailEntry(ListEntry):
-    def __init__(self, contact, label, core):
-        super(DetailEntry, self).__init__(label, core)
+    def __init__(self, contact, detail, label, pos, core):
+        super(DetailEntry, self).__init__(label, pos, core)
         self.contact = contact
+        self.detail = detail
 
 
 class AttributeEntry(DetailEntry):
-    def __init__(self, contact, attribute, core):
+    def __init__(self, contact, attribute, pos, core):
         label = attribute.key + ': ' + attribute.value
-        super(AttributeEntry, self).__init__(contact, label, core)
+        super(AttributeEntry, self).__init__(contact, attribute, label, pos, core)
         self.attribute = attribute
 
     def keypress(self, size, key):
         if key == 'a':
             self.core.cli.edit_attribute(self.contact, self.attribute)
         elif key == 'h':
-            self.core.cli.delete_attribute(self.contact, self.attribute)
+            self.core.cli.delete_attribute(self.contact, self.attribute, self.pos)
         elif key == 'y':
             pyperclip.copy(self.value)
             msg = "Copied \"" + self.attribute.value + "\" to clipboard."
@@ -338,21 +420,21 @@ class AttributeEntry(DetailEntry):
             return super(ListEntry, self).keypress(size, key)
 
 class GiftEntry(DetailEntry):
-    def __init__(self, contact, gift, core):
-        super(GiftEntry, self).__init__(contact, gift.name, core)
+    def __init__(self, contact, gift, pos, core):
+        super(GiftEntry, self).__init__(contact, gift, gift.name, pos, core)
         self.gift = gift
 
     def keypress(self, size, key):
         if key == 'a':
             self.core.cli.edit_gift(self.contact, self.gift)
         elif key == 'h':
-            self.core.cli.delete_gift(self.contact, self.gift)
+            self.core.cli.delete_gift(self.contact, self.gift, self.pos)
         else:
             return super(GiftEntry, self).keypress(size, key)
 
 class NoteEntry(DetailEntry):
-    def __init__(self, contact, note, core):
-        super(NoteEntry, self).__init__(contact, note.content, core)
+    def __init__(self, contact, note, pos, core):
+        super(NoteEntry, self).__init__(contact, note, note.content, pos, core)
         self.note = note
 
     def keypress(self, size, key):
@@ -361,7 +443,7 @@ class NoteEntry(DetailEntry):
         elif key == 'a':
             self.core.cli.rename_note(self.contact, self.note)
         elif key == 'h':
-            self.core.cli.delete_note(self.contact, self.note)
+            self.core.cli.delete_note(self.contact, self.note, self.pos)
         else:
             return super(NoteEntry, self).keypress(size, key)
 
@@ -384,6 +466,9 @@ class Console(urwid.Filler):
     def show_search(self):
         self.body = urwid.Edit("/")
         self.core.frame.set_focus('footer')
+
+    def show_meta(self, meta):
+        self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
     def keypress(self, size, key):
         if key == 'esc':

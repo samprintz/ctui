@@ -77,7 +77,7 @@ class NotesStore:
         dirname = self.path + contact.name.replace(' ', '_')
         notes = dict()
         try:
-            for filename in os.listdir(dirname):
+            for filename in sorted(os.listdir(dirname)):
                 date = filename.replace('.txt', '')
                 with open(dirname + '/' + filename, "r") as f:
                     content = f.read()

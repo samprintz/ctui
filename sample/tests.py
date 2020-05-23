@@ -185,31 +185,36 @@ class TestObjects(unittest.TestCase):
     # attributes
 
     def test_add_attr(self):
-        self.contact.add_attribute(self.attr1)
+        res = self.contact.add_attribute(self.attr1)
+        self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_attribute(self.attr1))
 
     def test_add_attr_already_existing(self):
         self.contact.add_attribute(self.attr1)
         self.assertTrue(self.contact.has_attribute(self.attr1))
-        self.contact.add_attribute(self.attr1)
+        res = self.contact.add_attribute(self.attr1)
+        self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_attribute(self.attr1))
 
 
     def test_edit_attr(self):
         self.contact.add_attribute(self.attr1)
-        self.contact.edit_attribute(self.attr1, self.attr2)
+        res = self.contact.edit_attribute(self.attr1, self.attr2)
+        self.assertIsNotNone(res)
         self.assertFalse(self.contact.has_attribute(self.attr1))
         self.assertTrue(self.contact.has_attribute(self.attr2))
 
     def test_edit_attr_unchanged(self):
         self.contact.add_attribute(self.attr1)
         res = self.contact.edit_attribute(self.attr1, self.attr1)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
         self.assertTrue(self.contact.has_attribute(self.attr1))
 
     def test_edit_attr_not_existing(self):
         self.assertFalse(self.contact.has_attribute(self.attr1))
         res = self.contact.edit_attribute(self.attr1, self.attr2)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
         self.assertFalse(self.contact.has_attribute(self.attr2))
 
@@ -230,43 +235,50 @@ class TestObjects(unittest.TestCase):
     def test_delete_attr(self):
         self.contact.add_attribute(self.attr1)
         self.assertTrue(self.contact.has_attribute(self.attr1))
-        self.contact.delete_attribute(self.attr1)
+        res = self.contact.delete_attribute(self.attr1)
+        self.assertIsNotNone(res)
         self.assertFalse(self.contact.has_attribute(self.attr1))
 
     def test_delete_attr_not_existing(self):
         self.assertFalse(self.contact.has_attribute(self.attr1))
         res = self.contact.delete_attribute(self.attr1)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
 
 
     # gifts
 
     def test_add_gift(self):
-        self.contact.add_gift(self.gift1)
+        res = self.contact.add_gift(self.gift1)
+        self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_gift(self.gift1))
 
     def test_add_gift_already_existing(self):
         self.contact.add_gift(self.gift1)
         self.assertTrue(self.contact.has_gift(self.gift1))
-        self.contact.add_gift(self.gift1)
+        res = self.contact.add_gift(self.gift1)
+        self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_gift(self.gift1))
 
 
     def test_edit_gift(self):
         self.contact.add_gift(self.gift1)
-        self.contact.edit_gift(self.gift1, self.gift2)
+        res = self.contact.edit_gift(self.gift1, self.gift2)
+        self.assertIsNotNone(res)
         self.assertFalse(self.contact.has_gift(self.gift1))
         self.assertTrue(self.contact.has_gift(self.gift2))
 
     def test_edit_gift_unchanged(self):
         self.contact.add_gift(self.gift1)
         res = self.contact.edit_gift(self.gift1, self.gift1)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
         self.assertTrue(self.contact.has_gift(self.gift1))
 
     def test_edit_gift_not_existing(self):
         self.assertFalse(self.contact.has_gift(self.gift1))
         res = self.contact.edit_gift(self.gift1, self.gift2)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
         self.assertFalse(self.contact.has_gift(self.gift2))
 
@@ -274,12 +286,14 @@ class TestObjects(unittest.TestCase):
     def test_delete_gift(self):
         self.contact.add_gift(self.gift1)
         self.assertTrue(self.contact.has_gift(self.gift1))
-        self.contact.delete_gift(self.gift1)
+        res = self.contact.delete_gift(self.gift1)
+        self.assertIsNotNone(res)
         self.assertFalse(self.contact.has_gift(self.gift1))
 
     def test_delete_gift_not_existing(self):
         self.assertFalse(self.contact.has_gift(self.gift1))
         res = self.contact.delete_gift(self.gift1)
+        self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
 
 
@@ -403,6 +417,7 @@ class TestTUI(unittest.TestCase):
         self.contact2 = Contact(self.name2, self.core)
         self.contact_first = Contact(self.name_first, self.core)
         self.contact_last = Contact(self.name_last, self.core)
+        self.pos = 0
         self.core.frame.refresh_contact_list()
 
 
@@ -410,21 +425,21 @@ class TestTUI(unittest.TestCase):
 
     def test_init_attribute_entry(self):
         attribute = Attribute("key", "value")
-        entry = AttributeEntry(self.contact1, attribute, self.core)
+        entry = AttributeEntry(self.contact1, attribute, self.pos, self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_gift_entry(self):
         gift = Gift("name")
-        entry = GiftEntry(self.contact1, gift, self.core)
+        entry = GiftEntry(self.contact1, gift, self.pos, self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_note_entry(self):
         note = Note("20200101", "Text")
-        entry = NoteEntry(self.contact1, note, self.core)
+        entry = NoteEntry(self.contact1, note, self.pos, self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_contact_entry(self):
-        entry = ContactEntry(self.contact1, self.core, 0)
+        entry = ContactEntry(self.contact1, self.core, self.pos)
         self.assertIsInstance(entry.label, str)
 
 
@@ -544,12 +559,20 @@ class TestTUI(unittest.TestCase):
         self.core.frame.refresh_contact_list()
         pos = self.core.frame.contact_list.get_contact_position(self.contact_last)
         self.core.cli.delete_contact(self.contact_last, pos)
+        #self.core.frame.watch_focus()
         args = ['delete-contact', self.name_last]
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
         new_pos = self.core.frame.contact_list.get_contact_position(focused_contact)
         self.assertEqual(new_pos, pos - 1)
         self.assertNotEqual(focused_contact.name, self.name_last)
+
+    def test_focus_delete_when_next_no_attributes(self):
+        pass
+        #TODO
+        #previous = Contact("zzy")
+        #self.core.
+        #self.core.add_contact(self.contact_last)
 
 
     @classmethod
