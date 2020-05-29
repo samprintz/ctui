@@ -60,7 +60,6 @@ class CLI:
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.delete_attribute(attribute)
-                self.detail = None
             elif command in ('add-gift'):
                 name = " ".join(args[1:])
                 gift = Gift(name)
@@ -76,7 +75,6 @@ class CLI:
                 name = " ".join(args[1:])
                 gift = Gift(name)
                 msg = self.contact.delete_gift(gift)
-                self.detail = None
             elif command in ('add-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.add_note(date_str)
@@ -88,7 +86,6 @@ class CLI:
             elif command in ('delete-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.delete_note(date_str)
-                self.detail = None
             elif command in ('edit-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.edit_note(date_str)

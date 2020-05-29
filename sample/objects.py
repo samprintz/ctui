@@ -185,12 +185,26 @@ class Contact:
         return self.core.notesstore.edit_note(self, date, new_content)
 
 
+class Name:
+
+    def __init__(self, name):
+        self.name = name
+
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
 
 class Attribute:
 
     def __init__(self, key, value):
         self.key = key
         self.value = value
+
+
+    def __eq__(self, other):
+        return self.key == other.key and self.value == other.value
 
 
 
@@ -200,10 +214,18 @@ class Gift:
         self.name = name
 
 
+    def __eq__(self, other):
+        return self.name == other.name
+
+
 
 class Note:
 
     def __init__(self, date, content):
         self.date = date
         self.content = content
+
+
+    def __eq__(self, other):
+        return self.date == other.date
 

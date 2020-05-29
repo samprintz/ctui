@@ -22,79 +22,69 @@ class ContactFrame(urwid.Frame):
         super(ContactFrame, self).__init__(None)
         self.config = config
         self.core = core
-        self.set_footer()
         self.first_detail_pos = 2
         self.current_contact = None
         self.current_contact_pos = None
         self.current_detail = None
         self.current_detail_pos = None
-        self.new_contact_focus = None
-        self.new_detail_focus = None
+        self.set_footer()
+
+    def init_contact_list(self, contact_list):
+        self.body = ContactFrameColumns(self.core, self.config)
+        self.set_contact_list(contact_list)
+        self.set_contact_details()
+        self.watch_focus()
 
     def set_contact_list(self, contact_list):
-        focus_map = self.config['display']['focus_map']
-        self.body = ContactFrameColumns(contact_list, self.core, self.config)
+        self.body.set_contact_list(contact_list)
         self.contact_list = self.body.contents[0][0].base_widget
-        self.set_contact_details()
 
-    def set_contact_details(self):
-        contact = self.contact_list.get_focused_contact()
+    def set_contact_details(self, contact=None):
+        if contact is None:
+            contact = self.contact_list.get_focused_contact()
         contact.get_details() # augment existing contact with details (not before for performance)
-        if len(self.body.contents) > 1:
-            del self.body.contents[1]
         self.body.set_contact_details(contact)
-        self.contact_details = self.body.contents[1][0].base_widget
+        self.contact_details = self.body.contents[-1][0].base_widget
 
-    #def refresh_contact_list(self, focused_contact=None, position=None):
-        #last_focused_contact = self.contact_list.get_focused_contact()
-    def refresh_contact_list(self, new_contact=None, new_detail=None):
-
-        self.new_contact_focus = new_contact
-        self.new_detail_focus = new_detail
+    def refresh_contact_list(self, contact=None, detail=None):
         contact_list = self.core.get_all_contacts()
         self.set_contact_list(contact_list)
-        self.update_focus()
+        self.set_contact_details(contact)
+        self.refresh_focus(contact, detail)
 
-#        # contact added or renamed: focus (new) contact / same contact
-#        if focused_contact is not None: #
-#            pos = self.contact_list.get_contact_position(focused_contact)
-#        else:
-#            # contact deleted: focus previous contact
-#            if position is not None:
-#                if position == 0: # if first contact: jump to first
-#                    pos = 0
-#                else: # generally: focus previous
-#                    pos = position - 1
-#            # list refresh (ctrl+r): focus contact that was focused before refresh
-#            else:
-#                pos = self.contact_list.get_contact_position(last_focused_contact)
-#                if pos is None: # if in tests no contact was focused before
-#                    pos = 0
-#
-#        self.contact_list.set_focus_position(pos)
+    def refresh_focus(self, contact=None, detail=None):
+        #TODO When adding detail to another contact but the first, the name of the contact, not that detail is focused
+        last_contact_exists = self.contact_list.get_contact_position(
+                self.current_contact) is not None
+        last_detail_exists = self.contact_details.get_detail_position(
+                self.current_detail) is not None
+        current_detail_exists = self.contact_details.get_detail_position(
+                detail) is not None
 
-    def update_focus(self):
+        contact_added_or_edited = contact is not None and detail is None
+        contact_deleted = not last_contact_exists
+        detail_added_or_edited = contact is not None and detail is not None \
+                and current_detail_exists
+        detail_deleted = not last_detail_exists and not detail_added_or_edited \
+                and not contact_added_or_edited and not contact_deleted
 
-        # added/edited contact
-        if self.new_contact_focus is not None:
-            contact_pos = self.contact_list.get_contact_position(self.new_contact_focus)
-            detail_pos = self.current_detail_pos
+        pu.db
 
-        # added/edited detail
-        elif self.new_detail_focus is not None:
-            contact_pos = self.current_contact_pos
-            detail_pos = self.contact_details.get_detail_position(self.new_detail_focus)
-
-        # deleted contact
-        elif self.contact_list.get_contact_position(self.current_contact) is None:
+        focus_details_column = False
+        if contact_deleted:
             contact_pos = max(0, self.current_contact_pos - 1) # previous or first
             detail_pos = self.first_detail_pos
-
-        # deleted detail
-        elif self.contact_details.get_detail_position(self.current_detail) is None:
+        elif contact_added_or_edited:
+            contact_pos = self.contact_list.get_contact_position(contact)
+            detail_pos = self.current_detail_pos
+        elif detail_deleted:
             contact_pos = self.current_contact_pos
             detail_pos = max(self.first_detail_pos, self.current_detail_pos - 1) # previous or first
-
+            focus_details_column = True
+        elif detail_added_or_edited:
+            contact_pos = self.current_contact_pos
+            detail_pos = self.contact_details.get_detail_position(detail)
+            focus_details_column = True
         else:
             contact_pos = self.current_contact_pos
             detail_pos = self.current_detail_pos
@@ -102,9 +92,12 @@ class ContactFrame(urwid.Frame):
         self.contact_list.set_focus_position(contact_pos)
 
         # if contact doesn't have detail, don't focus details
-        if self.contact_list.get_focused_contact().has_details():
+        if focus_details_column and self.contact_list.get_focused_contact().has_details():
             self.contact_details.set_focus_position(detail_pos)
+            self.body.set_focus_column(1)
 
+        # update focus watchers (esp. for testing; usually keyboard already triggers this)
+        self.watch_focus()
 
     def watch_focus(self):
         self.current_contact = self.contact_list.get_focused_contact()
@@ -131,20 +124,33 @@ class ContactFrame(urwid.Frame):
 
 
 class ContactFrameColumns(urwid.Columns):
-    def __init__(self, contact_list, core, config):
+    def __init__(self, core, config):
         self.core = core
         self.focus_map = config['display']['focus_map']
         self.nav_width = config['display']['nav_width']
         super(ContactFrameColumns, self).__init__([], dividechars=1)
-        self.set_contact_list(contact_list)
 
     def set_contact_list(self, contact_list):
-        self.contents.append((urwid.AttrMap(ContactList(contact_list, self.core),
-            'options', self.focus_map), self.options('given', self.nav_width)))
+        column = (urwid.AttrMap(ContactList(contact_list, self.core),
+            'options', self.focus_map), self.options('given', self.nav_width))
+        if len(self.contents) < 1:
+            self.contents.append(column)
+        else:
+            self.contents[0] = column
 
     def set_contact_details(self, contact):
-        self.contents.append((urwid.AttrMap(ContactDetails(contact, self.core),
-            'options', self.focus_map), self.options('weight', 1, True)))
+        column = (urwid.AttrMap(ContactDetails(contact, self.core),
+            'options', self.focus_map), self.options('weight', 1, True))
+        i = len(self.contents)
+        #TODO: Problem ist, dass der 'modified' trigger aktiviert wird, die set_contact_detail ein zweites mal aufruft, und die details_list noch ein zweites mal appended!
+        if i > 1:
+            label = column[0].base_widget.body[0].label
+            column[0].base_widget.body[0].set_label(label + str(i))
+        pu.db
+        #if len(self.contents) < 2:
+        self.contents.append(column)
+        #else:
+        #    self.contents[1] = column
 
     def keypress(self, size, key):
         if key == 'ctrl r':
@@ -291,7 +297,8 @@ class ContactDetails(CustListBox):
         self.set(contact)
 
     def set(self, contact):
-        entries = [urwid.Text(contact.name), urwid.Divider()]
+        name = DetailEntry(contact, Name(contact.name), contact.name, 0, self.core)
+        entries = [name, urwid.Divider()]
         pos = len(entries)
 
         if contact.attributes is not None:
@@ -338,7 +345,9 @@ class ContactDetails(CustListBox):
         return len(self.body) - 2
 
     def get_focused_detail(self):
-        return self.focus
+#        if not hasattr(self.focus, 'detail'):
+#            return None
+        return self.focus.detail
 
     def get_focus_position(self):
         return self.focus_position
@@ -348,9 +357,17 @@ class ContactDetails(CustListBox):
 
     def get_detail_position(self, detail):
         pos = 0
+#        if not isinstance(detail, Attribute) and not isinstance(detail, Gift) \
+#                and not isinstance(detail, Note):
+#            return None
         for entry in self.body:
-            if entry is detail:
-                return pos
+#            if isinstance(detail, urwid.Text):
+#                if entry.text == detail.text:
+#                    return pos
+            if isinstance(entry, DetailEntry):
+                if type(entry.detail) == type(detail):
+                    if entry.detail == detail:
+                        return pos
             pos = pos + 1
         return None
 
@@ -411,7 +428,7 @@ class AttributeEntry(DetailEntry):
         if key == 'a':
             self.core.cli.edit_attribute(self.contact, self.attribute)
         elif key == 'h':
-            self.core.cli.delete_attribute(self.contact, self.attribute, self.pos)
+            self.core.cli.delete_attribute(self.contact, self.attribute)
         elif key == 'y':
             pyperclip.copy(self.value)
             msg = "Copied \"" + self.attribute.value + "\" to clipboard."
@@ -428,7 +445,7 @@ class GiftEntry(DetailEntry):
         if key == 'a':
             self.core.cli.edit_gift(self.contact, self.gift)
         elif key == 'h':
-            self.core.cli.delete_gift(self.contact, self.gift, self.pos)
+            self.core.cli.delete_gift(self.contact, self.gift)
         else:
             return super(GiftEntry, self).keypress(size, key)
 
@@ -443,7 +460,7 @@ class NoteEntry(DetailEntry):
         elif key == 'a':
             self.core.cli.rename_note(self.contact, self.note)
         elif key == 'h':
-            self.core.cli.delete_note(self.contact, self.note, self.pos)
+            self.core.cli.delete_note(self.contact, self.note)
         else:
             return super(NoteEntry, self).keypress(size, key)
 

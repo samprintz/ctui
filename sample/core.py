@@ -25,11 +25,10 @@ class Core:
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
-        contacts = self.get_all_contacts()
+        contact_list = self.get_all_contacts()
 
         self.frame = tui.ContactFrame(config, self)
-        self.frame.set_contact_list(contacts)
-        self.frame.watch_focus()
+        self.frame.init_contact_list(contact_list)
 
         if not test:
             loop = tui.ContactLoop(self.frame, config)

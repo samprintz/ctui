@@ -100,7 +100,9 @@ class RDFStore:
     # attributes
 
     def has_attributes(self, contact):
-        pass
+        s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        triples = [po for po in self.g.predicate_objects(s)]
+        return len(triples) > 1
 
 
     def get_attributes(self, contact):

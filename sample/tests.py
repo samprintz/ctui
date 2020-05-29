@@ -405,10 +405,11 @@ class TestTUI(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.core = Core(config, True)
+        pass
 
     @classmethod
     def setUp(self):
+        self.core = Core(config, True)
         self.name1 = "Test Contact A"
         self.name2 = "Test Contact B"
         self.name_first = "A"
@@ -418,7 +419,6 @@ class TestTUI(unittest.TestCase):
         self.contact_first = Contact(self.name_first, self.core)
         self.contact_last = Contact(self.name_last, self.core)
         self.pos = 0
-        self.core.frame.refresh_contact_list()
 
 
     # test initialization entries objects
@@ -532,7 +532,7 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_first(self):
         self.core.add_contact(self.contact_first)
-        self.core.frame.refresh_contact_list()
+        self.core.frame.refresh_contact_list(self.contact_first)
         pos = self.core.frame.contact_list.get_contact_position(self.contact_first)
         self.core.cli.delete_contact(self.contact_first, pos)
         args = ['delete-contact', self.name_first]
@@ -544,7 +544,7 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_some(self):
         self.core.add_contact(self.contact1)
-        self.core.frame.refresh_contact_list()
+        self.core.frame.refresh_contact_list(self.contact1)
         pos = self.core.frame.contact_list.get_contact_position(self.contact1)
         self.core.cli.delete_contact(self.contact1, pos)
         args = ['delete-contact', self.name1]
@@ -556,10 +556,9 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_last(self):
         self.core.add_contact(self.contact_last)
-        self.core.frame.refresh_contact_list()
+        self.core.frame.refresh_contact_list(self.contact_last)
         pos = self.core.frame.contact_list.get_contact_position(self.contact_last)
         self.core.cli.delete_contact(self.contact_last, pos)
-        #self.core.frame.watch_focus()
         args = ['delete-contact', self.name_last]
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
