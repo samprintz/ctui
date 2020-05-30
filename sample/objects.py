@@ -130,15 +130,19 @@ class Contact:
         except ValueError:
             return "\"{}\" not in format YYYYMMDD.".format(date_str)
 
+        if not self.core.notesstore.contains_contact(self):
+            self.core.notesstore.add_contact(self)
+
         if self.has_note(date):
             return self.edit_note(date_str)
 
         try:
             content = self.core.editor.add(self.get_notes_path(), date_str)
+            note = Note(date, content)
         except OSError:
             return "Error: Note couldn't be added."
 
-        return self.core.notesstore.add_note(self, date, content)
+        return self.core.notesstore.add_note(self, note)
 
 
     def rename_note(self, note, date_str):
@@ -222,6 +226,11 @@ class Gift:
 class Note:
 
     def __init__(self, date, content):
+        if isinstance(date, str):
+            try:
+                date = datetime.strptime(date, '%Y%m%d')
+            except ValueError:
+                raise ValueError #TODO
         self.date = date
         self.content = content
 

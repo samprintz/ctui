@@ -109,19 +109,16 @@ class NotesStore:
             return "Couldn't read note"
 
 
-    def add_note(self, contact, date, content):
-        assert not self.contains_note(contact, date)
-
-        if not self.contains_contact(contact):
-            self.add_contact(contact)
+    def add_note(self, contact, note):
+        assert not self.contains_note(contact, note.date)
 
         dirname = self.path + contact.name.replace(' ', '_')
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
 
         try:
             with open(path, 'w') as f:
-                f.write(content)
+                f.write(note.content)
             return "Note added."
         except OSError:
             return "Error: Note not created."

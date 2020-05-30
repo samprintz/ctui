@@ -23,6 +23,7 @@ class CLI:
             name = " ".join(args[0:])
             msg = self.core.search_contact(name)
             self.mode = None
+            self.action = None
 
         else:
             command = args[0]
@@ -31,23 +32,27 @@ class CLI:
                 contact = Contact(name, self.core)
                 msg = self.core.add_contact(contact)
                 self.contact = contact # to focus it when refreshing contact list
+                self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('rename-contact'):
                 contact = self.contact
                 new_name = " ".join(args[1:])
                 msg = self.core.rename_contact(contact, new_name)
                 contact.name = new_name # TODO
                 self.contact = contact # to focus it when refreshing contact list
+                self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('delete-contact'):
                 name = " ".join(args[1:])
                 contact = Contact(name, self.core)
                 msg = self.core.delete_contact(contact)
                 self.contact = None # to focus other when refreshing contact list
+                self.action = Action.CONTACT_DELETED
             elif command in ('add-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.add_attribute(attribute)
                 self.detail = attribute
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('edit-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
@@ -55,46 +60,54 @@ class CLI:
                 old_attr = self.detail
                 msg = self.contact.edit_attribute(old_attr, new_attr)
                 self.detail = new_attr
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('delete-attribute'):
                 key = args[1]
                 value = " ".join(args[2:])
                 attribute = Attribute(key, value)
                 msg = self.contact.delete_attribute(attribute)
+                self.action = Action.DETAIL_DELETED
             elif command in ('add-gift'):
                 name = " ".join(args[1:])
                 gift = Gift(name)
                 msg = self.contact.add_gift(gift)
                 self.detail = gift
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('edit-gift'):
                 name = " ".join(args[1:])
                 new_gift = Gift(name)
                 old_gift = self.detail
                 msg = self.contact.edit_gift(old_gift, new_gift)
-                self.detail = gift
+                self.detail = new_gift
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('delete-gift'):
                 name = " ".join(args[1:])
                 gift = Gift(name)
                 msg = self.contact.delete_gift(gift)
+                self.action = Action.DETAIL_DELETED
             elif command in ('add-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.add_note(date_str)
-                self.detail = Note(None, None) #TODO
+                self.detail = Note(date_str, None)
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('rename-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.rename_note(self.note, date_str)
-                self.detail = Note(None, None) #TODO
+                self.detail = Note(date_str, None)
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('delete-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.delete_note(date_str)
+                self.action = Action.DETAIL_DELETED
             elif command in ('edit-note'):
                 date_str = " ".join(args[1:])
                 msg = self.contact.edit_note(date_str)
-                self.detail = Note(None, None) #TODO
+                self.detail = Note(date_str, None)
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             else:
                 msg = 'Not a valid command.'
 
-            #self.core.frame.refresh_contact_list(self.contact, self.pos)
-            self.core.frame.refresh_contact_list(self.contact, self.detail)
+            self.core.frame.refresh_contact_list(self.action, self.contact, self.detail)
 
         self.core.frame.set_focus('body')
         self.core.frame.console.show_message(msg)
@@ -210,4 +223,10 @@ class Mode(Enum):
     SEARCH = 'search'
     CONSOLE = 'console'
     INPUT = 'input'
+
+class Action(Enum):
+    CONTACT_ADDED_OR_EDITED = 'contact_added_or_edited'
+    CONTACT_DELETED = 'contact_deleted'
+    DETAIL_ADDED_OR_EDITED = 'detail_added_or_edited'
+    DETAIL_DELETED = 'detail_deleted'
 
