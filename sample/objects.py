@@ -49,7 +49,7 @@ class Contact:
             return "Error: {} doesn't own attribute {}={}.".format(
                     self.name, old_attr.key, old_attr.value)
 
-        if old_attr.value == new_attr.value:
+        if old_attr.key == new_attr.key and old_attr.value == new_attr.value:
             return "Warning: Attribute unchanged."
 
         return self.core.rdfstore.edit_attribute(self, old_attr, new_attr)

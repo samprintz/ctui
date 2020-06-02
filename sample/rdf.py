@@ -145,7 +145,7 @@ class RDFStore:
 
     def edit_attribute(self, contact, old_attr, new_attr):
         assert self.has_attribute(contact, old_attr)
-        assert old_attr.value != new_attr.value
+        assert old_attr.key != new_attr.key or old_attr.value != new_attr.value
 
         try:
             old_attr_ref = URIRef(self.namespace + old_attr.key)
