@@ -1,0 +1,26 @@
+[paths]
+rdf_file = ~/.contact-tui/contacts.n3
+notes_dir = ~/.contact-tui/notes/
+
+[rdf]
+serialization = n3
+namespace = http://TBD/contact#
+
+[google]
+credentials_file = ~/.contact-tui/google_credentials.json
+token_file = ~/.contact-tui/google_token.pickle
+
+[display]
+nav_width = 24
+
+[colors]
+default_text = "light gray"
+default_bg = "black"
+options_text = "light gray"
+options_bg = "black"
+focused_options_text = "black"
+focused_options_bg = "light gray"
+selected_text = "black"
+selected_bg = "light gray"
+status_bar_text = "light gray"
+status_bar_bg = "black"

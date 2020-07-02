@@ -1,6 +1,5 @@
-config
 contacts
 archiv/
 orga/
-sample/__pycache__
+contact-tui/__pycache__
 .ycm_extra_conf.py
