@@ -11,6 +11,10 @@ def load_config(path):
             'rdf': {
                 'namespace': cfg.get('rdf', 'namespace')
                 },
+            'google': {
+                'credentials_file': cfg.get('google', 'credentials_file'),
+                'token_file': cfg.get('google', 'token_file')
+                },
             'editor': 'vim',
             'display': {
                 'nav_width': cfg.getint('display', 'nav_width'),

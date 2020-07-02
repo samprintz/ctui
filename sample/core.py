@@ -12,6 +12,7 @@ import cli
 import notes
 import rdf
 import tui
+import google_contacts
 
 
 """
@@ -22,6 +23,7 @@ class Core:
     def __init__(self, config, test=False):
         self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
         self.notesstore = notes.NotesStore(config['path']['notes_dir'])
+        self.googlestore = google_contacts.GoogleStore(config['google']['credentials_file'], config['google']['token_file'])
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
@@ -38,7 +40,8 @@ class Core:
     """
     def get_all_contacts(self):
         contact_names = self.rdfstore.get_all_contact_names() \
-                + self.notesstore.get_all_contact_names()
+                + self.notesstore.get_all_contact_names() \
+                + self.googlestore.get_all_contacts_names()
         sorted_contact_names = sorted(set(contact_names))
         contacts = []
         for c in sorted_contact_names:
