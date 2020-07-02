@@ -57,21 +57,21 @@ class ContactFrame(urwid.Frame):
     def refresh_focus(self, action=None, contact=None, detail=None):
         contact_pos = None
         detail_pos = None
-        focus_detail_column = False
 
         if action is Action.CONTACT_ADDED_OR_EDITED:
             contact_pos = self.contact_list.get_contact_position(contact)
             detail_pos = 0
+            self.body.set_focus_column(0)
         elif action is Action.CONTACT_DELETED:
             contact_pos = min(self.current_contact_pos, len(self.contact_list.body) - 1)
             detail_pos = 0
         elif action is Action.DETAIL_ADDED_OR_EDITED:
             detail_pos = self.contact_details.get_detail_position(detail)
-            focus_detail_column = True
+            self.body.set_focus_column(1)
         elif action is Action.DETAIL_DELETED:
             if contact.has_details(): # don't focus details column if contact has no details
                 detail_pos = min(self.current_detail_pos, len(self.contact_details.body) - 1)
-                focus_detail_column = True
+                self.body.set_focus_column(1)
             else:
                 detail_pos = 0
         else: # defaults for ctrl+r refresh
@@ -84,8 +84,6 @@ class ContactFrame(urwid.Frame):
 
         # update focused detail
         self.contact_details.set_focus_position(detail_pos)
-        if focus_detail_column:
-            self.body.set_focus_column(1)
 
         # update focus watchers (esp. for testing; usually keyboard already triggers this)
         self.watch_focus()
@@ -95,8 +93,8 @@ class ContactFrame(urwid.Frame):
         self.current_contact_pos = self.contact_list.get_focus_position()
         self.current_detail = self.contact_details.get_focused_detail()
         self.current_detail_pos = self.contact_details.get_focus_position()
-        hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
-        self.console.show_meta(hiea)
+        #hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
+        #self.console.show_meta(hiea)
 
     def set_header(self):
         pass
@@ -132,11 +130,6 @@ class ContactFrameColumns(urwid.Columns):
     def set_contact_details(self, contact):
         column = (urwid.AttrMap(ContactDetails(contact, self.core),
             'options', self.focus_map), self.options('weight', 1, True))
-        #i = len(self.contents)
-        #TODO: Problem ist, dass der 'modified' trigger aktiviert wird, die set_contact_detail ein zweites mal aufruft, und die details_list noch ein zweites mal appended!
-        #if i > 1:
-        #    label = column[0].base_widget.body[0].label
-        #    column[0].base_widget.body[0].set_label(label + str(i))
         if len(self.contents) < 2:
             self.contents.append(column)
         else:
@@ -174,6 +167,8 @@ class CustListBox(urwid.ListBox):
                 self.core.cli.add_note(focused_contact)
             else:
                 self.core.last_keypress = None
+        elif key == 'I':
+            self.core.cli.add_contact()
         else:
             if key == 'i':
                 self.core.last_keypress = 'i'
@@ -321,15 +316,14 @@ class ContactDetails(CustListBox):
         urwid.connect_signal(self.body, 'modified', self.show_meta)
 
     def show_meta(self):
-        pass
-        #if self.core.frame.details_focused() is True:
-        #    if type(self.focus) is NoteEntry:
-        #        date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
-        #        self.core.frame.console.show_meta(date)
-        #    elif isinstance(self.focus, DetailEntry):
-        #        self.core.frame.console.show_meta(str(self.focus.pos))
-        #else:
-        #    self.core.frame.clear_footer()
+        if self.core.frame.details_focused() is True:
+            if type(self.focus) is NoteEntry:
+                date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
+                self.core.frame.console.show_meta(date)
+            elif isinstance(self.focus, DetailEntry):
+                self.core.frame.console.show_meta(str(self.focus.pos))
+        else:
+            self.core.frame.clear_footer()
 
     def number_of_details(self):
         return len(self.body) - 2
@@ -347,13 +341,7 @@ class ContactDetails(CustListBox):
 
     def get_detail_position(self, detail):
         pos = 0
-#        if not isinstance(detail, Attribute) and not isinstance(detail, Gift) \
-#                and not isinstance(detail, Note):
-#            return None
         for entry in self.body:
-#            if isinstance(detail, urwid.Text):
-#                if entry.text == detail.text:
-#                    return pos
             if isinstance(entry, DetailEntry):
                 if type(entry.detail) == type(detail):
                     if entry.detail == detail:
@@ -390,11 +378,11 @@ class ContactEntry(ListEntry):
     def keypress(self, size, key):
         if self.core.last_keypress is None:
             if key == 'a':
-                self.core.cli.rename_contact(self.contact, self.pos)
-            elif key == 'I':
-                self.core.cli.add_contact(self.pos)
+                self.core.cli.rename_contact(self.contact)
             elif key == 'h':
-                self.core.cli.delete_contact(self.contact, self.pos)
+                self.core.cli.delete_contact(self.contact)
+            elif key == 'enter':
+                return super(ContactEntry, self).keypress(size, 'right')
             else:
                 return super(ContactEntry, self).keypress(size, key)
         else:

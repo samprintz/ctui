@@ -14,7 +14,6 @@ class CLI:
         self.core = core
         self.contact = None
         self.detail = None
-        self.pos = None
         self.mode = None
 
 
@@ -92,7 +91,7 @@ class CLI:
                 self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('rename-note'):
                 date_str = " ".join(args[1:])
-                msg = self.contact.rename_note(self.note, date_str)
+                msg = self.contact.rename_note(self.detail, date_str)
                 self.detail = Note(date_str, None)
                 self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('delete-note'):
@@ -115,20 +114,17 @@ class CLI:
 
     # contacts
 
-    def add_contact(self, pos):
-        self.pos = pos
+    def add_contact(self):
         command = 'add-contact '
         self.core.frame.console.show_console(command)
 
-    def rename_contact(self, contact, pos):
+    def rename_contact(self, contact):
         self.contact = contact
-        self.pos = pos
         command = 'rename-contact {}'.format(contact.name)
         self.core.frame.console.show_console(command)
 
-    def delete_contact(self, contact, pos):
+    def delete_contact(self, contact):
         self.contact = contact
-        self.pos = pos
         command = 'delete-contact {}'.format(contact.name)
         self.core.frame.console.show_console(command)
 
