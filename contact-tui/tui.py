@@ -27,6 +27,7 @@ class ContactFrame(urwid.Frame):
         self.current_contact_pos = None
         self.current_detail = None
         self.current_detail_pos = None
+        self.core.find_mode = False
         self.set_footer()
 
     def init_contact_list(self, contact_list):
@@ -154,7 +155,21 @@ class CustListBox(urwid.ListBox):
 
         if key == 'esc':
             self.core.last_keypress = None
-        if self.core.last_keypress == 'i':
+            self.core.find_mode = False
+            self.core.find_string = ''
+        elif self.core.find_mode is True:
+            if key == 'enter':
+                self.core.find_mode = False
+                self.core.find_string = ''
+            else:
+                self.core.find_string += str(key)
+                found = self.core.frame.contact_list.jump_to_contact(self.core.find_string)
+                # workaround, otherwise list focus not updated
+                super(CustListBox, self).keypress(size, 'left')
+                if not found:
+                    self.core.find_mode = False
+                    self.core.find_string = ''
+        elif self.core.last_keypress == 'i':
             focused_contact = self.core.frame.contact_list.get_focused_contact()
             if key == 'i':
                 self.core.last_keypress = None
@@ -167,6 +182,14 @@ class CustListBox(urwid.ListBox):
                 self.core.cli.add_note(focused_contact)
             else:
                 self.core.last_keypress = None
+        elif self.core.last_keypress == 'g':
+            if key == 'g':
+                self.core.last_keypress = None
+                # 2x as workaround, otherwise list focus not updated
+                super(CustListBox, self).keypress(size, 'home')
+                super(CustListBox, self).keypress(size, 'home')
+            else:
+                self.core.last_keypress = None
         elif key == 'I':
             self.core.cli.add_contact()
         else:
@@ -174,6 +197,9 @@ class CustListBox(urwid.ListBox):
                 self.core.last_keypress = 'i'
             elif key == '/':
                 self.core.cli.search_contact()
+            elif key == 'f':
+                self.core.find_mode = True
+                self.core.find_string = ''
             elif key == 't':
                 if self.repeat_command > 0:
                     self.jump_down(size, self.repeat_command)
@@ -187,10 +213,11 @@ class CustListBox(urwid.ListBox):
                 else:
                     super(CustListBox, self).keypress(size, 'up')
             elif key == 'G':
+                # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'end')
                 super(CustListBox, self).keypress(size, 'end')
             elif key == 'g':
-                super(CustListBox, self).keypress(size, 'home')
+                self.core.last_keypress = 'g'
             elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 if self.repeat_command > 0:
                     self.repeat_command = int(str(self.repeat_command) + key)
@@ -250,7 +277,7 @@ class ContactList(CustListBox):
     def get_contact_position_startswith(self, name):
         pos = 0
         for entry in self.body:
-            if entry.label.startswith(name):
+            if entry.label.lower().startswith(name.lower()):
                 return pos
             pos = pos + 1
         return None
@@ -259,9 +286,11 @@ class ContactList(CustListBox):
         pos = self.get_contact_position_startswith(name)
         if pos is not None:
             self.set_focus(pos)
+            return True
+        return False
 
     def keypress(self, size, key):
-        if self.core.last_keypress is None:
+        if self.core.last_keypress is None and self.core.find_mode is False:
             if key == 'n':
                 # if has details
                 #if self.core.frame.contact_details.number_of_details() > 0:
