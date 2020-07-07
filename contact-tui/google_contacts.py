@@ -1,3 +1,4 @@
+from datetime import date,datetime
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -5,11 +6,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 import pudb
+from objects import GoogleContact, GoogleAttribute
 
 
 class GoogleStore:
 
-    def __init__(self, credentials_file, token_file):
+    def __init__(self, core, credentials_file, token_file):
+        self.core = core
         # If modifying these scopes, delete the file token.pickle.
         # Scopes: https://developers.google.com/people#people
         SCOPES = ['https://www.googleapis.com/auth/contacts']
@@ -38,10 +41,10 @@ class GoogleStore:
         self.service = build('people', 'v1', credentials=creds)
 
 
-    def get_all_contacts_names(self):
+    def get_all_contact_names(self):
         results = self.service.people().connections().list(
-            resourceName='people/me',
-            personFields='names,emailAddresses').execute()
+            resourceName='people/me', pageSize=1000,
+            personFields='names').execute()
         connections = results.get('connections', [])
 
         contact_names = []
@@ -52,6 +55,59 @@ class GoogleStore:
                 name = name + " [G]"
                 contact_names.append(name)
         return sorted(contact_names)
+
+    def get_all_contacts(self):
+        results = self.service.people().connections().list(
+            resourceName='people/me', pageSize=1000,
+            personFields='names,birthdays,addresses,emailAddresses,phoneNumbers').execute()
+        connections = results.get('connections', [])
+
+        contacts = []
+        for person in connections:
+
+            names = person.get('names', [])
+            if names:
+                display_name = names[0].get('displayName')
+                family_name = names[0].get('familyName')
+                given_name = names[0].get('givenName')
+                honorific_prefix = names[0].get('honorificPrefix')
+
+            attributes = []
+
+            birthdays = person.get('birthdays', [])
+            if birthdays:
+                b = birthdays[0].get('date')
+                if b is not None:
+                    year = str(b['year']) if 'year' in b else ''
+                    month = str(b['month']) if 'month' in b else ''
+                    day = str(b['day']) if 'day' in b else ''
+                    #b_date = datetime(year, month, day)
+                    #b_string = datetime.strftime(b_date, '%d.%m,%Y')
+                    b_string = '.'.join([day, month, year])
+                else:
+                    b_string = birthdays[0].get('text')
+                    b_string = b_string.replace('/', '.')
+                attributes.append(GoogleAttribute('birthday', b_string, 'birthdays'))
+
+            #TODO
+            #addresses = person.get('addresses', [])
+            #if addresses:
+            #for address in addresses:
+
+            email_addresses = person.get('emailAddresses', [])
+            if email_addresses:
+                for email_address in email_addresses:
+                    attributes.append(GoogleAttribute('email', email_address.get('value'), 'emailAddresses'))
+
+            phone_numbers = person.get('phoneNumbers', [])
+            if phone_numbers:
+                for phone_number in phone_numbers:
+                    attributes.append(GoogleAttribute('tel', phone_number.get('value'), 'phoneNumbers'))
+
+            contact = GoogleContact(display_name, self.core, attributes)
+            contacts.append(contact)
+
+        return contacts
 
 
     def add_contact(self, contact):

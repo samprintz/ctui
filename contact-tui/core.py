@@ -23,7 +23,7 @@ class Core:
     def __init__(self, config, test=False):
         self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
         self.notesstore = notes.NotesStore(config['path']['notes_dir'])
-        self.googlestore = google_contacts.GoogleStore(config['google']['credentials_file'], config['google']['token_file'])
+        self.googlestore = google_contacts.GoogleStore(self, config['google']['credentials_file'], config['google']['token_file'])
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
@@ -39,13 +39,25 @@ class Core:
     Returns a list of all contacts without their details.
     """
     def get_all_contacts(self):
-        contact_names = self.rdfstore.get_all_contact_names() \
-                + self.notesstore.get_all_contact_names() \
-                + self.googlestore.get_all_contacts_names()
-        sorted_contact_names = sorted(set(contact_names))
         contacts = []
-        for c in sorted_contact_names:
+        for c in self.rdfstore.get_all_contact_names():
             contacts.append(Contact(c, self))
+        for c in self.notesstore.get_all_contact_names():
+            # check if contact already in list
+            try:
+                existing_contact = next(x for x in contacts if c == x.name)
+            except StopIteration:
+                contacts.append(Contact(c, self))
+        for contact in self.googlestore.get_all_contacts():
+            # check if contact already in list
+            try:
+                existing_contact = next(x for x in contacts if contact.name == x.name)
+                contacts.remove(existing_contact)
+                contact.merge(existing_contact)
+            except StopIteration:
+                pass
+            contacts.append(contact)
+        contacts.sort(key=lambda x: x.name)
         return contacts 
 
     """
@@ -53,7 +65,8 @@ class Core:
     """
     def get_all_contact_names(self):
         contact_names = self.rdfstore.get_all_contact_names() \
-                + self.notesstore.get_all_contact_names()
+                + self.notesstore.get_all_contact_names() \
+                + self.googlestore.get_all_contact_names()
         return sorted(set(contact_names))
 
     def contains_contact(self, contact):

@@ -320,6 +320,11 @@ class ContactDetails(CustListBox):
                 entries.append(AttributeEntry(contact, Attribute(a[0], a[1]), pos, self.core))
                 pos = pos + 1
 
+        if type(contact) is GoogleContact and contact.google_attributes is not None:
+            for a in contact.google_attributes:
+                entries.append(GoogleAttributeEntry(contact, a, pos, self.core))
+                pos = pos + 1
+
         if contact.gifts is not None:
             if len(entries) > 2:
                 entries.append(urwid.Divider())
@@ -470,6 +475,25 @@ class NoteEntry(DetailEntry):
             self.core.cli.delete_note(self.contact, self.note)
         else:
             return super(NoteEntry, self).keypress(size, key)
+
+class GoogleAttributeEntry(DetailEntry):
+    def __init__(self, contact, attribute, pos, core):
+        label = 'G: ' + attribute.key + ': ' + attribute.value
+        super(GoogleAttributeEntry, self).__init__(contact, attribute, label, pos, core)
+        self.attribute = attribute
+
+    def keypress(self, size, key):
+        #if key == 'a':
+        #    self.core.cli.edit_attribute(self.contact, self.attribute)
+        #elif key == 'h':
+        #    self.core.cli.delete_attribute(self.contact, self.attribute)
+        if key == 'y':
+            pyperclip.copy(self.value)
+            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+            self.core.frame.show_message(msg)
+        else:
+            return super(ListEntry, self).keypress(size, key)
+
 
 class Console(urwid.Filler):
     def __init__(self, core):

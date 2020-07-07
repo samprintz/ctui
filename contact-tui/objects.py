@@ -1,6 +1,5 @@
 from core import *
 
-
 class Contact:
 
     def __init__(self, name, core, attributes=None, gifts=None, notes=None):
@@ -237,4 +236,35 @@ class Note:
 
     def __eq__(self, other):
         return self.date == other.date
+
+
+
+
+
+
+
+class GoogleContact(Contact):
+
+    def __init__(self, name, core, google_attributes=None):
+        super(GoogleContact, self).__init__(name, core)
+        self.google_attributes = google_attributes
+
+    def merge(self, contact):
+        self.attributes = contact.attributes
+        self.gifts = contact.gifts
+        self.notes = contact.notes
+        return self
+
+
+
+class GoogleAttribute:
+
+    def __init__(self, key, value, google_key):
+        self.key = key
+        self.value = value
+        self.google_key = google_key
+
+
+    def __eq__(self, other):
+        return self.key == other.key and self.value == other.value
 
