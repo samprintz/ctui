@@ -442,9 +442,9 @@ class AttributeEntry(DetailEntry):
         elif key == 'h':
             self.core.cli.delete_attribute(self.contact, self.attribute)
         elif key == 'y':
-            pyperclip.copy(self.value)
+            pyperclip.copy(self.attribute.value)
             msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-            self.core.frame.show_message(msg)
+            self.core.frame.console.show_message(msg)
         else:
             return super(ListEntry, self).keypress(size, key)
 
@@ -488,9 +488,9 @@ class GoogleAttributeEntry(DetailEntry):
         #elif key == 'h':
         #    self.core.cli.delete_attribute(self.contact, self.attribute)
         if key == 'y':
-            pyperclip.copy(self.value)
+            pyperclip.copy(self.attribute.value)
             msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-            self.core.frame.show_message(msg)
+            self.core.frame.console.show_message(msg)
         else:
             return super(ListEntry, self).keypress(size, key)
 
