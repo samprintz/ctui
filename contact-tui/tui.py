@@ -282,8 +282,18 @@ class ContactList(CustListBox):
             pos = pos + 1
         return None
 
+    def get_contact_position_contains(self, name):
+        pos = 0
+        for entry in self.body:
+            if name.lower() in entry.label.lower():
+                return pos
+            pos = pos + 1
+        return None
+
     def jump_to_contact(self, name):
         pos = self.get_contact_position_startswith(name)
+        if pos is None:
+            pos = self.get_contact_position_contains(name)
         if pos is not None:
             self.set_focus(pos)
             return True
