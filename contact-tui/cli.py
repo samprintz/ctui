@@ -261,6 +261,7 @@ class Mode(Enum):
     INPUT = 'input'
 
 class Action(Enum):
+    REFRESH = 'refresh'
     CONTACT_ADDED_OR_EDITED = 'contact_added_or_edited'
     CONTACT_DELETED = 'contact_deleted'
     DETAIL_ADDED_OR_EDITED = 'detail_added_or_edited'

@@ -57,7 +57,8 @@ class ContactFrame(urwid.Frame):
         if action is Action.CONTACT_ADDED_OR_EDITED or \
                 action is Action.CONTACT_DELETED or \
                 action is Action.FILTERING or \
-                action is Action.FILTERED:
+                action is Action.FILTERED or \
+                action is Action.REFRESH:
             self.set_contact_list(contact_list)
         self.set_contact_details(contact)
         if action is not Action.FILTERING:
@@ -86,7 +87,10 @@ class ContactFrame(urwid.Frame):
         elif action is Action.FILTERING or action is Action.FILTERED:
             contact_pos = self.contact_list.get_contact_position(self.current_contact)
             detail_pos = 0
-        else: # defaults for ctrl+r refresh
+        elif action is Action.REFRESH:
+            contact_pos = self.contact_list.get_contact_position(self.current_contact)
+            detail_pos = 0
+        else: # defaults
             contact_pos = 0
             detail_pos = 0
 
@@ -150,7 +154,9 @@ class ContactFrameColumns(urwid.Columns):
 
     def keypress(self, size, key):
         if key == 'ctrl r':
-            self.core.frame.refresh_contact_list()
+            self.core.frame.watch_focus()
+            self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
+                    self.core.filter_string)
         else:
             return super(ContactFrameColumns, self).keypress(size, key)
 
