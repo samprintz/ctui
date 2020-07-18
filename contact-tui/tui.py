@@ -562,6 +562,10 @@ class Console(urwid.Filler):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
     def keypress(self, size, key):
+        if key == 'ctrl w':
+            text = self.original_widget.edit_text.rsplit(None, 1)[0]
+            self.original_widget.edit_text = text + ' '
+            return
         if self.filter_mode is True:
             if key == 'esc':
                 self.filter_mode = False
