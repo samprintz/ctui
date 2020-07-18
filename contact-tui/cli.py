@@ -23,6 +23,20 @@ class CLI:
             msg = self.core.search_contact(name)
             self.mode = None
             self.action = None
+            self.core.frame.set_focus('body')
+            self.core.frame.console.show_message(msg)
+
+        elif self.mode is Mode.FILTER:
+            if args is not False:
+                filter_string = " ".join(args[1:])
+                self.core.filter_string = filter_string
+                #TODO Update/preserve focus (by using refresh_contact_list()?)
+                self.core.filter_contacts(filter_string)
+            else: # enter was pressed
+                self.core.frame.set_focus('body')
+                msg = 'f={}'.format(self.core.filter_string)
+                self.core.frame.console.show_message(msg)
+                self.mode = None
 
         else:
             command = args[0]
@@ -107,9 +121,8 @@ class CLI:
                 msg = 'Not a valid command.'
 
             self.core.frame.refresh_contact_list(self.action, self.contact, self.detail)
-
-        self.core.frame.set_focus('body')
-        self.core.frame.console.show_message(msg)
+            self.core.frame.set_focus('body')
+            self.core.frame.console.show_message(msg)
 
 
     # contacts
@@ -131,6 +144,22 @@ class CLI:
     def search_contact(self):
         self.mode = Mode.SEARCH
         self.core.frame.console.show_search()
+
+    def filter_contacts(self):
+        self.mode = Mode.FILTER
+        if self.core.filter_mode is False:
+            self.core.filter_string = ''
+        self.core.filter_mode = True
+        command = 'filter {}'.format(self.core.filter_string)
+        self.core.frame.console.show_filter(command)
+
+    def unfilter_contacts(self):
+        self.mode = None
+        self.core.filter_mode = False
+        self.core.filter_string = ''
+        self.core.filter_contacts(self.core.filter_string)
+        self.core.frame.clear_footer()
+
 
     # attributes
 
@@ -217,6 +246,7 @@ class CLI:
 
 class Mode(Enum):
     SEARCH = 'search'
+    FILTER = 'filter'
     CONSOLE = 'console'
     INPUT = 'input'
 

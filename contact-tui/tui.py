@@ -28,6 +28,7 @@ class ContactFrame(urwid.Frame):
         self.current_detail = None
         self.current_detail_pos = None
         self.core.find_mode = False
+        self.core.filter_mode = False
         self.set_footer()
 
     def init_contact_list(self, contact_list):
@@ -49,6 +50,7 @@ class ContactFrame(urwid.Frame):
 
     def refresh_contact_list(self, action=None, contact=None, detail=None):
         contact_list = self.core.get_all_contacts()
+        self.core.contact_list = contact_list
         if action is Action.CONTACT_ADDED_OR_EDITED or \
                 action is Action.CONTACT_DELETED:
             self.set_contact_list(contact_list)
@@ -190,6 +192,12 @@ class CustListBox(urwid.ListBox):
                 super(CustListBox, self).keypress(size, 'home')
             else:
                 self.core.last_keypress = None
+        elif self.core.last_keypress == 'z':
+            if key == 'z':
+                self.core.last_keypress = None
+                self.core.cli.filter_contacts()
+            else:
+                self.core.last_keypress = None
         elif key == 'I':
             self.core.cli.add_contact()
         else:
@@ -218,6 +226,10 @@ class CustListBox(urwid.ListBox):
                 super(CustListBox, self).keypress(size, 'end')
             elif key == 'g':
                 self.core.last_keypress = 'g'
+            elif key == 'z':
+                self.core.last_keypress = 'z'
+            elif key == 'Z':
+                self.core.cli.unfilter_contacts()
             elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 if self.repeat_command > 0:
                     self.repeat_command = int(str(self.repeat_command) + key)
@@ -509,6 +521,7 @@ class Console(urwid.Filler):
     def __init__(self, core):
         super(Console, self).__init__(urwid.Text(""))
         self.core = core
+        self.filter_mode = False
 
     def show_console(self, command=''):
         self.body = urwid.Edit(":", command)
@@ -525,15 +538,34 @@ class Console(urwid.Filler):
         self.body = urwid.Edit("/")
         self.core.frame.set_focus('footer')
 
+    def show_filter(self, command):
+        self.filter_mode = True
+        self.show_console(command)
+
     def show_meta(self, meta):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
     def keypress(self, size, key):
-        if key == 'esc':
-            self.core.frame.clear_footer()
-        if key != 'enter':
-            return super(Console, self).keypress(size, key)
+        if self.filter_mode is True:
+            if key == 'esc':
+                self.filter_mode = False
+                self.core.cli.unfilter_contacts()
+                self.core.frame.clear_footer()
+            elif key == 'enter':
+                self.filter_mode = False
+                args = self.original_widget.edit_text.split()
+                return self.core.cli.handle(False)
+            else:
+                super(Console, self).keypress(size, key)
+                args = self.original_widget.edit_text.split()
+                return self.core.cli.handle(args)
+        else:
+            if key == 'esc':
+                self.core.frame.clear_footer()
+            elif key == 'enter':
+                args = self.original_widget.edit_text.split()
+                return self.core.cli.handle(args)
+            else:
+                return super(Console, self).keypress(size, key)
 
-        args = self.original_widget.edit_text.split()
-        return self.core.cli.handle(args)
 

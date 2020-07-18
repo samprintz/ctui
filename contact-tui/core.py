@@ -27,10 +27,10 @@ class Core:
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
-        contact_list = self.get_all_contacts()
+        self.contact_list = self.get_all_contacts()
 
         self.frame = tui.ContactFrame(config, self)
-        self.frame.init_contact_list(contact_list)
+        self.frame.init_contact_list(self.contact_list)
 
         if not test:
             loop = tui.ContactLoop(self.frame, config)
@@ -83,6 +83,13 @@ class Core:
     def search_contact(self, name):
         self.frame.contact_list.jump_to_contact(name)
         return ""
+
+    def filter_contacts(self, filter_string):
+        filtered_contact_list = []
+        for contact in self.contact_list:
+            if filter_string.lower() in contact.name.lower():
+                filtered_contact_list.append(contact)
+        self.frame.set_contact_list(filtered_contact_list)
 
     def add_contact(self, contact):
         if self.contains_contact(contact):
