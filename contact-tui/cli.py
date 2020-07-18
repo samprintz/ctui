@@ -14,6 +14,7 @@ class CLI:
         self.core = core
         self.contact = None
         self.detail = None
+        self.filter_string = ''
         self.mode = None
 
 
@@ -30,9 +31,14 @@ class CLI:
             if args is not False:
                 filter_string = " ".join(args[1:])
                 self.core.filter_string = filter_string
-                #TODO Update/preserve focus (by using refresh_contact_list()?)
-                self.core.filter_contacts(filter_string)
+                self.filter_string = filter_string
+                self.action = Action.FILTERING
+                self.core.frame.refresh_contact_list(self.action, self.contact,
+                        self.detail, self.filter_string)
             else: # enter was pressed
+                self.action = Action.FILTERED
+                self.core.frame.refresh_contact_list(self.action, self.contact,
+                        self.detail, self.filter_string)
                 self.core.frame.set_focus('body')
                 msg = 'f={}'.format(self.core.filter_string)
                 self.core.frame.console.show_message(msg)
@@ -120,7 +126,8 @@ class CLI:
             else:
                 msg = 'Not a valid command.'
 
-            self.core.frame.refresh_contact_list(self.action, self.contact, self.detail)
+            self.core.frame.refresh_contact_list(self.action, self.contact,
+                    self.detail, self.filter_string)
             self.core.frame.set_focus('body')
             self.core.frame.console.show_message(msg)
 
@@ -155,9 +162,12 @@ class CLI:
 
     def unfilter_contacts(self):
         self.mode = None
+        self.action = Action.FILTERED
+        self.filter_string = ''
         self.core.filter_mode = False
         self.core.filter_string = ''
-        self.core.filter_contacts(self.core.filter_string)
+        self.core.frame.refresh_contact_list(self.action, self.contact,
+                self.detail, self.filter_string)
         self.core.frame.clear_footer()
 
 
@@ -255,4 +265,6 @@ class Action(Enum):
     CONTACT_DELETED = 'contact_deleted'
     DETAIL_ADDED_OR_EDITED = 'detail_added_or_edited'
     DETAIL_DELETED = 'detail_deleted'
+    FILTERING = 'filtering' # when the console is still open
+    FILTERED = 'filtered' # when filter string is entered and the console closed
 

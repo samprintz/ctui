@@ -48,14 +48,20 @@ class ContactFrame(urwid.Frame):
         self.body.set_contact_details(contact)
         self.contact_details = self.body.contents[-1][0].base_widget
 
-    def refresh_contact_list(self, action=None, contact=None, detail=None):
-        contact_list = self.core.get_all_contacts()
-        self.core.contact_list = contact_list
+    def refresh_contact_list(self, action=None, contact=None, detail=None,
+            filter_string=''):
+        if action is not Action.FILTERING and action is not Action.FILTERED:
+            contact_list = self.core.get_all_contacts()
+            self.core.contact_list = contact_list
+        contact_list = self.core.filter_contacts(filter_string)
         if action is Action.CONTACT_ADDED_OR_EDITED or \
-                action is Action.CONTACT_DELETED:
+                action is Action.CONTACT_DELETED or \
+                action is Action.FILTERING or \
+                action is Action.FILTERED:
             self.set_contact_list(contact_list)
         self.set_contact_details(contact)
-        self.refresh_focus(action, contact, detail)
+        if action is not Action.FILTERING:
+            self.refresh_focus(action, contact, detail)
 
     def refresh_focus(self, action=None, contact=None, detail=None):
         contact_pos = None
@@ -77,6 +83,9 @@ class ContactFrame(urwid.Frame):
                 self.body.set_focus_column(1)
             else:
                 detail_pos = 0
+        elif action is Action.FILTERING or action is Action.FILTERED:
+            contact_pos = self.contact_list.get_contact_position(self.current_contact)
+            detail_pos = 0
         else: # defaults for ctrl+r refresh
             contact_pos = 0
             detail_pos = 0
@@ -90,6 +99,7 @@ class ContactFrame(urwid.Frame):
 
         # update focus watchers (esp. for testing; usually keyboard already triggers this)
         self.watch_focus()
+
 
     def watch_focus(self):
         self.current_contact = self.contact_list.get_focused_contact()

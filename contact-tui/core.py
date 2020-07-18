@@ -58,7 +58,7 @@ class Core:
                 pass
             contacts.append(contact)
         contacts.sort(key=lambda x: x.name)
-        return contacts 
+        return contacts
 
     """
     Returns a list of the names of all contacts.
@@ -85,11 +85,14 @@ class Core:
         return ""
 
     def filter_contacts(self, filter_string):
-        filtered_contact_list = []
+        if not filter_string: # shortcut for empty filter (unfilter)
+            return self.contact_list
+        contacts = []
         for contact in self.contact_list:
             if filter_string.lower() in contact.name.lower():
-                filtered_contact_list.append(contact)
-        self.frame.set_contact_list(filtered_contact_list)
+                contacts.append(contact)
+        contacts.sort(key=lambda x: x.name)
+        return contacts
 
     def add_contact(self, contact):
         if self.contains_contact(contact):
