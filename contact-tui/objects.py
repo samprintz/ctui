@@ -245,9 +245,10 @@ class Note:
 
 class GoogleContact(Contact):
 
-    def __init__(self, name, core, google_attributes=None):
+    def __init__(self, name, core, google_id, google_attributes=None):
         super(GoogleContact, self).__init__(name, core)
         self.google_attributes = google_attributes
+        self.google_id = google_id
 
     def merge(self, contact):
         self.attributes = contact.attributes

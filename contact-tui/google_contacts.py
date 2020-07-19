@@ -65,6 +65,7 @@ class GoogleStore:
         contacts = []
         for person in connections:
 
+            contact_id = person['resourceName']
             names = person.get('names', [])
             if names:
                 display_name = names[0].get('displayName')
@@ -104,24 +105,26 @@ class GoogleStore:
                 for phone_number in phone_numbers:
                     attributes.append(GoogleAttribute('tel', phone_number.get('value'), 'phoneNumbers'))
 
-            contact = GoogleContact(display_name, self.core, attributes)
+            contact = GoogleContact(display_name, self.core, contact_id, attributes)
             contacts.append(contact)
 
         return contacts
 
 
+        # Fields of Person object: https://developers.google.com/people/api/rest/v1/people#Person
+        # People API (deleteContact, createContact, ...): http://googleapis.github.io/google-api-python-client/docs/dyn/people_v1.people.html
+        # Example of createContact: https://gist.github.com/samkit5495/ff8e2a6644363cadaec3fa22ddf38c90
+
+
     def add_contact(self, contact):
-            # Fields of Person object: https://developers.google.com/people/api/rest/v1/people#Person
-            # People API (deleteContact, createContact, ...): http://googleapis.github.io/google-api-python-client/docs/dyn/people_v1.people.html
-            # Example of createContact: https://gist.github.com/samkit5495/ff8e2a6644363cadaec3fa22ddf38c90
-            print("\nTest: Add contact")
-            contact = {"names": [{
-                "givenName": "Aaabbb",
-                "familyName": "Aaaccc"
-            }]}
-            res = self.service.people().createContact(body=contact).execute()
-            print(str(res)[:60] + "...")
-            contactId = res['resourceName']
+        res = self.service.people().createContact(body=contact).execute()
+
+    def delete_contact(self, contact):
+        res = self.service.people().deleteContact(
+                resourceName=contact.google_id).execute()
+
+
+
 
     def edit_contact(self, contact, new_contact):
         # Test edit contact
@@ -137,9 +140,14 @@ class GoogleStore:
         print(str(res)[:60] + "...")
 
 
-    def delete_contact(self, contact):
-        # Test delete contact
-        print("\nTest: Delete contact")
-        res = self.service.people().deleteContact(resourceName=contactId).execute()
-        print(str(res)[:60] + "...")
+    def edit_email(self, contact, email, new_email):
+        pu.db
+        field = "emailAddresses"
+        contact[field] = [{
+            "type": "home",
+            "value": "test@test.il"
+            }]
+        res = service.people().updateContact(resourceName=contact['resourceName'],
+                body=updatedContact,
+                updatePersonFields='emailAddresses').execute()
 

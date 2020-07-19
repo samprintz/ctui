@@ -28,6 +28,7 @@ class Core:
         self.editor = Editor(config['editor'])
         self.last_keypress = None
         self.contact_list = self.get_all_contacts()
+        self.filter_string = ''
 
         self.frame = tui.ContactFrame(config, self)
         self.frame.init_contact_list(self.contact_list)
@@ -78,7 +79,9 @@ class Core:
                 self.notesstore.contains_contact_name(name)
 
     def get_contact(self, name):
-        pass
+        for contact in self.contact_list:
+            if contact.name == name:
+                return contact
 
     def search_contact(self, name):
         self.frame.contact_list.jump_to_contact(name)
@@ -113,14 +116,31 @@ class Core:
             self.notesstore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
-    def delete_contact(self, contact):
-        if not self.contains_contact(contact):
-            return "Error: {} doesn't exists.".format(contact.name)
+    def delete_contact(self, name):
+        contact = self.get_contact(name)
+        if contact is None:
+            return "Error: {} doesn't exists.".format(name)
+        if type(contact) is GoogleContact:
+            self.googlestore.delete_contact(contact)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.delete_contact(contact)
         if self.notesstore.contains_contact(contact):
             self.notesstore.delete_contact(contact)
-        return "{} deleted.".format(contact.name)
+        return "{} deleted.".format(name)
+
+    def add_google_contact(self, name):
+        #TODO Check if already exists (offline, not in Google)
+        names = name.split()
+        givenName = names[0]
+        familyName = names[1] if len(names) > 1 else ''
+        contact = {"names": [{
+            "givenName": givenName,
+            "familyName": familyName
+        }]}
+        self.googlestore.add_contact(contact)
+        # GoogleContact object is not the one required by the google API but for the TUI
+        google_contact = GoogleContact(name, self)
+        return google_contact, "{} added.".format(name)
 
 
 

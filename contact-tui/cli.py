@@ -61,8 +61,7 @@ class CLI:
                 self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('delete-contact'):
                 name = " ".join(args[1:])
-                contact = Contact(name, self.core)
-                msg = self.core.delete_contact(contact)
+                msg = self.core.delete_contact(name)
                 self.contact = None # to focus other when refreshing contact list
                 self.action = Action.CONTACT_DELETED
             elif command in ('add-attribute'):
@@ -123,6 +122,11 @@ class CLI:
                 msg = self.contact.edit_note(date_str)
                 self.detail = Note(date_str, None)
                 self.action = Action.DETAIL_ADDED_OR_EDITED
+            elif command in ('add-google-contact'):
+                name = " ".join(args[1:])
+                contact, msg = self.core.add_google_contact(name)
+                self.contact = contact # to focus it when refreshing contact list
+                self.action = Action.CONTACT_ADDED_OR_EDITED
             else:
                 msg = 'Not a valid command.'
 
@@ -136,6 +140,10 @@ class CLI:
 
     def add_contact(self):
         command = 'add-contact '
+        self.core.frame.console.show_console(command)
+
+    def add_google_contact(self):
+        command = 'add-google-contact '
         self.core.frame.console.show_console(command)
 
     def rename_contact(self, contact):

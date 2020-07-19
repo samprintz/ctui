@@ -194,7 +194,10 @@ class CustListBox(urwid.ListBox):
                 self.core.cli.add_attribute(focused_contact)
             elif key == 'g':
                 self.core.last_keypress = None
-                self.core.cli.add_gift(focused_contact)
+                self.core.cli.add_google_contact()
+#            elif key == 'g':
+#                self.core.last_keypress = None
+#                self.core.cli.add_gift(focused_contact)
             elif key == 'n':
                 self.core.last_keypress = None
                 self.core.cli.add_note(focused_contact)
