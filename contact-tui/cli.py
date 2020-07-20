@@ -61,7 +61,7 @@ class CLI:
                 self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('delete-contact'):
                 name = " ".join(args[1:])
-                msg = self.core.delete_contact(name)
+                msg = self.core.delete_contact_by_name(name)
                 self.contact = None # to focus other when refreshing contact list
                 self.action = Action.CONTACT_DELETED
             elif command in ('add-attribute'):

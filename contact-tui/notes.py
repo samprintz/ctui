@@ -112,6 +112,9 @@ class NotesStore:
     def add_note(self, contact, note):
         assert not self.contains_note(contact, note.date)
 
+        if not self.contains_contact(contact):
+            self.add_contact(contact)
+
         dirname = self.path + contact.name.replace(' ', '_')
         filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename

@@ -116,17 +116,23 @@ class Core:
             self.notesstore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
-    def delete_contact(self, name):
+    def delete_contact_by_name(self, name):
         contact = self.get_contact(name)
         if contact is None:
             return "Error: {} doesn't exists.".format(name)
+        else:
+            return self.delete_contact(contact)
+
+    def delete_contact(self, contact):
+        if not self.contains_contact(contact):
+            return "Error: {} doesn't exists.".format(contact.name)
         if type(contact) is GoogleContact:
             self.googlestore.delete_contact(contact)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.delete_contact(contact)
         if self.notesstore.contains_contact(contact):
             self.notesstore.delete_contact(contact)
-        return "{} deleted.".format(name)
+        return "{} deleted.".format(contact.name)
 
     def add_google_contact(self, name):
         #TODO Check if already exists (offline, not in Google)
