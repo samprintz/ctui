@@ -1,10 +1,12 @@
 from datetime import date,datetime
+from httplib2 import ServerNotFoundError
 from subprocess import call
 import operator
 import os
 import pudb #TODO
 import pyperclip
 import shutil
+import socket
 import tempfile
 
 from objects import *
@@ -23,7 +25,15 @@ class Core:
     def __init__(self, config, test=False):
         self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
         self.notesstore = notes.NotesStore(config['path']['notes_dir'])
-        self.googlestore = google_contacts.GoogleStore(self, config['google']['credentials_file'], config['google']['token_file'])
+
+        if self.is_connected():
+            try:
+                self.googlestore = google_contacts.GoogleStore(self, config['google']['credentials_file'], config['google']['token_file'])
+            except ServerNotFoundError:
+                self.googlestore = None
+        else:
+            self.googlestore = None
+
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
@@ -35,6 +45,22 @@ class Core:
 
         if not test:
             loop = tui.ContactLoop(self.frame, config)
+
+    """
+    Check if connected to the internet
+    """
+    def is_connected(self):
+        hostname = "one.one.one.one"
+        try:
+            # host name resolvable -> DNS listening
+            host = socket.gethostbyname(hostname)
+            # connect to the host -> host reachable
+            s = socket.create_connection((host, 80), 2)
+            s.close()
+            return True
+        except:
+            pass
+        return False
 
     """
     Returns a list of all contacts without their details.
@@ -49,15 +75,16 @@ class Core:
                 existing_contact = next(x for x in contacts if c == x.name)
             except StopIteration:
                 contacts.append(Contact(c, self))
-        for contact in self.googlestore.get_all_contacts():
-            # check if contact already in list
-            try:
-                existing_contact = next(x for x in contacts if contact.name == x.name)
-                contacts.remove(existing_contact)
-                contact.merge(existing_contact)
-            except StopIteration:
-                pass
-            contacts.append(contact)
+        if self.googlestore is not None:
+            for contact in self.googlestore.get_all_contacts():
+                # check if contact already in list
+                try:
+                    existing_contact = next(x for x in contacts if contact.name == x.name)
+                    contacts.remove(existing_contact)
+                    contact.merge(existing_contact)
+                except StopIteration:
+                    pass
+                contacts.append(contact)
         contacts.sort(key=lambda x: x.name)
         return contacts
 
