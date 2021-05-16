@@ -418,9 +418,14 @@ class ContactDetails(CustListBox):
         pos = 0
         for entry in self.body:
             if isinstance(entry, DetailEntry):
-                if type(entry.detail) == type(detail):
-                    if entry.detail == detail:
+                # TODO Workaround for gifts (as they are not recognized as gifts when creating them with add-attribute instead of add-gift
+                if isinstance(detail, Attribute) and detail.key == "giftIdea" and isinstance(entry.detail, Gift):
+                    if detail.value == entry.detail.name:
                         return pos
+                else:
+                    if type(entry.detail) == type(detail):
+                        if entry.detail == detail:
+                            return pos
             pos = pos + 1
         return None
 
