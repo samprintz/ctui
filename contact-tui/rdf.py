@@ -100,7 +100,10 @@ class RDFStore:
     # attributes
 
     def has_attributes(self, contact):
-        s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        try:
+            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        except StopIteration:
+            return False
         triples = [po for po in self.g.predicate_objects(s)]
         return len(triples) > 1
 
@@ -177,7 +180,10 @@ class RDFStore:
     # gifts
 
     def has_gifts(self, contact):
-        s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        try:
+            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        except StopIteration:
+            return False
         return (s, GIFTIDEA_REF, None) in self.g
 
 
