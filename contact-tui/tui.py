@@ -396,11 +396,12 @@ class ContactDetails(CustListBox):
 
     def show_meta(self):
         if self.core.frame.details_focused() is True:
-            if type(self.focus) is NoteEntry:
+            if type(self.focus) is NoteEntry or type(self.focus) is EncryptedNoteEntry:
                 date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
                 self.core.frame.console.show_meta(date)
             elif isinstance(self.focus, DetailEntry):
-                self.core.frame.console.show_meta(str(self.focus.pos))
+                self.core.frame.console.show_meta("")
+                #self.core.frame.console.show_meta(str(self.focus.pos))
         else:
             self.core.frame.clear_footer()
 
