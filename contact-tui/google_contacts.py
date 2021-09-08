@@ -5,7 +5,6 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-import pudb
 from objects import GoogleContact, GoogleAttribute
 
 
@@ -141,7 +140,6 @@ class GoogleStore:
 
 
     def edit_email(self, contact, email, new_email):
-        pu.db
         field = "emailAddresses"
         contact[field] = [{
             "type": "home",

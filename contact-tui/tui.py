@@ -1,6 +1,5 @@
 from datetime import date,datetime
 import urwid
-import pudb
 
 from objects import *
 from cli import *
@@ -201,6 +200,9 @@ class CustListBox(urwid.ListBox):
             elif key == 'n':
                 self.core.last_keypress = None
                 self.core.cli.add_note(focused_contact)
+            elif key == 'e':
+                self.core.last_keypress = None
+                self.core.cli.add_encrypted_note(focused_contact)
             else:
                 self.core.last_keypress = None
         elif self.core.last_keypress == 'g':
@@ -382,9 +384,11 @@ class ContactDetails(CustListBox):
                 pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN"))
             pos = pos + 1
-            for d, content in contact.notes.items():
-                date = datetime.strptime(d, '%Y%m%d')
-                entries.append(NoteEntry(contact, Note(date, content), pos, self.core))
+            for note in contact.notes:
+                if type(note) is Note: # plain note
+                    entries.append(NoteEntry(contact, note, pos, self.core))
+                else: # encrypted note
+                    entries.append(EncryptedNoteEntry(contact, note, pos, self.core))
                 pos = pos + 1
 
         self.body = urwid.SimpleFocusListWalker(entries)
@@ -412,7 +416,12 @@ class ContactDetails(CustListBox):
         return self.focus_position
 
     def set_focus_position(self, pos):
-        self.focus_position = pos
+        try: # fix for frequent problem: # TODO undo this after improving get_detail_position()
+            # "'<' not supported between instances of 'NoneType' and 'int'"
+            self.focus_position = pos
+        except TypeError:
+            pass
+
 
     def get_detail_position(self, detail):
         pos = 0
@@ -519,8 +528,29 @@ class NoteEntry(DetailEntry):
             self.core.cli.rename_note(self.contact, self.note)
         elif key == 'h':
             self.core.cli.delete_note(self.contact, self.note)
+        elif key == 'e':
+            self.core.cli.encrypt_note(self.contact, self.note)
         else:
             return super(NoteEntry, self).keypress(size, key)
+
+class EncryptedNoteEntry(DetailEntry):
+    def __init__(self, contact, note, pos, core):
+        super(EncryptedNoteEntry, self).__init__(contact, note, '(encrypted)', pos, core)
+        self.note = note
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            self.core.cli.edit_note(self.contact, self.note)
+        elif key == 'a':
+            self.core.cli.rename_note(self.contact, self.note)
+        elif key == 'h':
+            self.core.cli.delete_note(self.contact, self.note)
+        elif key == 's':
+            self.core.cli.toggle_note_encryption(self.contact, self.note)
+        elif key == 'e':
+            self.core.cli.decrypt_note(self.contact, self.note)
+        else:
+            return super(EncryptedNoteEntry, self).keypress(size, key)
 
 class GoogleAttributeEntry(DetailEntry):
     def __init__(self, contact, attribute, pos, core):
@@ -566,6 +596,10 @@ class Console(urwid.Filler):
         self.filter_mode = True
         self.show_console(command)
 
+    def show_passphrase_input(self):
+        self.body = urwid.Edit("Passphrase: ", mask="*")
+        self.core.frame.set_focus('footer')
+
     def show_meta(self, meta):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
@@ -595,5 +629,3 @@ class Console(urwid.Filler):
                 return self.core.cli.handle(args)
             else:
                 return super(Console, self).keypress(size, key)
-
-

@@ -1,8 +1,10 @@
 from datetime import date,datetime
+import gnupg
 import os
 import shutil
 from subprocess import call
-import pudb #TODO
+
+from objects import Note, EncryptedNote
 
 
 """
@@ -12,6 +14,7 @@ class NotesStore:
 
     def __init__(self, path):
         self.path = path
+        self.gpg = gnupg.GPG()
 
 
     def get_notes_path(self, contact):
@@ -74,14 +77,29 @@ class NotesStore:
 
 
     def get_notes(self, contact):
+        """
+        Read plain text and encrypted notes of a given contact and return a
+        list of both of them.
+        """
         dirname = self.path + contact.name.replace(' ', '_')
-        notes = dict()
+        notes = []
         try:
             for filename in sorted(os.listdir(dirname)):
-                date = filename.replace('.txt', '')
-                with open(dirname + '/' + filename, "r") as f:
-                    content = f.read()
-                    notes[date] = content.strip()
+
+                # plain notes
+                if 'gpg' not in filename:
+                    date = filename.replace('.txt', '')
+                    with open(dirname + '/' + filename, "r") as f:
+                        content = f.read().strip()
+                        note = Note(date, content)
+                        notes.append(note)
+
+                # encrypted notes
+                else:
+                    date = filename.replace('.txt', '').replace('.gpg', '')
+                    note = EncryptedNote(date)
+                    notes.append(note)
+
             return notes
         except FileNotFoundError:
             return None
@@ -90,6 +108,13 @@ class NotesStore:
     def contains_note(self, contact, date):
         dirname = self.path + contact.name.replace(' ', '_')
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path = dirname + '/' + filename
+        return os.path.isfile(path) or os.path.isfile(path + ".gpg") # plain or encrypted notes
+
+
+    def note_is_encrypted(self, contact, date):
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
         path = dirname + '/' + filename
         return os.path.isfile(path)
 
@@ -127,15 +152,45 @@ class NotesStore:
             return "Error: Note not created."
 
 
+    def add_encrypted_note(self, contact, note):
+        assert not self.contains_note(contact, note.date)
+
+        if not self.contains_contact(contact):
+            self.add_contact(contact)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
+        path = dirname + '/' + filename
+
+        try:
+            # write to (normal) file
+            with open(path, 'w') as f:
+                f.write(note.content)
+            # encrypt that file
+            with open(path, 'rb') as f:
+                status = self.gpg.encrypt_file(
+                    f, recipients=['343EFE5987C5F0B9'], output=f'{path}.gpg')
+            # delete plain text file
+            os.remove(path)
+            return f"Note added (ok: {status.ok})."
+        except OSError:
+            return "Error: Note not created."
+
+
     def rename_note(self, contact, note, new_date):
         assert note.date != new_date
         assert self.contains_note(contact, note.date)
         assert not self.contains_note(contact, new_date)
 
+        if self.note_is_encrypted(contact, note.date):
+            old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt.gpg"
+            new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt.gpg"
+        else:
+            old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
+            new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt"
+
         dirname = self.path + contact.name.replace(' ', '_')
-        old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
         old_path = dirname + '/' + old_filename
-        new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt"
         new_path = dirname + '/' + new_filename
 
         try:
@@ -148,8 +203,12 @@ class NotesStore:
     def delete_note(self, contact, date):
         assert self.contains_note(contact, date)
 
+        if self.note_is_encrypted(contact, date):
+            filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
+        else:
+            filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+
         dirname = self.path + contact.name.replace(' ', '_')
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
 
         try:
@@ -177,3 +236,45 @@ class NotesStore:
         except OSError:
             return "Error: Note not edited."
 
+
+    def encrypt_note(self, contact, date):
+        assert self.contains_note(contact, date)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path_plain = dirname + '/' + filename
+        path_encrypt = dirname + '/' + filename + ".gpg"
+
+        try:
+            # encrypt file
+            with open(path_plain, 'rb') as f: # "rb" is important, "r" doesn't work
+                status = self.gpg.encrypt_file(
+                    f, recipients=['343EFE5987C5F0B9'], output=path_encrypt)
+            # delete plain file
+            os.remove(path_plain)
+            return f"Note encrypted (ok: {status.ok})."
+        except OSError:
+            return "Error: Note not encrypted."
+
+
+    def decrypt_note(self, contact, date, passphrase):
+        assert self.contains_note(contact, date)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path_plain = dirname + '/' + filename
+        path_encrypt = dirname + '/' + filename + ".gpg"
+
+        try:
+            # decrypt file
+            with open(path_encrypt, 'rb') as f:
+                status = self.gpg.decrypt_file(
+                        f, passphrase=passphrase, output=path_plain)
+            if status.ok: # Note for debugging: GPG might remember a correct passphrase for few minutes
+                # delete encrypted file
+                os.remove(path_encrypt)
+                return "Note decrypted"
+            else:
+                return "Wrong passphrase"
+        except OSError:
+            return "Error: Note not decrypted."

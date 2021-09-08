@@ -1,6 +1,5 @@
 import os
 import unittest
-import pudb
 import urwid
 
 import config as cfg

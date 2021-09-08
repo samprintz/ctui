@@ -144,6 +144,27 @@ class Contact:
         return self.core.notesstore.add_note(self, note)
 
 
+    def add_encrypted_note(self, date_str):
+        try:
+            date = datetime.strptime(date_str, '%Y%m%d')
+        except ValueError:
+            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+
+        if not self.core.notesstore.contains_contact(self):
+            self.core.notesstore.add_contact(self)
+
+        if self.has_note(date):
+            return self.edit_note(date_str)
+
+        try:
+            content = self.core.editor.add(self.get_notes_path(), date_str)
+            note = EncryptedNote(date, content)
+        except OSError:
+            return "Error: Note couldn't be added."
+
+        return self.core.notesstore.add_encrypted_note(self, note)
+
+
     def rename_note(self, note, date_str):
         try:
             new_date = datetime.strptime(date_str, '%Y%m%d')
@@ -188,6 +209,36 @@ class Contact:
         return self.core.notesstore.edit_note(self, date, new_content)
 
 
+    def encrypt_note(self, date_str):
+        try:
+            date = datetime.strptime(date_str, '%Y%m%d')
+        except ValueError:
+            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+
+        if not self.core.notesstore.contains_contact(self):
+            return "Contact \"{}\" not found.".format(self.name)
+
+        if not self.has_note(date):
+            return "Note \"{}\" not found.".format(date_str)
+
+        return self.core.notesstore.encrypt_note(self, date)
+
+
+    def decrypt_note(self, date_str, passphrase):
+        try:
+            date = datetime.strptime(date_str, '%Y%m%d')
+        except ValueError:
+            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+
+        if not self.core.notesstore.contains_contact(self):
+            return "Contact \"{}\" not found.".format(self.name)
+
+        if not self.has_note(date):
+            return "Note \"{}\" not found.".format(date_str)
+
+        return self.core.notesstore.decrypt_note(self, date, passphrase)
+
+
 class Name:
 
     def __init__(self, name):
@@ -225,6 +276,23 @@ class Gift:
 class Note:
 
     def __init__(self, date, content):
+        if isinstance(date, str):
+            try:
+                date = datetime.strptime(date, '%Y%m%d')
+            except ValueError:
+                raise ValueError #TODO
+        self.date = date
+        self.content = content
+
+
+    def __eq__(self, other):
+        return self.date == other.date
+
+
+
+class EncryptedNote(Note):
+
+    def __init__(self, date, content=None, encrypted=True):
         if isinstance(date, str):
             try:
                 date = datetime.strptime(date, '%Y%m%d')
