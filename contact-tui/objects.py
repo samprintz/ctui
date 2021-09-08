@@ -224,7 +224,7 @@ class Contact:
         return self.core.notesstore.encrypt_note(self, date)
 
 
-    def decrypt_note(self, date_str, passphrase):
+    def decrypt_note(self, date_str, passphrase=None):
         try:
             date = datetime.strptime(date_str, '%Y%m%d')
         except ValueError:
@@ -237,6 +237,7 @@ class Contact:
             return "Note \"{}\" not found.".format(date_str)
 
         return self.core.notesstore.decrypt_note(self, date, passphrase)
+
 
 
 class Name:

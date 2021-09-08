@@ -257,7 +257,7 @@ class NotesStore:
             return "Error: Note not encrypted."
 
 
-    def decrypt_note(self, contact, date, passphrase):
+    def decrypt_note(self, contact, date, passphrase=None):
         assert self.contains_note(contact, date)
 
         dirname = self.path + contact.name.replace(' ', '_')
@@ -268,9 +268,10 @@ class NotesStore:
         try:
             # decrypt file
             with open(path_encrypt, 'rb') as f:
+                # passphrase is always None, the gpg-agent is taking care of it
                 status = self.gpg.decrypt_file(
                         f, passphrase=passphrase, output=path_plain)
-            if status.ok: # Note for debugging: GPG might remember a correct passphrase for few minutes
+            if status.ok:
                 # delete encrypted file
                 os.remove(path_encrypt)
                 return "Note decrypted"

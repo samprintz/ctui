@@ -44,30 +44,6 @@ class CLI:
                 self.core.frame.console.show_message(msg)
                 self.mode = None
 
-        elif self.mode is Mode.DECRYPT_NOTE:
-            # special mode for the decryption of notes, called after the passphrase is entered
-            passphrase = " ".join(args[0:])
-            msg = self.contact.decrypt_note(self.note, passphrase)
-            self.detail = Note(self.note, None)
-            self.action = Action.DETAIL_ADDED_OR_EDITED
-            self.mode = None
-            self.note = None
-            self.core.frame.refresh_contact_list(self.action, self.contact, # TODO necessary?
-                    self.detail, self.filter_string)
-            self.core.frame.set_focus('body')
-            self.core.frame.console.show_message(msg)
-
-        elif args[0] in ('decrypt-note'):
-            # currently special treatment, as this is the only case where a
-            # command is followed by another cli interaction (for the input of
-            # the passphrase)
-            # TODO find better solution similar to calling vim, also making
-            # use of the memory function of gpg
-            date_str = " ".join(args[1:])
-            self.note = date_str
-            self.mode = Mode.DECRYPT_NOTE
-            self.core.frame.console.show_passphrase_input()
-
         else:
             command = args[0]
             if command in ('add-contact'):
@@ -155,6 +131,11 @@ class CLI:
                 date_str = " ".join(args[1:])
                 msg = self.contact.encrypt_note(date_str)
                 self.detail = EncryptedNote(date_str, None)
+                self.action = Action.DETAIL_ADDED_OR_EDITED
+            elif command in ('decrypt-note'):
+                date_str = " ".join(args[1:])
+                msg = self.contact.decrypt_note(date_str)
+                self.detail = Note(date_str, None)
                 self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('toggle-note-encryption'):
                 date_str = " ".join(args[1:])
@@ -334,7 +315,6 @@ class Mode(Enum):
     FILTER = 'filter'
     CONSOLE = 'console'
     INPUT = 'input'
-    DECRYPT_NOTE = 'decrypt_note'
 
 class Action(Enum):
     REFRESH = 'refresh'
