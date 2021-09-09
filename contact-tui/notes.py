@@ -12,9 +12,10 @@ Store for interaction with the directory with notes about the contacts.
 """
 class NotesStore:
 
-    def __init__(self, path):
+    def __init__(self, path, gpg_keyid):
         self.path = path
         self.gpg = gnupg.GPG()
+        self.gpg_keyid = gpg_keyid
 
 
     def get_notes_path(self, contact):
@@ -169,7 +170,7 @@ class NotesStore:
             # encrypt that file
             with open(path, 'rb') as f:
                 status = self.gpg.encrypt_file(
-                    f, recipients=['343EFE5987C5F0B9'], output=f'{path}.gpg')
+                    f, recipients=[self.gpg_keyid], output=f'{path}.gpg')
             # delete plain text file
             os.remove(path)
             return f"Note added (ok: {status.ok})."
@@ -249,7 +250,7 @@ class NotesStore:
             # encrypt file
             with open(path_plain, 'rb') as f: # "rb" is important, "r" doesn't work
                 status = self.gpg.encrypt_file(
-                    f, recipients=['343EFE5987C5F0B9'], output=path_encrypt)
+                    f, recipients=[self.gpg_keyid], output=path_encrypt)
             # delete plain file
             os.remove(path_plain)
             return f"Note encrypted (ok: {status.ok})."

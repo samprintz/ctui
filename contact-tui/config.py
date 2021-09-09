@@ -11,6 +11,9 @@ def load_config(path):
             'rdf': {
                 'namespace': cfg.get('rdf', 'namespace')
                 },
+            'encryption': {
+                'keyid': cfg.get('encryption', 'keyid')
+                },
             'google': {
                 'credentials_file': cfg.get('google', 'credentials_file'),
                 'token_file': cfg.get('google', 'token_file')
