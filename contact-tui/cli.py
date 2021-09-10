@@ -142,6 +142,12 @@ class CLI:
                 msg = self.contact.toggle_note_encryption(date_str)
                 self.detail = EncryptedNote(date_str, None)
                 self.action = Action.DETAIL_ADDED_OR_EDITED
+            elif command in ('show-all-encrypted-notes'):
+                msg = self.contact.show_all_encrypted_notes()
+                self.action = Action.DETAIL_ADDED_OR_EDITED
+            elif command in ('hide-all-encrypted-notes'):
+                msg = self.contact.hide_all_encrypted_notes()
+                self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('add-google-contact'):
                 name = " ".join(args[1:])
                 contact, msg = self.core.add_google_contact(name)
@@ -304,8 +310,18 @@ class CLI:
         self.contact = contact
         self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
-        command = 'toggle-note-encryption {}'.format(date_str)
-        self.core.frame.console.show_console(command)
+        args = 'toggle-note-encryption {}'.format(date_str).split()
+        self.core.cli.handle(args)
+
+    def show_all_encrypted_notes(self, contact):
+        self.contact = contact
+        args = ['show-all-encrypted-notes']
+        self.core.cli.handle(args)
+
+    def hide_all_encrypted_notes(self, contact):
+        self.contact = contact
+        args = ['hide-all-encrypted-notes']
+        self.core.cli.handle(args)
 
 
 

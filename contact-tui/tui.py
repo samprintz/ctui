@@ -528,16 +528,32 @@ class NoteEntry(DetailEntry):
         self.note = note
 
     def keypress(self, size, key):
-        if key == 'enter':
-            self.core.cli.edit_note(self.contact, self.note)
-        elif key == 'a':
-            self.core.cli.rename_note(self.contact, self.note)
-        elif key == 'h':
-            self.core.cli.delete_note(self.contact, self.note)
-        elif key == 'e':
-            self.core.cli.encrypt_note(self.contact, self.note)
-        else:
-            return super(NoteEntry, self).keypress(size, key)
+        if self.core.last_keypress is None:
+            if key == 'enter':
+                self.core.cli.edit_note(self.contact, self.note)
+            elif key == 'a':
+                self.core.cli.rename_note(self.contact, self.note)
+            elif key == 'h':
+                self.core.cli.delete_note(self.contact, self.note)
+            elif key == 'e':
+                self.core.last_keypress = 'e'
+            else:
+                return super(NoteEntry, self).keypress(size, key)
+        elif self.core.last_keypress == 'e':
+            if key == 'e':
+                self.core.cli.encrypt_note(self.contact, self.note)
+                self.core.last_keypress = None
+            elif key == 'v':
+                self.core.cli.toggle_note_encryption(self.contact, self.note)
+                self.core.last_keypress = None
+            elif key == 's':
+                self.core.cli.show_all_encrypted_notes(self.contact)
+                self.core.last_keypress = None
+            elif key == 'h':
+                self.core.cli.hide_all_encrypted_notes(self.contact)
+                self.core.last_keypress = None
+            else:
+                self.core.last_keypress = None
 
 class EncryptedNoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core, visible=False):
@@ -549,18 +565,32 @@ class EncryptedNoteEntry(DetailEntry):
         self.note = note
 
     def keypress(self, size, key):
-        if key == 'enter':
-            self.core.cli.edit_note(self.contact, self.note)
-        elif key == 'a':
-            self.core.cli.rename_note(self.contact, self.note)
-        elif key == 'h':
-            self.core.cli.delete_note(self.contact, self.note)
-        elif key == 's':
-            self.core.cli.toggle_note_encryption(self.contact, self.note)
-        elif key == 'e':
-            self.core.cli.decrypt_note(self.contact, self.note)
-        else:
-            return super(EncryptedNoteEntry, self).keypress(size, key)
+        if self.core.last_keypress is None:
+            if key == 'enter':
+                self.core.cli.edit_note(self.contact, self.note)
+            elif key == 'a':
+                self.core.cli.rename_note(self.contact, self.note)
+            elif key == 'h':
+                self.core.cli.delete_note(self.contact, self.note)
+            elif key == 'e':
+                self.core.last_keypress = 'e'
+            else:
+                return super(EncryptedNoteEntry, self).keypress(size, key)
+        elif self.core.last_keypress == 'e':
+            if key == 'e':
+                self.core.cli.decrypt_note(self.contact, self.note)
+                self.core.last_keypress = None
+            elif key == 'v':
+                self.core.cli.toggle_note_encryption(self.contact, self.note)
+                self.core.last_keypress = None
+            elif key == 's':
+                self.core.cli.show_all_encrypted_notes(self.contact)
+                self.core.last_keypress = None
+            elif key == 'h':
+                self.core.cli.hide_all_encrypted_notes(self.contact)
+                self.core.last_keypress = None
+            else:
+                self.core.last_keypress = None
 
 class GoogleAttributeEntry(DetailEntry):
     def __init__(self, contact, attribute, pos, core):

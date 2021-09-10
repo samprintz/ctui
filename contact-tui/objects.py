@@ -105,6 +105,10 @@ class Contact:
         return self.core.notesstore.has_notes(self)
 
 
+    def has_encrypted_notes(self):
+        return self.core.notesstore.has_encrypted_notes(self)
+
+
     def get_notes(self):
         return self.core.notesstore.get_notes(self)
 
@@ -261,6 +265,33 @@ class Contact:
                 return "Show encrypted note content."
             else:
                 return "Failed to show encrypted note content."
+
+
+    def show_all_encrypted_notes(self, passphrase=None):
+        if not self.has_encrypted_notes():
+            return "No encrypted notes found."
+
+        result = True
+        for note in self.core.notesstore.get_encrypted_notes(self):
+            content = self.core.notesstore.get_encrypted_note_text(self, note.date, passphrase)
+            note = EncryptedNote(note.date, content)
+            if not self.core.memorystore.add_note(self, note):
+                result = False
+
+        if result:
+            return "Show content of all encrypted notes."
+        else:
+            return "Failed to show content of all encrypted notes."
+
+
+    def hide_all_encrypted_notes(self, passphrase=None):
+        if not self.core.memorystore.has_notes(self):
+            return "All encrypted notes are hidden."
+
+        if self.core.memorystore.delete_all_notes(self):
+            return "Hide content of all encrypted notes."
+        else:
+            return "Failed to hide content of all encrypted notes."
 
 
     # memory

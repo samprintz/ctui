@@ -77,6 +77,15 @@ class NotesStore:
         return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
 
 
+    def has_encrypted_notes(self, contact):
+        dirname = self.path + contact.name.replace(' ', '_')
+        if not self.has_notes(contact):
+            return False
+        for file in os.listdir(dirname):
+            if file.endswith(".gpg"):
+                return True
+
+
     def get_notes(self, contact):
         """
         Read plain text and encrypted notes of a given contact and return a
@@ -88,7 +97,7 @@ class NotesStore:
             for filename in sorted(os.listdir(dirname)):
 
                 # plain notes
-                if 'gpg' not in filename:
+                if not filename.endswith(".gpg"):
                     date = filename.replace('.txt', '')
                     with open(dirname + '/' + filename, "r") as f:
                         content = f.read().strip()
@@ -101,6 +110,23 @@ class NotesStore:
                     note = EncryptedNote(date)
                     notes.append(note)
 
+            return notes
+        except FileNotFoundError:
+            return None
+
+
+    def get_encrypted_notes(self, contact):
+        """
+        Read encrypted notes of a given contact and return a list of them.
+        """
+        dirname = self.path + contact.name.replace(' ', '_')
+        notes = []
+        try:
+            for filename in sorted(os.listdir(dirname)):
+                if filename.endswith(".gpg"):
+                    date = filename.replace('.txt', '').replace('.gpg', '')
+                    note = EncryptedNote(date)
+                    notes.append(note)
             return notes
         except FileNotFoundError:
             return None

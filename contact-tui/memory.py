@@ -1,3 +1,5 @@
+from datetime import datetime
+
 """
 Store for in-memory information. Used when displaying encrypted notes. This
 allows to show encrypted information for multiple contacts that is deleted
@@ -9,19 +11,29 @@ class MemoryStore:
         self.notes = {}
 
 
+    def has_notes(self, contact):
+        if contact.name not in self.notes:
+            return False
+        return len(self.notes[contact.name]) > 0
+
+
     def get_notes(self, contact):
+        if contact.name not in self.notes:
+            return False
         return self.notes[contact.name]
 
 
     def contains_note(self, contact, date):
-        return contact.name in self.notes is not None and \
-                date in self.notes[contact.name] is not None
+        date_str = datetime.strftime(date, "%Y%m%d")
+        return contact.name in self.notes and \
+                date_str in self.notes[contact.name]
 
 
     def add_note(self, contact, note):
         if contact.name not in self.notes:
             self.notes[contact.name] = {}
-        self.notes[contact.name][note.date] = note
+        date_str = datetime.strftime(note.date, "%Y%m%d")
+        self.notes[contact.name][date_str] = note
         return True
 
 
@@ -29,8 +41,16 @@ class MemoryStore:
         if not self.contains_note(contact, date):
             return None
         else:
-            return self.notes[contact.name][date]
+            date_str = datetime.strftime(date, "%Y%m%d")
+            return self.notes[contact.name][date_str]
+
 
     def delete_note(self, contact, date):
         if self.contains_note(contact, date):
-            del self.notes[contact.name][date]
+            date_str = datetime.strftime(date, "%Y%m%d")
+            del self.notes[contact.name][date_str]
+
+
+    def delete_all_notes(self, contact):
+        if self.has_notes(contact):
+            del self.notes[contact.name]
