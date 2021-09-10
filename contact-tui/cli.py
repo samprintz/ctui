@@ -139,8 +139,7 @@ class CLI:
                 self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('toggle-note-encryption'):
                 date_str = " ".join(args[1:])
-                #msg = self.contact.toggle_note_encryption(date_str)
-                msg = "Not implemented" # TODO
+                msg = self.contact.toggle_note_encryption(date_str)
                 self.detail = EncryptedNote(date_str, None)
                 self.action = Action.DETAIL_ADDED_OR_EDITED
             elif command in ('add-google-contact'):
@@ -304,7 +303,7 @@ class CLI:
     def toggle_note_encryption(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(date.today(), "%Y%m%d")
+        date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'toggle-note-encryption {}'.format(date_str)
         self.core.frame.console.show_console(command)
 

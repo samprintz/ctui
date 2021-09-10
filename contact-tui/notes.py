@@ -280,3 +280,31 @@ class NotesStore:
                 return "Wrong passphrase"
         except OSError:
             return "Error: Note not decrypted."
+
+
+    def get_encrypted_note_text(self, contact, date, passphrase=None):
+        assert self.contains_note(contact, date)
+
+        dirname = self.path + contact.name.replace(' ', '_')
+        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
+        path_plain = dirname + '/' + filename
+        path_encrypt = dirname + '/' + filename + ".gpg"
+
+        try:
+            # decrypt file
+            with open(path_encrypt, 'rb') as f:
+                # passphrase is always None, the gpg-agent is taking care of it
+                status = self.gpg.decrypt_file(
+                        f, passphrase=passphrase, output=path_plain)
+            if status.ok:
+                # read decrypted file
+                with open(path_plain) as f:
+                    content = f.read()
+                # delete decrypted file again
+                # TODO Is there a way to not even create the decrypted file?
+                os.remove(path_plain)
+                return content.strip()
+            else:
+                return "Wrong passphrase"
+        except OSError:
+            return "Error: Note not decrypted."

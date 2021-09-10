@@ -10,6 +10,7 @@ import tempfile
 
 from objects import *
 import cli
+import memory
 import notes
 import rdf
 import tui
@@ -24,6 +25,7 @@ class Core:
     def __init__(self, config, test=False):
         self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
         self.notesstore = notes.NotesStore(config['path']['notes_dir'], config['encryption']['keyid'])
+        self.memorystore = memory.MemoryStore()
 
         if self.is_connected():
             try:

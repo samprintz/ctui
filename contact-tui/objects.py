@@ -239,6 +239,40 @@ class Contact:
         return self.core.notesstore.decrypt_note(self, date, passphrase)
 
 
+    def toggle_note_encryption(self, date_str, passphrase=None):
+        try:
+            date = datetime.strptime(date_str, '%Y%m%d')
+        except ValueError:
+            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+
+        if not self.core.notesstore.contains_contact(self):
+            return "Contact \"{}\" not found.".format(self.name)
+
+        if not self.has_note(date):
+            return "Note \"{}\" not found.".format(date_str)
+
+        if self.core.memorystore.contains_note(self, date): # hide
+            content = self.core.memorystore.delete_note(self, date)
+            return "Hide encrypted note content."
+        else: # show
+            content = self.core.notesstore.get_encrypted_note_text(self, date, passphrase)
+            note = EncryptedNote(date, content)
+            if self.core.memorystore.add_note(self, note):
+                return "Show encrypted note content."
+            else:
+                return "Failed to show encrypted note content."
+
+
+    # memory
+
+    def has_visible_note(self, note):
+        return self.core.memorystore.contains_note(self, note.date)
+
+
+    def get_visible_note(self, note):
+        return self.core.memorystore.get_note(self, note.date)
+
+
 
 class Name:
 

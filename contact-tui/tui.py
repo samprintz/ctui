@@ -388,7 +388,12 @@ class ContactDetails(CustListBox):
                 if type(note) is Note: # plain note
                     entries.append(NoteEntry(contact, note, pos, self.core))
                 else: # encrypted note
-                    entries.append(EncryptedNoteEntry(contact, note, pos, self.core))
+                    # check if made visible
+                    if contact.has_visible_note(note):
+                        visible_note = contact.get_visible_note(note)
+                        entries.append(EncryptedNoteEntry(contact, visible_note, pos, self.core, visible=True))
+                    else:
+                        entries.append(EncryptedNoteEntry(contact, note, pos, self.core))
                 pos = pos + 1
 
         self.body = urwid.SimpleFocusListWalker(entries)
@@ -535,8 +540,12 @@ class NoteEntry(DetailEntry):
             return super(NoteEntry, self).keypress(size, key)
 
 class EncryptedNoteEntry(DetailEntry):
-    def __init__(self, contact, note, pos, core):
-        super(EncryptedNoteEntry, self).__init__(contact, note, '(encrypted)', pos, core)
+    def __init__(self, contact, note, pos, core, visible=False):
+        if visible:
+            content = '[' + note.content + ']'
+            super(EncryptedNoteEntry, self).__init__(contact, note, content, pos, core)
+        else:
+            super(EncryptedNoteEntry, self).__init__(contact, note, '(encrypted)', pos, core)
         self.note = note
 
     def keypress(self, size, key):
