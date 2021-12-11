@@ -577,8 +577,11 @@ class EncryptedNoteEntry(DetailEntry):
             else:
                 return super(EncryptedNoteEntry, self).keypress(size, key)
         elif self.core.last_keypress == 'e':
-            if key == 'e':
+            if key == 'left': # 'd' is mapped to 'left'
                 self.core.cli.decrypt_note(self.contact, self.note)
+                self.core.last_keypress = None
+            elif key == 'e':
+                self.core.cli.encrypt_note(self.contact, self.note)
                 self.core.last_keypress = None
             elif key == 'v':
                 self.core.cli.toggle_note_encryption(self.contact, self.note)

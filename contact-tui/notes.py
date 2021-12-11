@@ -272,13 +272,18 @@ class NotesStore:
         path_plain = dirname + '/' + filename
         path_encrypt = dirname + '/' + filename + ".gpg"
 
+        # check if key available
+        if not self.is_key_in_keyring():
+            return "GPG key not found in keyring"
+
         try:
             # encrypt file
             with open(path_plain, 'rb') as f: # "rb" is important, "r" doesn't work
                 status = self.gpg.encrypt_file(
                     f, recipients=[self.gpg_keyid], output=path_encrypt)
             # delete plain file
-            os.remove(path_plain)
+            if status.ok:
+                os.remove(path_plain)
             return f"Note encrypted (ok: {status.ok})."
         except OSError:
             return "Error: Note not encrypted."
@@ -291,6 +296,10 @@ class NotesStore:
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path_plain = dirname + '/' + filename
         path_encrypt = dirname + '/' + filename + ".gpg"
+
+        # check if key available
+        if not self.is_key_in_keyring():
+            return "GPG key not found in keyring"
 
         try:
             # decrypt file
@@ -334,3 +343,21 @@ class NotesStore:
                 return "Wrong passphrase"
         except OSError:
             return "Error: Note not decrypted."
+
+
+    def is_key_in_keyring(self):
+        found_public_key = False
+        found_private_key = False
+
+        public_keys = self.gpg.list_keys()
+        for public_key in public_keys:
+            if public_key['keyid'] == self.gpg_keyid:
+                found_public_key = True
+
+        private_keys = self.gpg.list_keys(True)
+        for private_key in private_keys:
+            if private_key['keyid'] == self.gpg_keyid:
+                found_private_key = True
+
+        return found_public_key and found_private_key
+        # TODO Log whether both or only one of them is missing
