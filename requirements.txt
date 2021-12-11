@@ -1,0 +1,7 @@
+gnupg
+google-api-python-client
+google-auth-oauthlib
+httplib2
+pyperclip
+rdflib
+urwid
