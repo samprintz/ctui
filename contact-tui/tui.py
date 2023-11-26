@@ -648,8 +648,12 @@ class Console(urwid.Filler):
 
     def keypress(self, size, key):
         if key == 'ctrl w':
-            text = self.original_widget.edit_text.rsplit(None, 1)[0]
-            self.original_widget.edit_text = text + ' '
+            last_whitespace = self.original_widget.edit_text.rfind(' ')
+            if last_whitespace != -1:
+                text = (self.original_widget.edit_text[:last_whitespace]) + ' '
+            else:
+                text = ''
+            self.original_widget.edit_text = text
             return
         if self.filter_mode is True:
             if key == 'esc':
