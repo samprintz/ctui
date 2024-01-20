@@ -378,6 +378,16 @@ class ContactDetails(CustListBox):
                 entries.append(GiftEntry(contact, Gift(a), pos, self.core))
                 pos = pos + 1
 
+        if type(contact) is GoogleContact and len(contact.google_notes) > 0:
+            if len(entries) > 2:
+                entries.append(urwid.Divider())
+                pos = pos + 1
+            entries.append(urwid.Text(u"NOTIZEN GOOGLE"))
+            pos = pos + 1
+            for note in contact.google_notes:
+                entries.append(GoogleNoteEntry(contact, note, pos, self.core))
+                pos = pos + 1
+
         if contact.notes is not None:
             if len(entries) > 2:
                 entries.append(urwid.Divider())
@@ -594,6 +604,12 @@ class EncryptedNoteEntry(DetailEntry):
                 self.core.last_keypress = None
             else:
                 self.core.last_keypress = None
+
+class GoogleNoteEntry(DetailEntry):
+    def __init__(self, contact, note, pos, core):
+        super(GoogleNoteEntry, self).__init__(contact, note, note.content, pos, core)
+        self.note = note
+
 
 class GoogleAttributeEntry(DetailEntry):
     def __init__(self, contact, attribute, pos, core):

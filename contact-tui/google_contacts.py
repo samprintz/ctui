@@ -7,7 +7,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from objects import GoogleContact, GoogleAttribute
+from objects import GoogleContact, GoogleAttribute, GoogleNote
 
 
 class GoogleStore:
@@ -60,12 +60,11 @@ class GoogleStore:
     def get_all_contacts(self):
         results = self.service.people().connections().list(
             resourceName='people/me', pageSize=1000,
-            personFields='names,birthdays,addresses,emailAddresses,phoneNumbers').execute()
+            personFields='names,birthdays,addresses,emailAddresses,phoneNumbers,biographies').execute()
         connections = results.get('connections', [])
 
         contacts = []
         for person in connections:
-
             contact_id = person['resourceName']
             names = person.get('names', [])
             if names:
@@ -75,6 +74,12 @@ class GoogleStore:
                 honorific_prefix = names[0].get('honorificPrefix')
 
             attributes = []
+            notes = []
+
+            biographies = person.get('biographies', [])
+            if biographies:
+                for biography in biographies:
+                    notes.append(GoogleNote(biography['value']))
 
             birthdays = person.get('birthdays', [])
             if birthdays:
@@ -106,7 +111,7 @@ class GoogleStore:
                 for phone_number in phone_numbers:
                     attributes.append(GoogleAttribute('tel', phone_number.get('value'), 'phoneNumbers'))
 
-            contact = GoogleContact(display_name, self.core, contact_id, attributes)
+            contact = GoogleContact(display_name, self.core, contact_id, attributes, notes)
             contacts.append(contact)
 
         return contacts

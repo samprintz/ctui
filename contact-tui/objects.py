@@ -379,10 +379,11 @@ class EncryptedNote(Note):
 
 class GoogleContact(Contact):
 
-    def __init__(self, name, core, google_id, google_attributes=None):
+    def __init__(self, name, core, google_id, google_attributes=None, google_notes=None):
         super(GoogleContact, self).__init__(name, core)
-        self.google_attributes = google_attributes
         self.google_id = google_id
+        self.google_attributes = google_attributes
+        self.google_notes = google_notes
 
     def merge(self, contact):
         self.attributes = contact.attributes
@@ -402,4 +403,15 @@ class GoogleAttribute:
 
     def __eq__(self, other):
         return self.key == other.key and self.value == other.value
+
+
+
+class GoogleNote:
+
+    def __init__(self, content):
+        self.content = content
+
+
+    def __eq__(self, other):
+        return self.content == other.content
 
