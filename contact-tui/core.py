@@ -27,9 +27,6 @@ class Core:
         self.notesstore = notes.NotesStore(config['path']['notes_dir'], config['encryption']['keyid'])
         self.memorystore = memory.MemoryStore()
 
-        # TODO Google connection stopped working 03/2023
-        self.googlestore = None
-        '''
         if self.is_connected():
             try:
                 self.googlestore = google_contacts.GoogleStore(self, config['google']['credentials_file'], config['google']['token_file'])
@@ -37,7 +34,6 @@ class Core:
                 self.googlestore = None
         else:
             self.googlestore = None
-        '''
 
         self.cli = cli.CLI(self)
         self.editor = Editor(config['editor'])
