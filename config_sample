@@ -6,6 +6,9 @@ notes_dir = ~/.contact-tui/notes/
 serialization = n3
 namespace = http://TBD/contact#
 
+[encryption]
+keyid=MYKEYID
+
 [google]
 credentials_file = ~/.contact-tui/google_credentials.json
 token_file = ~/.contact-tui/google_token.pickle
