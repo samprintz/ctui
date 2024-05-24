@@ -1,19 +1,30 @@
-import config as cfg
+#!/usr/bin/env python
+import os.path
+from argparse import ArgumentParser
+
+import util as util
+
 import core
-
-import os
-
-
-config = None
-RUN_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
-CONFIG_FILE = '../config'
-CONFIG_PATH = RUN_DIR + CONFIG_FILE
 
 
 def main():
-    global config
-    config = cfg.load_config(CONFIG_PATH)
-    hiea = core.Core(config)
+    parser = ArgumentParser(prog='ctui',
+                            description='Contact TUI')
+
+    parser.add_argument("--config",
+                        default="~/.config/ctui/config.ini",
+                        help="configuration file")
+
+    args = parser.parse_args()
+
+    config_path = os.path.expanduser(args.config)
+
+    if not os.path.isfile(config_path):
+        print(f'Configuration file not found: "{config_path}"')
+        exit(0)
+
+    config = util.load_config(config_path)
+    core.Core(config)
 
 
 if __name__ == "__main__":

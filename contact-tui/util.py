@@ -1,5 +1,6 @@
 import configparser
 
+
 def load_config(path):
     cfg = configparser.ConfigParser()
     cfg.read(path)
@@ -29,8 +30,3 @@ def load_config(path):
                 }
             }
     return config
-
-#GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
-#GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
-#EDITOR = os.environ.get('EDITOR','vim')
-

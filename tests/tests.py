@@ -2,16 +2,14 @@ import os
 import unittest
 import urwid
 
-import config as cfg
+import util as util
 from core import *
 from tui import *
 from objects import *
 
 
-RUN_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
-CONFIG_FILE = '../config'
-CONFIG_PATH = RUN_DIR + CONFIG_FILE
-config = cfg.load_config(CONFIG_PATH)
+CONFIG_FILE = 'config.ini'
+config = util.load_config(CONFIG_FILE)
 
 
 
