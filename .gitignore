@@ -1,6 +1,3 @@
-config
-contacts
-archiv/
-orga/
 __pycache__
 .idea
+*.egg-info
