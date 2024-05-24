@@ -1,0 +1,4 @@
+@prefix c: <http://hiea.de/contact#> .
+
+[] c:givenName "Maria Mustermann" .
+

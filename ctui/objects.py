@@ -1,4 +1,5 @@
-from core import *
+from datetime import datetime
+
 
 class Contact:
 
@@ -9,123 +10,102 @@ class Contact:
         self.gifts = gifts
         self.notes = notes
 
-
     def has_details(self):
         return self.core.rdfstore.has_attributes(self) or \
-                self.core.rdfstore.has_gifts(self) or \
-                self.core.notesstore.has_notes(self)
-
+            self.core.rdfstore.has_gifts(self) or \
+            self.core.notesstore.has_notes(self)
 
     def get_details(self):
         self.attributes = self.get_attributes()
         self.gifts = self.get_gifts()
         self.notes = self.get_notes()
 
-
     # attributes
 
     def has_attributes(self):
         return self.core.rdfstore.has_attributes(self)
 
-
     def get_attributes(self):
         return self.core.rdfstore.get_attributes(self)
-
 
     def has_attribute(self, attribute):
         return self.core.rdfstore.has_attribute(self, attribute)
 
-
     def add_attribute(self, attribute):
         return self.core.rdfstore.add_attribute(self, attribute)
 
-
     def edit_attribute(self, old_attr, new_attr):
-        if old_attr.key == "givenName": # special case: rename
+        if old_attr.key == "givenName":  # special case: rename
             return self.core.rename_contact(self, new_attr.value)
 
         if not self.has_attribute(old_attr):
             return "Error: {} doesn't own attribute {}={}.".format(
-                    self.name, old_attr.key, old_attr.value)
+                self.name, old_attr.key, old_attr.value)
 
         if old_attr.key == new_attr.key and old_attr.value == new_attr.value:
             return "Warning: Attribute unchanged."
 
         return self.core.rdfstore.edit_attribute(self, old_attr, new_attr)
 
-
     def delete_attribute(self, attribute):
         if not self.has_attribute(attribute):
             return "Error: {} doesn't own attribute {}={}.".format(
-                    self.name, attribute.key, attribute.value)
+                self.name, attribute.key, attribute.value)
 
         return self.core.rdfstore.delete_attribute(self, attribute)
-
 
     # gifts
 
     def has_gifts(self):
         return self.core.rdfstore.has_gifts(self)
 
-
     def get_gifts(self):
         return self.core.rdfstore.get_gifts(self)
-
 
     def has_gift(self, gift):
         return self.core.rdfstore.has_gift(self, gift)
 
-
     def add_gift(self, gift):
         return self.core.rdfstore.add_gift(self, gift)
-
 
     def edit_gift(self, old_gift, new_gift):
         if not self.has_gift(old_gift):
             return "Error: {} doesn't own gift {}.".format(
-                    self.name, old_gift.name)
+                self.name, old_gift.name)
 
         if old_gift.name == new_gift.name:
             return "Warning: Gift unchanged."
 
         return self.core.rdfstore.edit_gift(self, old_gift, new_gift)
 
-
     def delete_gift(self, gift):
         if not self.has_gift(gift):
             return "Error: {} doesn't own gift {}.".format(
-                    self.name, gift.name)
+                self.name, gift.name)
 
         return self.core.rdfstore.delete_gift(self, gift)
-
 
     # notes
 
     def has_notes(self):
         return self.core.notesstore.has_notes(self)
 
-
     def has_encrypted_notes(self):
         return self.core.notesstore.has_encrypted_notes(self)
-
 
     def get_notes(self):
         return self.core.notesstore.get_notes(self)
 
-
     def get_notes_path(self):
         return self.core.notesstore.get_notes_path(self)
 
-
     def has_note(self, date):
         return self.core.notesstore.contains_note(self, date)
-
 
     def get_note(self, date):
         if not self.has_note(date):
             return "Error: Note doesn't exist."
         return self.core.notesstore.get_note(self, date)
-
 
     def add_note(self, date_str):
         try:
@@ -147,7 +127,6 @@ class Contact:
 
         return self.core.notesstore.add_note(self, note)
 
-
     def add_encrypted_note(self, date_str):
         try:
             date = datetime.strptime(date_str, '%Y%m%d')
@@ -168,7 +147,6 @@ class Contact:
 
         return self.core.notesstore.add_encrypted_note(self, note)
 
-
     def rename_note(self, note, date_str):
         try:
             new_date = datetime.strptime(date_str, '%Y%m%d')
@@ -183,7 +161,6 @@ class Contact:
 
         return self.core.notesstore.rename_note(self, note, new_date)
 
-
     def delete_note(self, date_str):
         try:
             date = datetime.strptime(date_str, '%Y%m%d')
@@ -194,7 +171,6 @@ class Contact:
             return "Error: No note for \"{}\".".format(date_str)
 
         return self.core.notesstore.delete_note(self, date)
-
 
     def edit_note(self, date_str):
         try:
@@ -212,7 +188,6 @@ class Contact:
 
         return self.core.notesstore.edit_note(self, date, new_content)
 
-
     def encrypt_note(self, date_str):
         try:
             date = datetime.strptime(date_str, '%Y%m%d')
@@ -226,7 +201,6 @@ class Contact:
             return "Note \"{}\" not found.".format(date_str)
 
         return self.core.notesstore.encrypt_note(self, date)
-
 
     def decrypt_note(self, date_str, passphrase=None):
         try:
@@ -242,7 +216,6 @@ class Contact:
 
         return self.core.notesstore.decrypt_note(self, date, passphrase)
 
-
     def toggle_note_encryption(self, date_str, passphrase=None):
         try:
             date = datetime.strptime(date_str, '%Y%m%d')
@@ -255,17 +228,17 @@ class Contact:
         if not self.has_note(date):
             return "Note \"{}\" not found.".format(date_str)
 
-        if self.core.memorystore.contains_note(self, date): # hide
+        if self.core.memorystore.contains_note(self, date):  # hide
             content = self.core.memorystore.delete_note(self, date)
             return "Hide encrypted note content."
-        else: # show
-            content = self.core.notesstore.get_encrypted_note_text(self, date, passphrase)
+        else:  # show
+            content = self.core.notesstore.get_encrypted_note_text(self, date,
+                                                                   passphrase)
             note = EncryptedNote(date, content)
             if self.core.memorystore.add_note(self, note):
                 return "Show encrypted note content."
             else:
                 return "Failed to show encrypted note content."
-
 
     def show_all_encrypted_notes(self, passphrase=None):
         if not self.has_encrypted_notes():
@@ -273,7 +246,9 @@ class Contact:
 
         result = True
         for note in self.core.notesstore.get_encrypted_notes(self):
-            content = self.core.notesstore.get_encrypted_note_text(self, note.date, passphrase)
+            content = self.core.notesstore.get_encrypted_note_text(self,
+                                                                   note.date,
+                                                                   passphrase)
             note = EncryptedNote(note.date, content)
             if not self.core.memorystore.add_note(self, note):
                 result = False
@@ -282,7 +257,6 @@ class Contact:
             return "Show content of all encrypted notes."
         else:
             return "Failed to show content of all encrypted notes."
-
 
     def hide_all_encrypted_notes(self, passphrase=None):
         if not self.core.memorystore.has_notes(self):
@@ -293,16 +267,13 @@ class Contact:
         else:
             return "Failed to hide content of all encrypted notes."
 
-
     # memory
 
     def has_visible_note(self, note):
         return self.core.memorystore.contains_note(self, note.date)
 
-
     def get_visible_note(self, note):
         return self.core.memorystore.get_note(self, note.date)
-
 
 
 class Name:
@@ -310,10 +281,8 @@ class Name:
     def __init__(self, name):
         self.name = name
 
-
     def __eq__(self, other):
         return self.name == other.name
-
 
 
 class Attribute:
@@ -322,10 +291,8 @@ class Attribute:
         self.key = key
         self.value = value
 
-
     def __eq__(self, other):
         return self.key == other.key and self.value == other.value
-
 
 
 class Gift:
@@ -333,10 +300,8 @@ class Gift:
     def __init__(self, name):
         self.name = name
 
-
     def __eq__(self, other):
         return self.name == other.name
-
 
 
 class Note:
@@ -346,14 +311,12 @@ class Note:
             try:
                 date = datetime.strptime(date, '%Y%m%d')
             except ValueError:
-                raise ValueError #TODO
+                raise ValueError  # TODO
         self.date = date
         self.content = content
 
-
     def __eq__(self, other):
         return self.date == other.date
-
 
 
 class EncryptedNote(Note):
@@ -363,23 +326,18 @@ class EncryptedNote(Note):
             try:
                 date = datetime.strptime(date, '%Y%m%d')
             except ValueError:
-                raise ValueError #TODO
+                raise ValueError  # TODO
         self.date = date
         self.content = content
-
 
     def __eq__(self, other):
         return self.date == other.date
 
 
-
-
-
-
-
 class GoogleContact(Contact):
 
-    def __init__(self, name, core, google_id, google_attributes=None, google_notes=None):
+    def __init__(self, name, core, google_id, google_attributes=None,
+                 google_notes=None):
         super(GoogleContact, self).__init__(name, core)
         self.google_id = google_id
         self.google_attributes = google_attributes
@@ -392,7 +350,6 @@ class GoogleContact(Contact):
         return self
 
 
-
 class GoogleAttribute:
 
     def __init__(self, key, value, google_key):
@@ -400,10 +357,8 @@ class GoogleAttribute:
         self.value = value
         self.google_key = google_key
 
-
     def __eq__(self, other):
         return self.key == other.key and self.value == other.value
-
 
 
 class GoogleNote:
@@ -411,7 +366,5 @@ class GoogleNote:
     def __init__(self, content):
         self.content = content
 
-
     def __eq__(self, other):
         return self.content == other.content
-

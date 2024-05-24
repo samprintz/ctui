@@ -1,8 +1,9 @@
-from datetime import date,datetime
+from datetime import datetime
+import pyperclip
 import urwid
 
-from objects import *
-from cli import *
+from ctui.objects import Name, Attribute, Gift, Note, GoogleContact
+from ctui.cli import Action
 
 
 class ContactLoop(urwid.MainLoop):
@@ -43,12 +44,12 @@ class ContactFrame(urwid.Frame):
     def set_contact_details(self, contact=None):
         if contact is None:
             contact = self.contact_list.get_focused_contact()
-        contact.get_details() # augment existing contact with details (not before for performance)
+        contact.get_details()  # augment existing contact with details (not before for performance)
         self.body.set_contact_details(contact)
         self.contact_details = self.body.contents[-1][0].base_widget
 
     def refresh_contact_list(self, action=None, contact=None, detail=None,
-            filter_string=''):
+                             filter_string=''):
         if action is not Action.FILTERING and action is not Action.FILTERED:
             contact_list = self.core.get_all_contacts()
             self.core.contact_list = contact_list
@@ -72,24 +73,28 @@ class ContactFrame(urwid.Frame):
             detail_pos = 0
             self.body.set_focus_column(0)
         elif action is Action.CONTACT_DELETED:
-            contact_pos = min(self.current_contact_pos, len(self.contact_list.body) - 1)
+            contact_pos = min(self.current_contact_pos,
+                              len(self.contact_list.body) - 1)
             detail_pos = 0
         elif action is Action.DETAIL_ADDED_OR_EDITED:
             detail_pos = self.contact_details.get_detail_position(detail)
             self.body.set_focus_column(1)
         elif action is Action.DETAIL_DELETED:
-            if contact.has_details(): # don't focus details column if contact has no details
-                detail_pos = min(self.current_detail_pos, len(self.contact_details.body) - 1)
+            if contact.has_details():  # don't focus details column if contact has no details
+                detail_pos = min(self.current_detail_pos,
+                                 len(self.contact_details.body) - 1)
                 self.body.set_focus_column(1)
             else:
                 detail_pos = 0
         elif action is Action.FILTERING or action is Action.FILTERED:
-            contact_pos = self.contact_list.get_contact_position(self.current_contact)
+            contact_pos = self.contact_list.get_contact_position(
+                self.current_contact)
             detail_pos = 0
         elif action is Action.REFRESH:
-            contact_pos = self.contact_list.get_contact_position(self.current_contact)
+            contact_pos = self.contact_list.get_contact_position(
+                self.current_contact)
             detail_pos = 0
-        else: # defaults
+        else:  # defaults
             contact_pos = 0
             detail_pos = 0
 
@@ -103,14 +108,13 @@ class ContactFrame(urwid.Frame):
         # update focus watchers (esp. for testing; usually keyboard already triggers this)
         self.watch_focus()
 
-
     def watch_focus(self):
         self.current_contact = self.contact_list.get_focused_contact()
         self.current_contact_pos = self.contact_list.get_focus_position()
         self.current_detail = self.contact_details.get_focused_detail()
         self.current_detail_pos = self.contact_details.get_focus_position()
-        #hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
-        #self.console.show_meta(hiea)
+        # hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
+        # self.console.show_meta(hiea)
 
     def set_header(self):
         pass
@@ -137,7 +141,8 @@ class ContactFrameColumns(urwid.Columns):
 
     def set_contact_list(self, contact_list):
         column = (urwid.AttrMap(ContactList(contact_list, self.core),
-            'options', self.focus_map), self.options('given', self.nav_width))
+                                'options', self.focus_map),
+                  self.options('given', self.nav_width))
         if len(self.contents) < 1:
             self.contents.append(column)
         else:
@@ -145,7 +150,8 @@ class ContactFrameColumns(urwid.Columns):
 
     def set_contact_details(self, contact):
         column = (urwid.AttrMap(ContactDetails(contact, self.core),
-            'options', self.focus_map), self.options('weight', 1, True))
+                                'options', self.focus_map),
+                  self.options('weight', 1, True))
         if len(self.contents) < 2:
             self.contents.append(column)
         else:
@@ -155,11 +161,10 @@ class ContactFrameColumns(urwid.Columns):
         if key == 'ctrl r':
             self.core.frame.watch_focus()
             self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
-                    self.core.filter_string)
+                                                 self.core.filter_string)
         else:
             return super(ContactFrameColumns, self).keypress(size, key)
 
-    
 
 class CustListBox(urwid.ListBox):
     def __init__(self, listwalker, core):
@@ -180,7 +185,8 @@ class CustListBox(urwid.ListBox):
                 self.core.find_string = ''
             else:
                 self.core.find_string += str(key)
-                found = self.core.frame.contact_list.jump_to_contact(self.core.find_string)
+                found = self.core.frame.contact_list.jump_to_contact(
+                    self.core.find_string)
                 # workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'left')
                 if not found:
@@ -194,9 +200,9 @@ class CustListBox(urwid.ListBox):
             elif key == 'g':
                 self.core.last_keypress = None
                 self.core.cli.add_google_contact()
-#            elif key == 'g':
-#                self.core.last_keypress = None
-#                self.core.cli.add_gift(focused_contact)
+            #            elif key == 'g':
+            #                self.core.last_keypress = None
+            #                self.core.cli.add_gift(focused_contact)
             elif key == 'n':
                 self.core.last_keypress = None
                 self.core.cli.add_note(focused_contact)
@@ -280,11 +286,13 @@ class ContactList(CustListBox):
         pos = 0
         for c in contact_list:
             entry = ContactEntry(c, pos, self.core)
-            urwid.connect_signal(entry, 'click', self.core.frame.set_contact_details) #TODO in ListEntry
+            urwid.connect_signal(entry, 'click',
+                                 self.core.frame.set_contact_details)  # TODO in ListEntry
             a.append(entry)
             pos = pos + 1
         self.body = urwid.SimpleFocusListWalker(a)
-        urwid.connect_signal(self.body, 'modified', self.core.frame.set_contact_details)
+        urwid.connect_signal(self.body, 'modified',
+                             self.core.frame.set_contact_details)
 
     def get_focused_contact(self):
         return self.focus.contact
@@ -336,9 +344,9 @@ class ContactList(CustListBox):
         if self.core.last_keypress is None and self.core.find_mode is False:
             if key == 'n':
                 # if has details
-                #if self.core.frame.contact_details.number_of_details() > 0:
+                # if self.core.frame.contact_details.number_of_details() > 0:
                 return super(ContactList, self).keypress(size, 'right')
-                #else:
+                # else:
                 #    return super(ContactList, self).keypress(size, key)
             else:
                 return super(ContactList, self).keypress(size, key)
@@ -354,13 +362,16 @@ class ContactDetails(CustListBox):
         self.set(contact)
 
     def set(self, contact):
-        name = DetailEntry(contact, Name(contact.name), contact.name, 0, self.core)
+        name = DetailEntry(contact, Name(contact.name), contact.name, 0,
+                           self.core)
         entries = [name, urwid.Divider()]
         pos = len(entries)
 
         if contact.attributes is not None:
             for a in contact.attributes:
-                entries.append(AttributeEntry(contact, Attribute(a[0], a[1]), pos, self.core))
+                entries.append(
+                    AttributeEntry(contact, Attribute(a[0], a[1]), pos,
+                                   self.core))
                 pos = pos + 1
 
         if type(contact) is GoogleContact and contact.google_attributes is not None:
@@ -395,15 +406,18 @@ class ContactDetails(CustListBox):
             entries.append(urwid.Text(u"NOTIZEN"))
             pos = pos + 1
             for note in contact.notes:
-                if type(note) is Note: # plain note
+                if type(note) is Note:  # plain note
                     entries.append(NoteEntry(contact, note, pos, self.core))
-                else: # encrypted note
+                else:  # encrypted note
                     # check if made visible
                     if contact.has_visible_note(note):
                         visible_note = contact.get_visible_note(note)
-                        entries.append(EncryptedNoteEntry(contact, visible_note, pos, self.core, visible=True))
+                        entries.append(
+                            EncryptedNoteEntry(contact, visible_note, pos,
+                                               self.core, visible=True))
                     else:
-                        entries.append(EncryptedNoteEntry(contact, note, pos, self.core))
+                        entries.append(
+                            EncryptedNoteEntry(contact, note, pos, self.core))
                 pos = pos + 1
 
         self.body = urwid.SimpleFocusListWalker(entries)
@@ -411,12 +425,13 @@ class ContactDetails(CustListBox):
 
     def show_meta(self):
         if self.core.frame.details_focused() is True:
-            if type(self.focus) is NoteEntry or type(self.focus) is EncryptedNoteEntry:
+            if type(self.focus) is NoteEntry or type(
+                    self.focus) is EncryptedNoteEntry:
                 date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
                 self.core.frame.console.show_meta(date)
             elif isinstance(self.focus, DetailEntry):
                 self.core.frame.console.show_meta("")
-                #self.core.frame.console.show_meta(str(self.focus.pos))
+                # self.core.frame.console.show_meta(str(self.focus.pos))
         else:
             self.core.frame.clear_footer()
 
@@ -424,27 +439,28 @@ class ContactDetails(CustListBox):
         return len(self.body) - 2
 
     def get_focused_detail(self):
-#        if not hasattr(self.focus, 'detail'):
-#            return None
+        #        if not hasattr(self.focus, 'detail'):
+        #            return None
         return self.focus.detail
 
     def get_focus_position(self):
         return self.focus_position
 
     def set_focus_position(self, pos):
-        try: # fix for frequent problem: # TODO undo this after improving get_detail_position()
+        try:  # fix for frequent problem: # TODO undo this after improving get_detail_position()
             # "'<' not supported between instances of 'NoneType' and 'int'"
             self.focus_position = pos
         except TypeError:
             pass
-
 
     def get_detail_position(self, detail):
         pos = 0
         for entry in self.body:
             if isinstance(entry, DetailEntry):
                 # TODO Workaround for gifts (as they are not recognized as gifts when creating them with add-attribute instead of add-gift
-                if isinstance(detail, Attribute) and detail.key == "giftIdea" and isinstance(entry.detail, Gift):
+                if isinstance(detail,
+                              Attribute) and detail.key == "giftIdea" and isinstance(
+                        entry.detail, Gift):
                     if detail.value == entry.detail.name:
                         return pos
                 else:
@@ -504,7 +520,8 @@ class DetailEntry(ListEntry):
 class AttributeEntry(DetailEntry):
     def __init__(self, contact, attribute, pos, core):
         label = attribute.key + ': ' + attribute.value
-        super(AttributeEntry, self).__init__(contact, attribute, label, pos, core)
+        super(AttributeEntry, self).__init__(contact, attribute, label, pos,
+                                             core)
         self.attribute = attribute
 
     def keypress(self, size, key):
@@ -519,6 +536,7 @@ class AttributeEntry(DetailEntry):
         else:
             return super(ListEntry, self).keypress(size, key)
 
+
 class GiftEntry(DetailEntry):
     def __init__(self, contact, gift, pos, core):
         super(GiftEntry, self).__init__(contact, gift, gift.name, pos, core)
@@ -531,6 +549,7 @@ class GiftEntry(DetailEntry):
             self.core.cli.delete_gift(self.contact, self.gift)
         else:
             return super(GiftEntry, self).keypress(size, key)
+
 
 class NoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core):
@@ -565,13 +584,16 @@ class NoteEntry(DetailEntry):
             else:
                 self.core.last_keypress = None
 
+
 class EncryptedNoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core, visible=False):
         if visible:
             content = '[' + note.content + ']'
-            super(EncryptedNoteEntry, self).__init__(contact, note, content, pos, core)
+            super(EncryptedNoteEntry, self).__init__(contact, note, content,
+                                                     pos, core)
         else:
-            super(EncryptedNoteEntry, self).__init__(contact, note, '(encrypted)', pos, core)
+            super(EncryptedNoteEntry, self).__init__(contact, note,
+                                                     '(encrypted)', pos, core)
         self.note = note
 
     def keypress(self, size, key):
@@ -587,7 +609,7 @@ class EncryptedNoteEntry(DetailEntry):
             else:
                 return super(EncryptedNoteEntry, self).keypress(size, key)
         elif self.core.last_keypress == 'e':
-            if key == 'left': # 'd' is mapped to 'left'
+            if key == 'left':  # 'd' is mapped to 'left'
                 self.core.cli.decrypt_note(self.contact, self.note)
                 self.core.last_keypress = None
             elif key == 'e':
@@ -605,22 +627,25 @@ class EncryptedNoteEntry(DetailEntry):
             else:
                 self.core.last_keypress = None
 
+
 class GoogleNoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core):
-        super(GoogleNoteEntry, self).__init__(contact, note, note.content, pos, core)
+        super(GoogleNoteEntry, self).__init__(contact, note, note.content, pos,
+                                              core)
         self.note = note
 
 
 class GoogleAttributeEntry(DetailEntry):
     def __init__(self, contact, attribute, pos, core):
         label = 'G: ' + attribute.key + ': ' + attribute.value
-        super(GoogleAttributeEntry, self).__init__(contact, attribute, label, pos, core)
+        super(GoogleAttributeEntry, self).__init__(contact, attribute, label,
+                                                   pos, core)
         self.attribute = attribute
 
     def keypress(self, size, key):
-        #if key == 'a':
+        # if key == 'a':
         #    self.core.cli.edit_attribute(self.contact, self.attribute)
-        #elif key == 'h':
+        # elif key == 'h':
         #    self.core.cli.delete_attribute(self.contact, self.attribute)
         if key == 'y':
             pyperclip.copy(self.attribute.value)

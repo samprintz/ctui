@@ -1,55 +1,55 @@
-from datetime import date,datetime
 from httplib2 import ServerNotFoundError
 from subprocess import call
-import operator
 import os
-import pyperclip
-import shutil
 import socket
 import tempfile
 
-from objects import *
-import cli
-import memory
-import notes
-import rdf
-import tui
-import google_contacts
+from ctui.objects import *
+from ctui.cli import CLI
+from ctui.google_contacts import GoogleStore
+from ctui.memory import MemoryStore
+from ctui.notes import NotesStore
+from ctui.rdf import RDFStore
+from ctui.tui import ContactFrame, ContactLoop
 
 
-"""
-Business logic of the contact TUI.
-"""
 class Core:
+    """
+    Business logic of the contact TUI.
+    """
 
     def __init__(self, config, test=False):
-        self.rdfstore = rdf.RDFStore(config['path']['rdf_file'], config['rdf']['namespace'])
-        self.notesstore = notes.NotesStore(config['path']['notes_dir'], config['encryption']['keyid'])
-        self.memorystore = memory.MemoryStore()
+        self.rdfstore = RDFStore(config['path']['rdf_file'],
+                                 config['rdf']['namespace'])
+        self.notesstore = NotesStore(config['path']['notes_dir'],
+                                     config['encryption']['keyid'])
+        self.memorystore = MemoryStore()
 
-        if self.is_connected():
+        if self.is_connected() and not test:
             try:
-                self.googlestore = google_contacts.GoogleStore(self, config['google']['credentials_file'], config['google']['token_file'])
+                self.googlestore = GoogleStore(self, config['google'][
+                    'credentials_file'], config['google']['token_file'])
             except ServerNotFoundError:
                 self.googlestore = None
         else:
             self.googlestore = None
 
-        self.cli = cli.CLI(self)
+        self.cli = CLI(self)
         self.editor = Editor(config['editor'])
         self.last_keypress = None
         self.contact_list = self.get_all_contacts()
         self.filter_string = ''
 
-        self.frame = tui.ContactFrame(config, self)
+        self.frame = ContactFrame(config, self)
         self.frame.init_contact_list(self.contact_list)
 
         if not test:
-            loop = tui.ContactLoop(self.frame, config)
+            loop = ContactLoop(self.frame, config)
 
     """
     Check if connected to the internet
     """
+
     def is_connected(self):
         hostname = "one.one.one.one"
         try:
@@ -66,6 +66,7 @@ class Core:
     """
     Returns a list of all contacts without their details.
     """
+
     def get_all_contacts(self):
         contacts = []
         for c in self.rdfstore.get_all_contact_names():
@@ -80,7 +81,8 @@ class Core:
             for contact in self.googlestore.get_all_contacts():
                 # check if contact already in list
                 try:
-                    existing_contact = next(x for x in contacts if contact.name == x.name)
+                    existing_contact = next(
+                        x for x in contacts if contact.name == x.name)
                     contacts.remove(existing_contact)
                     contact.merge(existing_contact)
                 except StopIteration:
@@ -92,19 +94,23 @@ class Core:
     """
     Returns a list of the names of all contacts.
     """
+
     def get_all_contact_names(self):
         contact_names = self.rdfstore.get_all_contact_names() \
-                + self.notesstore.get_all_contact_names() \
-                + self.googlestore.get_all_contact_names()
+                        + self.notesstore.get_all_contact_names()
+
+        if self.googlestore is not None:
+            contact_names + self.googlestore.get_all_contact_names()
+
         return sorted(set(contact_names))
 
     def contains_contact(self, contact):
         return self.rdfstore.contains_contact(contact) or \
-                self.notesstore.contains_contact(contact)
+            self.notesstore.contains_contact(contact)
 
     def contains_contact_name(self, name):
         return self.rdfstore.contains_contact_name(name) or \
-                self.notesstore.contains_contact_name(name)
+            self.notesstore.contains_contact_name(name)
 
     def get_contact(self, name):
         for contact in self.contact_list:
@@ -116,7 +122,7 @@ class Core:
         return ""
 
     def filter_contacts(self, filter_string):
-        if not filter_string: # shortcut for empty filter (unfilter)
+        if not filter_string:  # shortcut for empty filter (unfilter)
             return self.contact_list
         contacts = []
         for contact in self.contact_list:
@@ -163,7 +169,7 @@ class Core:
         return "{} deleted.".format(contact.name)
 
     def add_google_contact(self, name):
-        #TODO Check if already exists (offline, not in Google)
+        # TODO Check if already exists (offline, not in Google)
         names = name.split()
         givenName = names[0]
         familyName = names[1] if len(names) > 1 else ''
@@ -177,11 +183,9 @@ class Core:
         return google_contact, "{} added.".format(name)
 
 
-
 class Editor:
     def __init__(self, editor_name):
         self.editor = os.environ.get('EDITOR', editor_name)
-
 
     def add(self, dirname, filename):
         path = dirname + '/' + filename + '.txt'
@@ -197,10 +201,9 @@ class Editor:
             os.remove(temp_path)
 
         except OSError:
-            raise OSError #TODO
+            raise OSError  # TODO
 
         return content
-
 
     def edit(self, dirname, filename):
         path = dirname + '/' + filename + '.txt'
@@ -219,16 +222,15 @@ class Editor:
                 content = tf.read()
 
             os.remove(temp_path)
-#            with tempfile.NamedTemporaryFile(
-#                    suffix=".tmp", prefix=filename + '_', dir=dirname) as tf:
-#                tf.write(old_content)
-#                tf.flush()
-#                call([self.editor, tf.name])
-#                tf.seek(0)
-#                content = tf.read().decode("utf-8")
+        #            with tempfile.NamedTemporaryFile(
+        #                    suffix=".tmp", prefix=filename + '_', dir=dirname) as tf:
+        #                tf.write(old_content)
+        #                tf.flush()
+        #                call([self.editor, tf.name])
+        #                tf.seek(0)
+        #                content = tf.read().decode("utf-8")
 
         except OSError:
-            raise OSError #TODO
+            raise OSError  # TODO
 
         return content
-

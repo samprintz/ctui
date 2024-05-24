@@ -1,14 +1,14 @@
-from datetime import date,datetime
+from datetime import date, datetime
 from enum import Enum
 
-import core
-from objects import *
+from ctui.objects import Attribute, Gift, Note, EncryptedNote
 
 
-"""
-Vim-like console that serves as main user interface for data-manipulation (esp. create, update, delete).
-"""
 class CLI:
+    """
+    Vim-like console that serves as main user interface for data-manipulation (esp. create, update, delete).
+    """
+
     def __init__(self, core):
         self.core = core
         self.contact = None
@@ -16,7 +16,6 @@ class CLI:
         self.filter_string = ''
         self.mode = None
         self.note = None
-
 
     def handle(self, args):
         if self.mode is Mode.SEARCH:
@@ -34,11 +33,13 @@ class CLI:
                 self.filter_string = filter_string
                 self.action = Action.FILTERING
                 self.core.frame.refresh_contact_list(self.action, self.contact,
-                        self.detail, self.filter_string)
-            else: # enter was pressed
+                                                     self.detail,
+                                                     self.filter_string)
+            else:  # enter was pressed
                 self.action = Action.FILTERED
                 self.core.frame.refresh_contact_list(self.action, self.contact,
-                        self.detail, self.filter_string)
+                                                     self.detail,
+                                                     self.filter_string)
                 self.core.frame.set_focus('body')
                 msg = 'f={}'.format(self.core.filter_string)
                 self.core.frame.console.show_message(msg)
@@ -50,19 +51,19 @@ class CLI:
                 name = " ".join(args[1:])
                 contact = Contact(name, self.core)
                 msg = self.core.add_contact(contact)
-                self.contact = contact # to focus it when refreshing contact list
+                self.contact = contact  # to focus it when refreshing contact list
                 self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('rename-contact'):
                 contact = self.contact
                 new_name = " ".join(args[1:])
                 msg = self.core.rename_contact(contact, new_name)
-                contact.name = new_name # TODO
-                self.contact = contact # to focus it when refreshing contact list
+                contact.name = new_name  # TODO
+                self.contact = contact  # to focus it when refreshing contact list
                 self.action = Action.CONTACT_ADDED_OR_EDITED
             elif command in ('delete-contact'):
                 name = " ".join(args[1:])
                 msg = self.core.delete_contact_by_name(name)
-                self.contact = None # to focus other when refreshing contact list
+                self.contact = None  # to focus other when refreshing contact list
                 self.action = Action.CONTACT_DELETED
             elif command in ('add-attribute'):
                 key = args[1]
@@ -151,16 +152,16 @@ class CLI:
             elif command in ('add-google-contact'):
                 name = " ".join(args[1:])
                 contact, msg = self.core.add_google_contact(name)
-                self.contact = contact # to focus it when refreshing contact list
+                self.contact = contact  # to focus it when refreshing contact list
                 self.action = Action.CONTACT_ADDED_OR_EDITED
             else:
                 msg = 'Not a valid command.'
 
             self.core.frame.refresh_contact_list(self.action, self.contact,
-                    self.detail, self.filter_string)
+                                                 self.detail,
+                                                 self.filter_string)
             self.core.frame.set_focus('body')
             self.core.frame.console.show_message(msg)
-
 
     # contacts
 
@@ -201,9 +202,8 @@ class CLI:
         self.core.filter_mode = False
         self.core.filter_string = ''
         self.core.frame.refresh_contact_list(self.action, self.contact,
-                self.detail, self.filter_string)
+                                             self.detail, self.filter_string)
         self.core.frame.clear_footer()
-
 
     # attributes
 
@@ -221,7 +221,8 @@ class CLI:
     def delete_attribute(self, contact, attribute):
         self.contact = contact
         self.detail = attribute
-        command = 'delete-attribute {} {}'.format(attribute.key, attribute.value)
+        command = 'delete-attribute {} {}'.format(attribute.key,
+                                                  attribute.value)
         self.core.frame.console.show_console(command)
 
     # gifts
@@ -324,12 +325,12 @@ class CLI:
         self.core.cli.handle(args)
 
 
-
 class Mode(Enum):
     SEARCH = 'search'
     FILTER = 'filter'
     CONSOLE = 'console'
     INPUT = 'input'
+
 
 class Action(Enum):
     REFRESH = 'refresh'
@@ -337,6 +338,5 @@ class Action(Enum):
     CONTACT_DELETED = 'contact_deleted'
     DETAIL_ADDED_OR_EDITED = 'detail_added_or_edited'
     DETAIL_DELETED = 'detail_deleted'
-    FILTERING = 'filtering' # when the console is still open
-    FILTERED = 'filtered' # when filter string is entered and the console closed
-
+    FILTERING = 'filtering'  # when the console is still open
+    FILTERED = 'filtered'  # when filter string is entered and the console closed

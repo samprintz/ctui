@@ -1,11 +1,9 @@
-import os
 import unittest
-import urwid
 
-import util as util
-from core import *
-from tui import *
-from objects import *
+import ctui.util as util
+from ctui.core import *
+from ctui.tui import *
+from ctui.objects import *
 
 
 CONFIG_FILE = 'config.ini'
