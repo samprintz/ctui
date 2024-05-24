@@ -22,11 +22,7 @@ def load_config(path):
             'display': {
                 'nav_width': cfg.getint('display', 'nav_width'),
                 'palette': [
-                    (None,  'light gray', 'black'),
-                    ('options', 'light gray', 'black'),
-                    ('focus options', 'black', 'light gray'),
-                    ('selected', 'black', 'light gray'),
-                    ('status_bar', 'light gray', 'black')
+                    ('selected', '', 'light gray'),
                     ],
                 'focus_map': {
                     'options': 'focus options'}
