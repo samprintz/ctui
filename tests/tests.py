@@ -5,7 +5,7 @@ from ctui.core import *
 from ctui.tui import *
 from ctui.objects import *
 
-CONFIG_FILE = 'config.ini'
+CONFIG_FILE = 'files/config.ini'
 config = util.load_config(CONFIG_FILE)
 
 
@@ -381,6 +381,30 @@ class TestObjects(unittest.TestCase):
         pass
 
 
+class TestKeybindings(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        pass
+
+    @classmethod
+    def setUp(self):
+        self.core = Core(config, True)
+
+    def test_init_keybindings(self):
+        commands = self.core.keybindings.commands
+        self.assertDictContainsSubset(["keybindings.global"], commands)
+
+    @classmethod
+    def tearDown(self):
+        pass
+
+    @classmethod
+    def tearDownClass(self):
+        pass
+
+
+
 class TestTUI(unittest.TestCase):
 
     @classmethod
@@ -572,10 +596,11 @@ class TestTUI(unittest.TestCase):
     def tearDownClass(self):
         pass
 
-    # test focusing of details after CRUD operations
-
 
 class TestTUIDetailFocusFirstContact(unittest.TestCase):
+    """
+    Test focusing of details after CRUD operations
+    """
 
     @classmethod
     def setUp(self):

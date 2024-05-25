@@ -7,6 +7,7 @@ import tempfile
 from ctui.objects import *
 from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
+from ctui.keybindings import Keybindings
 from ctui.memory import MemoryStore
 from ctui.notes import NotesStore
 from ctui.rdf import RDFStore
@@ -35,7 +36,7 @@ class Core:
             self.googlestore = None
 
         self.cli = CLI(self)
-        self.editor = Editor(config['editor'])
+        self.keybindings = Keybindings(config)
         self.editor = Editor(config['editor']['editor'])
         self.last_keypress = None
         self.contact_list = self.get_all_contacts()

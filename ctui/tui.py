@@ -167,10 +167,46 @@ class ContactFrameColumns(urwid.Columns):
 
 
 class CustListBox(urwid.ListBox):
-    def __init__(self, listwalker, core):
+    def __init__(self, listwalker, core, name):
         super(CustListBox, self).__init__(listwalker)
         self.repeat_command = 0
         self.core = core
+        self.name = name
+        self.register_keybindings()
+
+    def register_keybindings(self):
+        def add_attribute():
+            focused_contact = self.core.frame.contact_list.get_focused_contact()
+            self.core.cli.add_attribute(focused_contact)
+
+        def add_note():
+            focused_contact = self.core.frame.contact_list.get_focused_contact()
+            self.core.cli.add_note(focused_contact)
+
+        def add_encrypted_note():
+            focused_contact = self.core.frame.contact_list.get_focused_contact()
+            self.core.cli.add_encrypted_note(focused_contact)
+
+        commands = [
+            {
+                'id': 'add_attribute',
+                'function': add_attribute
+            },
+            {
+                'id': 'add_google_contact',
+                'function': self.core.cli.add_google_contact
+            },
+            {
+                'id': 'add_note',
+                'function': add_note
+            },
+            {
+                'id': 'add_encrypted_note',
+                'function': add_encrypted_note
+            }
+        ]
+
+        self.core.keybindings.register(commands, self.name)
 
     def keypress(self, size, key):
         self.core.frame.watch_focus()
@@ -192,6 +228,10 @@ class CustListBox(urwid.ListBox):
                 if not found:
                     self.core.find_mode = False
                     self.core.find_string = ''
+        else:
+            self.core.keybindings.call(key, self.name)
+
+        '''
         elif self.core.last_keypress == 'i':
             focused_contact = self.core.frame.contact_list.get_focused_contact()
             if key == 'i':
@@ -264,6 +304,7 @@ class CustListBox(urwid.ListBox):
                     self.repeat_command = int(key)
             else:
                 return super(CustListBox, self).keypress(size, key)
+        '''
 
     def jump_down(self, size, n):
         for i in range(0, n):
@@ -277,7 +318,7 @@ class CustListBox(urwid.ListBox):
 class ContactList(CustListBox):
     def __init__(self, contact_list, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactList, self).__init__(listwalker, core)
+        super(ContactList, self).__init__(listwalker, core, 'contact_list')
         self.core = core
         self.set(contact_list)
 
@@ -357,7 +398,8 @@ class ContactList(CustListBox):
 class ContactDetails(CustListBox):
     def __init__(self, contact, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactDetails, self).__init__(listwalker, core)
+        super(ContactDetails, self).__init__(listwalker, core,
+                                             'contact_details')
         self.core = core
         self.set(contact)
 
@@ -460,7 +502,7 @@ class ContactDetails(CustListBox):
                 # TODO Workaround for gifts (as they are not recognized as gifts when creating them with add-attribute instead of add-gift
                 if isinstance(detail,
                               Attribute) and detail.key == "giftIdea" and isinstance(
-                        entry.detail, Gift):
+                    entry.detail, Gift):
                     if detail.value == entry.detail.name:
                         return pos
                 else:
