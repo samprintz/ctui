@@ -8,7 +8,7 @@ from ctui.cli import Action
 
 class ContactLoop(urwid.MainLoop):
     def __init__(self, frame, config):
-        palette = config['display']['palette']
+        palette = [('selected', '', 'light gray')]
         loop = urwid.MainLoop(frame, palette, unhandled_input=self.show_or_exit)
         loop.run()
 
@@ -135,7 +135,7 @@ class ContactFrame(urwid.Frame):
 class ContactFrameColumns(urwid.Columns):
     def __init__(self, core, config):
         self.core = core
-        self.focus_map = config['display']['focus_map']
+        self.focus_map = {'options': 'focus options'}
         self.nav_width = config['display']['nav_width']
         super(ContactFrameColumns, self).__init__([], dividechars=1)
 

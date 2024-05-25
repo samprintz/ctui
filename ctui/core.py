@@ -36,6 +36,7 @@ class Core:
 
         self.cli = CLI(self)
         self.editor = Editor(config['editor'])
+        self.editor = Editor(config['editor']['editor'])
         self.last_keypress = None
         self.contact_list = self.get_all_contacts()
         self.filter_string = ''
