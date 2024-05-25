@@ -136,7 +136,7 @@ class ContactFrameColumns(urwid.Columns):
     def __init__(self, core, config):
         self.core = core
         self.focus_map = {'options': 'focus options'}
-        self.nav_width = config['display']['nav_width']
+        self.nav_width = int(config['display']['nav_width'])
         super(ContactFrameColumns, self).__init__([], dividechars=1)
 
     def set_contact_list(self, contact_list):
