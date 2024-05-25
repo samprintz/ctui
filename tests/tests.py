@@ -5,10 +5,8 @@ from ctui.core import *
 from ctui.tui import *
 from ctui.objects import *
 
-
 CONFIG_FILE = 'config.ini'
 config = util.load_config(CONFIG_FILE)
-
 
 
 class TestCore(unittest.TestCase):
@@ -25,14 +23,12 @@ class TestCore(unittest.TestCase):
     def setUp(self):
         pass
 
-
     # contacts
 
     def test_get_all_contact_names(self):
         contact_names = self.core.get_all_contact_names()
         self.assertIsNotNone(contact_names)
         self.assertIsInstance(contact_names, list)
-
 
     def test_add_contact(self):
         res = self.core.add_contact(self.contact1)
@@ -55,7 +51,6 @@ class TestCore(unittest.TestCase):
         res = self.core.add_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
         self.assertTrue(self.core.contains_contact(self.contact1))
-
 
     def test_rename_contact(self):
         self.core.add_contact(self.contact1)
@@ -97,7 +92,6 @@ class TestCore(unittest.TestCase):
         self.assertFalse(self.core.rdfstore.contains_contact_name(self.name1))
         self.assertFalse(self.core.notesstore.contains_contact_name(self.name1))
 
-
     def test_delete_contact(self):
         self.core.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
@@ -133,8 +127,6 @@ class TestCore(unittest.TestCase):
         self.assertFalse(self.core.contains_contact(self.contact1))
         self.assertFalse(self.core.rdfstore.contains_attribute(attr))
 
-
-
     @classmethod
     def tearDown(self):
         self.core.delete_contact(self.contact1)
@@ -143,7 +135,6 @@ class TestCore(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         pass
-
 
 
 class TestObjects(unittest.TestCase):
@@ -176,7 +167,6 @@ class TestObjects(unittest.TestCase):
     def setUp(self):
         self.core.add_contact(self.contact)
 
-
     # attributes
 
     def test_add_attr(self):
@@ -190,7 +180,6 @@ class TestObjects(unittest.TestCase):
         res = self.contact.add_attribute(self.attr1)
         self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_attribute(self.attr1))
-
 
     def test_edit_attr(self):
         self.contact.add_attribute(self.attr1)
@@ -214,7 +203,7 @@ class TestObjects(unittest.TestCase):
         self.assertFalse(self.contact.has_attribute(self.attr2))
 
     def test_edit_attr_givenname_with_only_notes(self):
-        self.core.delete_contact(self.contact) # undo setUp
+        self.core.delete_contact(self.contact)  # undo setUp
         self.core.notesstore.add_contact(self.contact)
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact))
         new_name = "Test Person"
@@ -224,9 +213,8 @@ class TestObjects(unittest.TestCase):
         self.assertTrue(self.core.contains_contact_name(new_name))
         self.assertFalse(self.core.contains_contact_name(self.name))
         self.assertFalse(self.core.rdfstore.contains_contact_name(new_name))
-        self.core.contact_list = self.core.get_all_contacts() # to be able to delete it by name
+        self.core.contact_list = self.core.get_all_contacts()  # to be able to delete it by name
         self.core.delete_contact_by_name(new_name)
-
 
     def test_delete_attr(self):
         self.contact.add_attribute(self.attr1)
@@ -241,7 +229,6 @@ class TestObjects(unittest.TestCase):
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
 
-
     # gifts
 
     def test_add_gift(self):
@@ -255,7 +242,6 @@ class TestObjects(unittest.TestCase):
         res = self.contact.add_gift(self.gift1)
         self.assertIsNotNone(res)
         self.assertTrue(self.contact.has_gift(self.gift1))
-
 
     def test_edit_gift(self):
         self.contact.add_gift(self.gift1)
@@ -278,7 +264,6 @@ class TestObjects(unittest.TestCase):
         self.assertTrue(res.startswith("Error"))
         self.assertFalse(self.contact.has_gift(self.gift2))
 
-
     def test_delete_gift(self):
         self.contact.add_gift(self.gift1)
         self.assertTrue(self.contact.has_gift(self.gift1))
@@ -291,7 +276,6 @@ class TestObjects(unittest.TestCase):
         res = self.contact.delete_gift(self.gift1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
-
 
     # notes
 
@@ -315,7 +299,6 @@ class TestObjects(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.core.notesstore.add_note(self.contact, self.note1)
 
-
     def test_rename_note(self):
         self.core.notesstore.add_note(self.contact, self.note1)
         self.core.notesstore.rename_note(self.contact, self.note1, self.date2)
@@ -328,13 +311,15 @@ class TestObjects(unittest.TestCase):
     def test_rename_note_unchanged(self):
         self.core.notesstore.add_note(self.contact, self.note1)
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1, self.date1)
+            self.core.notesstore.rename_note(self.contact, self.note1,
+                                             self.date1)
         self.assertTrue(self.contact.has_note(self.date1))
 
     def test_rename_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1, self.date2)
+            self.core.notesstore.rename_note(self.contact, self.note1,
+                                             self.date2)
         self.assertFalse(self.contact.has_note(self.date1))
 
     def test_rename_note_already_existing(self):
@@ -342,10 +327,10 @@ class TestObjects(unittest.TestCase):
         note2 = Note(self.date2, self.note_content2)
         self.core.notesstore.add_note(self.contact, note2)
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1, self.date2)
+            self.core.notesstore.rename_note(self.contact, self.note1,
+                                             self.date2)
         self.assertTrue(self.contact.has_note(self.date1))
         self.assertTrue(self.contact.has_note(self.date2))
-
 
     def test_delete_note(self):
         self.core.notesstore.add_note(self.contact, self.note1)
@@ -369,15 +354,14 @@ class TestObjects(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.core.notesstore.delete_note(self.contact, self.date1)
 
-
     def test_edit_note(self):
         self.core.notesstore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
-        self.core.notesstore.edit_note(self.contact, self.date1, self.note_content2)
+        self.core.notesstore.edit_note(self.contact, self.date1,
+                                       self.note_content2)
         self.assertTrue(self.contact.has_note(self.date1))
         res = self.contact.get_note(self.date1)
         self.assertEqual(res, self.note_content2)
-
 
     def test_edit_note_date_error(self):
         pass
@@ -385,8 +369,8 @@ class TestObjects(unittest.TestCase):
     def test_edit_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.edit_note(self.contact, self.date1, self.note_content2)
-
+            self.core.notesstore.edit_note(self.contact, self.date1,
+                                           self.note_content2)
 
     @classmethod
     def tearDown(self):
@@ -395,7 +379,6 @@ class TestObjects(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         pass
-
 
 
 class TestTUI(unittest.TestCase):
@@ -417,7 +400,6 @@ class TestTUI(unittest.TestCase):
         self.contact_last = Contact(self.name_last, self.core)
         self.pos = 0
 
-
     # test initialization entries objects
 
     def test_init_attribute_entry(self):
@@ -438,7 +420,6 @@ class TestTUI(unittest.TestCase):
     def test_init_contact_entry(self):
         entry = ContactEntry(self.contact1, self.core, self.pos)
         self.assertIsInstance(entry.label, str)
-
 
     # test focusing of contacts after CRUD operations
 
@@ -500,7 +481,8 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_rename_last_to_some(self):
         self.core.add_contact(self.contact_last)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact_last)
+        pos = self.core.frame.contact_list.get_contact_position(
+            self.contact_last)
         self.core.cli.rename_contact(self.contact_last)
         args = ['rename-contact', self.name2]
         self.core.cli.handle(args)
@@ -515,7 +497,8 @@ class TestTUI(unittest.TestCase):
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
-        new_pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        new_pos = self.core.frame.contact_list.get_contact_position(
+            focused_contact)
         self.assertEqual(new_pos, 0)
 
     def test_focus_rename_some_to_last(self):
@@ -529,48 +512,54 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_first(self):
         self.core.add_contact(self.contact_first)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact_first)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact_first)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact_first)
+        pos = self.core.frame.contact_list.get_contact_position(
+            self.contact_first)
         self.core.cli.delete_contact(self.contact_first)
         args = ['delete-contact', self.name_first]
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        new_pos = self.core.frame.contact_list.get_contact_position(
+            focused_contact)
         self.assertEqual(new_pos, 0)
         self.assertNotEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_some(self):
         self.core.add_contact(self.contact1)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact1)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact1)
         pos = self.core.frame.contact_list.get_contact_position(self.contact1)
         self.core.cli.delete_contact(self.contact1)
         args = ['delete-contact', self.name1]
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        new_pos = self.core.frame.contact_list.get_contact_position(
+            focused_contact)
         self.assertEqual(new_pos, pos)
         self.assertNotEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_last(self):
         self.core.add_contact(self.contact_last)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact_last)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact_last)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact_last)
+        pos = self.core.frame.contact_list.get_contact_position(
+            self.contact_last)
         self.core.cli.delete_contact(self.contact_last)
         args = ['delete-contact', self.name_last]
         self.core.cli.handle(args)
         focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        new_pos = self.core.frame.contact_list.get_contact_position(
+            focused_contact)
         self.assertEqual(new_pos, pos - 1)
         self.assertNotEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_when_next_no_attributes(self):
         pass
-        #TODO
-        #previous = Contact("zzy")
-        #self.core.
-        #self.core.add_contact(self.contact_last)
-
-
+        # TODO
+        # previous = Contact("zzy")
+        # self.core.
+        # self.core.add_contact(self.contact_last)
 
     @classmethod
     def tearDown(self):
@@ -583,9 +572,8 @@ class TestTUI(unittest.TestCase):
     def tearDownClass(self):
         pass
 
-
-
     # test focusing of details after CRUD operations
+
 
 class TestTUIDetailFocusFirstContact(unittest.TestCase):
 
@@ -595,14 +583,16 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         self.name_first = "A"
         self.contact_first = Contact(self.name_first, self.core)
         self.core.add_contact(self.contact_first)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact_first)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact_first)
 
     @classmethod
     def tearDown(self):
         self.core.delete_contact(self.contact_first)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(self.contact_first)
+        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+            self.contact_first)
         self.assertEqual(self.ct_pos, 0)
 
     def test_focus_add_first_detail_to_first_contact(self):
@@ -642,7 +632,6 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         pass
 
 
-
 class TestTUIDetailFocusSomeContact(unittest.TestCase):
 
     @classmethod
@@ -651,17 +640,19 @@ class TestTUIDetailFocusSomeContact(unittest.TestCase):
         self.name1 = "Test Contact A"
         self.contact1 = Contact(self.name1, self.core)
         self.core.add_contact(self.contact1)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact1)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact1)
 
     @classmethod
     def tearDown(self):
         self.core.delete_contact(self.contact1)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(self.contact1)
-        self.assertNotEqual(self.ct_pos, 0) # not first
+        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+            self.contact1)
+        self.assertNotEqual(self.ct_pos, 0)  # not first
         contact_list_length = len(self.core.frame.contact_list.body)
-        self.assertNotEqual(self.ct_pos, contact_list_length) # not last
+        self.assertNotEqual(self.ct_pos, contact_list_length)  # not last
 
     def test_focus_add_first_detail_to_some_contact(self):
         pass
@@ -700,7 +691,6 @@ class TestTUIDetailFocusSomeContact(unittest.TestCase):
         pass
 
 
-
 class TestTUIDetailFocusLastContact(unittest.TestCase):
 
     @classmethod
@@ -709,14 +699,16 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
         self.name_last = "zzz"
         self.contact_last = Contact(self.name_last, self.core)
         self.core.add_contact(self.contact_last)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED, self.contact_last)
+        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                             self.contact_last)
 
     @classmethod
     def tearDown(self):
         self.core.delete_contact(self.contact_last)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(self.contact_last)
+        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+            self.contact_last)
         contact_list_length = len(self.core.frame.contact_list.body)
         self.assertEqual(self.ct_pos, contact_list_length - 1)
 
@@ -755,7 +747,6 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
 
     def test_focus_delete_last_detail_from_last_contact(self):
         pass
-
 
 
 if __name__ == '__main__':
