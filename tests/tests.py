@@ -393,7 +393,12 @@ class TestKeybindings(unittest.TestCase):
 
     def test_init_keybindings(self):
         commands = self.core.keybindings.commands
-        self.assertDictContainsSubset(["keybindings.global"], commands)
+        self.assertEqual(list(commands.keys()), ["contact_list", "contact_details"])
+        self.assertEqual(list(commands["contact_list"].keys()), ["add_contact", "add_google_contact", "add_attribute", "add_note", "add_encrypted_note"])
+        self.assertEqual(list(commands["contact_details"].keys()), ["add_contact", "add_gift", "add_attribute", "add_note", "add_encrypted_note"])
+        self.assertEqual(commands["contact_list"]["add_contact"]["key_sequence"], "I")
+        self.assertEqual(commands["contact_list"]["add_google_contact"]["key_sequence"], "ig")
+        self.assertEqual(commands["contact_details"]["add_gift"]["key_sequence"], "ig")
 
     @classmethod
     def tearDown(self):
