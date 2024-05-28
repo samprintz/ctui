@@ -229,7 +229,7 @@ class CustListBox(urwid.ListBox):
                     self.core.find_mode = False
                     self.core.find_string = ''
         else:
-            self.core.keybindings.call(key, self.name)
+            self.core.keybindings.press(key, self.name)
 
         '''
         elif self.core.last_keypress == 'i':

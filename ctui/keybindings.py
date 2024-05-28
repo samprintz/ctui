@@ -28,21 +28,28 @@ class Keybindings:
                     command['function']
 
     def press(self, key, context):
-        if context is not self.current_context:
+        if context != self.current_context:
             self.current_context = context
             self.current_keys = []
 
         self.current_keys.append(key)
-        self.call(self.current_keys, context)
+        key_sequence = ''.join(self.current_keys)
+        self.call(key_sequence, context)
 
     def call(self, key_sequence, context):
         function = None
+        key_sequence_exists = False
 
         if context in self.commands:
             for command_id, command in self.commands[context].items():
-                if command['key_sequence'] is key_sequence:
+                if command['key_sequence'].startswith(key_sequence):
+                    key_sequence_exists = True
+                if command['key_sequence'] == key_sequence:
                     function = command['function']
                     self.current_keys = []
+
+        if not key_sequence_exists:
+            self.current_keys = []
 
         if function:
             function()
