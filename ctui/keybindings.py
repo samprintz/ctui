@@ -19,8 +19,13 @@ class Keybindings:
                     }
 
     def register(self, commands, context):
+        if context not in self.commands:
+            self.commands[context] = {}
+
         for command in commands:
-            self.commands[context][command['id']]['function'] = command['function']
+            if command['id'] in self.commands[context]:
+                self.commands[context][command['id']]['function'] = \
+                    command['function']
 
     def press(self, key, context):
         if context is not self.current_context:
