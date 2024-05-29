@@ -14,42 +14,36 @@ class Keybindings:
                     if context not in self.commands:
                         self.commands[context] = {}
 
-                    self.commands[context][command_id] = {
-                        'key_sequence': key_sequence
-                    }
+                    if key_sequence in self.commands[context]:
+                        print(f'Warning: Key sequence "{key_sequence}" is used multiple times')
 
-    def register(self, commands, context):
-        if context not in self.commands:
-            self.commands[context] = {}
+                    self.commands[context][key_sequence] = command_id
 
-        for command in commands:
-            if command['id'] in self.commands[context]:
-                self.commands[context][command['id']]['function'] = \
-                    command['function']
-
-    def press(self, key, context):
-        if context != self.current_context:
-            self.current_context = context
-            self.current_keys = []
-
+    def append_key(self, key):
         self.current_keys.append(key)
-        key_sequence = ''.join(self.current_keys)
-        self.call(key_sequence, context)
 
-    def call(self, key_sequence, context):
-        function = None
+    def get_command_id(self, key, context):
+        command_id = None
         key_sequence_exists = False
+        new_context = context != self.current_context
+
+        if new_context:
+            self.current_context = context
+            self.current_keys = [key]
+
+        current_key_sequence = ''.join(self.current_keys)
 
         if context in self.commands:
-            for command_id, command in self.commands[context].items():
-                if command['key_sequence'].startswith(key_sequence):
+            for key_sequence in self.commands[context].keys():
+                if key_sequence.startswith(current_key_sequence):
                     key_sequence_exists = True
-                if command['key_sequence'] == key_sequence:
-                    function = command['function']
-                    self.current_keys = []
 
-        if not key_sequence_exists:
+        if key_sequence_exists:
+            if current_key_sequence in self.commands[context]:
+                command_id = self.commands[context][current_key_sequence]
+
+        if not key_sequence_exists or command_id is not None:
             self.current_keys = []
 
-        if function:
-            function()
+        import pudb; pu.db
+        return command_id

@@ -172,43 +172,9 @@ class CustListBox(urwid.ListBox):
         self.repeat_command = 0
         self.core = core
         self.name = name
-        self.register_keybindings()
-
-    def register_keybindings(self):
-        def add_attribute():
-            focused_contact = self.core.frame.contact_list.get_focused_contact()
-            self.core.cli.add_attribute(focused_contact)
-
-        def add_note():
-            focused_contact = self.core.frame.contact_list.get_focused_contact()
-            self.core.cli.add_note(focused_contact)
-
-        def add_encrypted_note():
-            focused_contact = self.core.frame.contact_list.get_focused_contact()
-            self.core.cli.add_encrypted_note(focused_contact)
-
-        commands = [
-            {
-                'id': 'add_attribute',
-                'function': add_attribute
-            },
-            {
-                'id': 'add_google_contact',
-                'function': self.core.cli.add_google_contact
-            },
-            {
-                'id': 'add_note',
-                'function': add_note
-            },
-            {
-                'id': 'add_encrypted_note',
-                'function': add_encrypted_note
-            }
-        ]
-
-        self.core.keybindings.register(commands, self.name)
 
     def keypress(self, size, key):
+        import pudb; pu.db
         self.core.frame.watch_focus()
 
         if key == 'esc':
@@ -229,28 +195,38 @@ class CustListBox(urwid.ListBox):
                     self.core.find_mode = False
                     self.core.find_string = ''
         else:
-            self.core.keybindings.press(key, self.name)
+            command_id = self.core.keybindings.get_command_id(key, self.name)
+            match command_id:
+                case 'move_down':
+                    if self.repeat_command > 0:  # TODO move to Keybindings
+                        self.jump_down(size, self.repeat_command)
+                        self.repeat_command = 0
+                    else:
+                        super(CustListBox, self).keypress(size, 'down')
+                case 'move_up':
+                    if self.repeat_command > 0:
+                        self.jump_up(size, self.repeat_command)
+                        self.repeat_command = 0
+                    else:
+                        super(CustListBox, self).keypress(size, 'up')
+                case 'add_contact':
+                    self.core.cli.add_contact()
+                case 'add_attribute':
+                    focused_contact = self.core.frame.contact_list \
+                        .get_focused_contact()
+                    self.core.cli.add_attribute(focused_contact)
+                case 'add_note':
+                    focused_contact = self.core.frame.contact_list \
+                        .get_focused_contact()
+                    self.core.cli.add_note(focused_contact)
+                case 'add_encrypted_note':
+                    focused_contact = self.core.frame.contact_list. \
+                        get_focused_contact()
+                    self.core.cli.add_encrypted_note(focused_contact)
+                case _:
+                    return super(CustListBox, self).keypress(size, key)
 
         '''
-        elif self.core.last_keypress == 'i':
-            focused_contact = self.core.frame.contact_list.get_focused_contact()
-            if key == 'i':
-                self.core.last_keypress = None
-                self.core.cli.add_attribute(focused_contact)
-            elif key == 'g':
-                self.core.last_keypress = None
-                self.core.cli.add_google_contact()
-            #            elif key == 'g':
-            #                self.core.last_keypress = None
-            #                self.core.cli.add_gift(focused_contact)
-            elif key == 'n':
-                self.core.last_keypress = None
-                self.core.cli.add_note(focused_contact)
-            elif key == 'e':
-                self.core.last_keypress = None
-                self.core.cli.add_encrypted_note(focused_contact)
-            else:
-                self.core.last_keypress = None
         elif self.core.last_keypress == 'g':
             if key == 'g':
                 self.core.last_keypress = None
@@ -265,28 +241,12 @@ class CustListBox(urwid.ListBox):
                 self.core.cli.filter_contacts()
             else:
                 self.core.last_keypress = None
-        elif key == 'I':
-            self.core.cli.add_contact()
         else:
-            if key == 'i':
-                self.core.last_keypress = 'i'
             elif key == '/':
                 self.core.cli.search_contact()
             elif key == 'f':
                 self.core.find_mode = True
                 self.core.find_string = ''
-            elif key == 't':
-                if self.repeat_command > 0:
-                    self.jump_down(size, self.repeat_command)
-                    self.repeat_command = 0
-                else:
-                    super(CustListBox, self).keypress(size, 'down')
-            elif key == 'r':
-                if self.repeat_command > 0:
-                    self.jump_up(size, self.repeat_command)
-                    self.repeat_command = 0
-                else:
-                    super(CustListBox, self).keypress(size, 'up')
             elif key == 'G':
                 # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'end')
@@ -382,15 +342,17 @@ class ContactList(CustListBox):
         return False
 
     def keypress(self, size, key):
+        import pudb; pu.db
+        self.core.keybindings.append_key(key)
         if self.core.last_keypress is None and self.core.find_mode is False:
-            if key == 'n':
-                # if has details
-                # if self.core.frame.contact_details.number_of_details() > 0:
-                return super(ContactList, self).keypress(size, 'right')
-                # else:
-                #    return super(ContactList, self).keypress(size, key)
-            else:
-                return super(ContactList, self).keypress(size, key)
+            command_id = self.core.keybindings.get_command_id(key, self.name)
+            match command_id:
+                case 'go_right':
+                    return super(ContactList, self).keypress(size, 'right')
+                case 'add_google_contact':
+                    self.core.cli.add_google_contact()
+                case _:
+                    return super(ContactList, self).keypress(size, key)
         else:
             return super(ContactList, self).keypress(size, key)
 
@@ -513,10 +475,18 @@ class ContactDetails(CustListBox):
         return None
 
     def keypress(self, size, key):
-        if key == 'd':
-            return super(ContactDetails, self).keypress(size, 'left')
-        else:
-            return super(ContactDetails, self).keypress(size, key)
+        import pudb; pu.db
+        self.core.keybindings.append_key(key)
+        command_id = self.core.keybindings.get_command_id(key, self.name)
+        match command_id:
+            case 'go_left':
+                return super(ContactDetails, self).keypress(size, 'left')
+            case 'add_gift':
+                focused_contact = self.core.frame.contact_list \
+                    .get_focused_contact()
+                self.core.cli.add_gift(focused_contact)
+            case _:
+                return super(ContactDetails, self).keypress(size, key)
 
 
 class ListEntry(urwid.Button):
