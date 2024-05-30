@@ -113,8 +113,8 @@ class ContactFrame(urwid.Frame):
         self.current_contact_pos = self.contact_list.get_focus_position()
         self.current_detail = self.contact_details.get_focused_detail()
         self.current_detail_pos = self.contact_details.get_focus_position()
-        # hiea = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
-        # self.console.show_meta(hiea)
+        # focus_str = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
+        # self.console.show_meta(focus_str)
 
     def set_header(self):
         pass
@@ -132,12 +132,17 @@ class ContactFrame(urwid.Frame):
         return self.body.get_focus_column() == 1
 
     def keypress(self, size, key):
+        if key == 'esc':
+            self.core.keybindings.reset()
+            return
+
         key = super(ContactFrame, self).keypress(size, key)
         if key is None:
             return
 
         self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
+
         match command_id:
             case 'reload':
                 self.core.frame.watch_focus()
@@ -186,47 +191,44 @@ class CustListBox(urwid.ListBox):
 
         self.core.frame.watch_focus()
 
-        if key == 'esc':
-            self.core.last_keypress = None
-        else:
-            command_id, command_key, command_repeat \
-                = self.core.keybindings.eval()
-            match command_id:
-                case 'move_down':
-                    self.jump_down(size, command_repeat)
-                case 'move_up':
-                    self.jump_up(size, command_repeat)
-                case 'jump_to_first':
-                    # 2x as workaround, otherwise list focus not updated
-                    super(CustListBox, self).keypress(size, 'home')
-                    super(CustListBox, self).keypress(size, 'home')
-                case 'jump_to_last':
-                    # 2x as workaround, otherwise list focus not updated
-                    super(CustListBox, self).keypress(size, 'end')
-                    super(CustListBox, self).keypress(size, 'end')
-                case 'add_contact':
-                    self.core.cli.add_contact()
-                case 'add_attribute':
-                    focused_contact = self.core.frame.contact_list \
-                        .get_focused_contact()
-                    self.core.cli.add_attribute(focused_contact)
-                case 'add_note':
-                    focused_contact = self.core.frame.contact_list \
-                        .get_focused_contact()
-                    self.core.cli.add_note(focused_contact)
-                case 'add_encrypted_note':
-                    focused_contact = self.core.frame.contact_list. \
-                        get_focused_contact()
-                    self.core.cli.add_encrypted_note(focused_contact)
-                case 'search_contact':
-                    self.core.cli.search_contact()
-                case 'set_contact_filter':
-                    self.core.cli.filter_contacts()
-                case 'clear_contact_filter':
-                    self.core.cli.unfilter_contacts()
-                case _:
-                    self.core.keybindings.set_bubbling(True)
-                    return key
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'move_down':
+                self.jump_down(size, command_repeat)
+            case 'move_up':
+                self.jump_up(size, command_repeat)
+            case 'jump_to_first':
+                # 2x as workaround, otherwise list focus not updated
+                super(CustListBox, self).keypress(size, 'home')
+                super(CustListBox, self).keypress(size, 'home')
+            case 'jump_to_last':
+                # 2x as workaround, otherwise list focus not updated
+                super(CustListBox, self).keypress(size, 'end')
+                super(CustListBox, self).keypress(size, 'end')
+            case 'add_contact':
+                self.core.cli.add_contact()
+            case 'add_attribute':
+                focused_contact = self.core.frame.contact_list \
+                    .get_focused_contact()
+                self.core.cli.add_attribute(focused_contact)
+            case 'add_note':
+                focused_contact = self.core.frame.contact_list \
+                    .get_focused_contact()
+                self.core.cli.add_note(focused_contact)
+            case 'add_encrypted_note':
+                focused_contact = self.core.frame.contact_list. \
+                    get_focused_contact()
+                self.core.cli.add_encrypted_note(focused_contact)
+            case 'search_contact':
+                self.core.cli.search_contact()
+            case 'set_contact_filter':
+                self.core.cli.filter_contacts()
+            case 'clear_contact_filter':
+                self.core.cli.unfilter_contacts()
+            case _:
+                self.core.keybindings.set_bubbling(True)
+                return key
 
     def jump_down(self, size, n):
         n = 1 if n == 0 else n  # at least once
@@ -308,21 +310,17 @@ class ContactList(CustListBox):
 
     def keypress(self, size, key):
         self.core.keybindings.keypress(key, self.name)
-        if self.core.last_keypress is None:
-            command_id, command_key, command_repeat \
-                = self.core.keybindings.eval()
-            match command_id:
-                case 'go_right':
-                    return super(ContactList, self).keypress(size, 'right')
-                case 'add_google_contact':
-                    self.core.cli.add_google_contact()
-                case _:
-                    self.core.keybindings.set(command_key, command_repeat)
-                    self.core.keybindings.set_bubbling(True)
-                    return super(ContactList, self).keypress(size, key)
-        else:
-            self.core.keybindings.set_bubbling(True)
-            return super(ContactList, self).keypress(size, key)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'go_right':
+                return super(ContactList, self).keypress(size, 'right')
+            case 'add_google_contact':
+                self.core.cli.add_google_contact()
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return super(ContactList, self).keypress(size, key)
 
 
 class ContactDetails(CustListBox):
@@ -445,6 +443,7 @@ class ContactDetails(CustListBox):
     def keypress(self, size, key):
         self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
+
         match command_id:
             case 'go_left':
                 return super(ContactDetails, self).keypress(size, 'left')
@@ -478,15 +477,12 @@ class ContactEntry(ListEntry):
         self.contact = contact
 
     def keypress(self, size, key):
-        if self.core.last_keypress is None:
-            if key == 'a':
-                self.core.cli.rename_contact(self.contact)
-            elif key == 'h':
-                self.core.cli.delete_contact(self.contact)
-            elif key == 'enter':
-                return super(ContactEntry, self).keypress(size, 'right')
-            else:
-                return super(ContactEntry, self).keypress(size, key)
+        if key == 'a':
+            self.core.cli.rename_contact(self.contact)
+        elif key == 'h':
+            self.core.cli.delete_contact(self.contact)
+        elif key == 'enter':
+            return super(ContactEntry, self).keypress(size, 'right')
         else:
             return super(ContactEntry, self).keypress(size, key)
 
