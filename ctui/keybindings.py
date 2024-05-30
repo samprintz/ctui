@@ -1,11 +1,13 @@
 class Keybindings:
 
+    default_context = 'global'
+
     def __init__(self, config):
         self.commands = {}
-        self.current_context = None
-        self.current_keys = []  # used for multi-key-bindings
+        self.current_context: str = None
+        self.current_keys: list = []  # Used for multi-key-bindings
+        self.current_repeat: int = 0  # Some commands can be executed multiple times
         self.load(config)
-        self.default_context = 'global'
 
     def load(self, config):
         for config_section, config_entry in config.items():
@@ -16,12 +18,17 @@ class Keybindings:
                         self.commands[context] = {}
 
                     if key_sequence in self.commands[context]:
-                        print(f'Warning: Key sequence "{key_sequence}" is used multiple times')
+                        print(f'Warning: Key sequence "{key_sequence}" is assigned multiple times')
 
                     self.commands[context][key_sequence] = command_id
 
-    def set(self, keys):
+    def set(self, keys, repeat):
         self.current_keys = keys
+        self.current_repeat = repeat
+
+    def reset(self):
+        self.current_keys = []
+        self.current_repeat = 0
 
     def keypress(self, key, context):
         new_context = context != self.current_context
@@ -30,15 +37,22 @@ class Keybindings:
             self.current_context = context
             self.current_keys = []
 
-        self.current_keys.append(key)
+        if key.isdigit():
+            if self.current_repeat > 0:
+                self.current_repeat = int(str(self.current_repeat) + key)
+            else:
+                self.current_repeat = int(key)
+        else:
+            self.current_keys.append(key)
 
     def eval(self):
         current_keys = self.current_keys
+        current_repeat = 1 if self.current_repeat == 0 else self.current_repeat
         command_id = None
         key_sequence_exists = False
 
         current_key_sequence = ''.join(current_keys)
-        contexts = [self.default_context, self.current_context]
+        contexts = [Keybindings.default_context, self.current_context]
 
         for context_iter in contexts:
             for key_sequence in self.commands[context_iter].keys():
@@ -52,6 +66,6 @@ class Keybindings:
                         current_key_sequence]
 
         if not key_sequence_exists or command_id is not None:
-            self.current_keys = []
+            self.reset()
 
-        return command_id, current_keys
+        return command_id, current_keys, current_repeat

@@ -169,7 +169,6 @@ class ContactFrameColumns(urwid.Columns):
 class CustListBox(urwid.ListBox):
     def __init__(self, listwalker, core, name):
         super(CustListBox, self).__init__(listwalker)
-        self.repeat_command = 0
         self.core = core
         self.name = name
 
@@ -194,20 +193,13 @@ class CustListBox(urwid.ListBox):
                     self.core.find_mode = False
                     self.core.find_string = ''
         else:
-            command_id, key_sequence = self.core.keybindings.eval()
+            command_id, key_sequence, repeat_command \
+                = self.core.keybindings.eval()
             match command_id:
                 case 'move_down':
-                    if self.repeat_command > 0:  # TODO move to Keybindings
-                        self.jump_down(size, self.repeat_command)
-                        self.repeat_command = 0
-                    else:
-                        super(CustListBox, self).keypress(size, 'down')
+                    self.jump_down(size, repeat_command)
                 case 'move_up':
-                    if self.repeat_command > 0:
-                        self.jump_up(size, self.repeat_command)
-                        self.repeat_command = 0
-                    else:
-                        super(CustListBox, self).keypress(size, 'up')
+                    self.jump_up(size, repeat_command)
                 case 'add_contact':
                     self.core.cli.add_contact()
                 case 'add_attribute':
@@ -256,11 +248,6 @@ class CustListBox(urwid.ListBox):
                 self.core.last_keypress = 'z'
             elif key == 'Z':
                 self.core.cli.unfilter_contacts()
-            elif key in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                if self.repeat_command > 0:
-                    self.repeat_command = int(str(self.repeat_command) + key)
-                else:
-                    self.repeat_command = int(key)
             else:
                 return super(CustListBox, self).keypress(size, key)
         '''
@@ -343,14 +330,15 @@ class ContactList(CustListBox):
     def keypress(self, size, key):
         self.core.keybindings.keypress(key, self.name)
         if self.core.last_keypress is None and self.core.find_mode is False:
-            command_id, key_sequence = self.core.keybindings.eval()
+            command_id, key_sequence, command_repeat \
+                = self.core.keybindings.eval()
             match command_id:
                 case 'go_right':
                     return super(ContactList, self).keypress(size, 'right')
                 case 'add_google_contact':
                     self.core.cli.add_google_contact()
                 case _:
-                    self.core.keybindings.set(key_sequence)
+                    self.core.keybindings.set(key_sequence, command_repeat)
                     return super(ContactList, self).keypress(size, key)
         else:
             return super(ContactList, self).keypress(size, key)
@@ -475,7 +463,7 @@ class ContactDetails(CustListBox):
 
     def keypress(self, size, key):
         self.core.keybindings.keypress(key, self.name)
-        command_id, key_sequence = self.core.keybindings.eval()
+        command_id, key_sequence, command_repeat = self.core.keybindings.eval()
         match command_id:
             case 'go_left':
                 return super(ContactDetails, self).keypress(size, 'left')
@@ -484,7 +472,7 @@ class ContactDetails(CustListBox):
                     .get_focused_contact()
                 self.core.cli.add_gift(focused_contact)
             case _:
-                self.core.keybindings.set(key_sequence)
+                self.core.keybindings.set(key_sequence, command_repeat)
                 return super(ContactDetails, self).keypress(size, key)
 
 
