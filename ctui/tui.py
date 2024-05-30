@@ -174,7 +174,6 @@ class CustListBox(urwid.ListBox):
         self.name = name
 
     def keypress(self, size, key):
-        import pudb; pu.db
         self.core.frame.watch_focus()
 
         if key == 'esc':
@@ -195,7 +194,7 @@ class CustListBox(urwid.ListBox):
                     self.core.find_mode = False
                     self.core.find_string = ''
         else:
-            command_id = self.core.keybindings.get_command_id(key, self.name)
+            command_id, key_sequence = self.core.keybindings.eval()
             match command_id:
                 case 'move_down':
                     if self.repeat_command > 0:  # TODO move to Keybindings
@@ -342,16 +341,16 @@ class ContactList(CustListBox):
         return False
 
     def keypress(self, size, key):
-        import pudb; pu.db
-        self.core.keybindings.append_key(key)
+        self.core.keybindings.keypress(key, self.name)
         if self.core.last_keypress is None and self.core.find_mode is False:
-            command_id = self.core.keybindings.get_command_id(key, self.name)
+            command_id, key_sequence = self.core.keybindings.eval()
             match command_id:
                 case 'go_right':
                     return super(ContactList, self).keypress(size, 'right')
                 case 'add_google_contact':
                     self.core.cli.add_google_contact()
                 case _:
+                    self.core.keybindings.set(key_sequence)
                     return super(ContactList, self).keypress(size, key)
         else:
             return super(ContactList, self).keypress(size, key)
@@ -475,9 +474,8 @@ class ContactDetails(CustListBox):
         return None
 
     def keypress(self, size, key):
-        import pudb; pu.db
-        self.core.keybindings.append_key(key)
-        command_id = self.core.keybindings.get_command_id(key, self.name)
+        self.core.keybindings.keypress(key, self.name)
+        command_id, key_sequence = self.core.keybindings.eval()
         match command_id:
             case 'go_left':
                 return super(ContactDetails, self).keypress(size, 'left')
@@ -486,6 +484,7 @@ class ContactDetails(CustListBox):
                     .get_focused_contact()
                 self.core.cli.add_gift(focused_contact)
             case _:
+                self.core.keybindings.set(key_sequence)
                 return super(ContactDetails, self).keypress(size, key)
 
 

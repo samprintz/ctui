@@ -5,6 +5,7 @@ class Keybindings:
         self.current_context = None
         self.current_keys = []  # used for multi-key-bindings
         self.load(config)
+        self.default_context = 'global'
 
     def load(self, config):
         for config_section, config_entry in config.items():
@@ -19,31 +20,38 @@ class Keybindings:
 
                     self.commands[context][key_sequence] = command_id
 
-    def append_key(self, key):
-        self.current_keys.append(key)
+    def set(self, keys):
+        self.current_keys = keys
 
-    def get_command_id(self, key, context):
-        command_id = None
-        key_sequence_exists = False
+    def keypress(self, key, context):
         new_context = context != self.current_context
 
         if new_context:
             self.current_context = context
-            self.current_keys = [key]
+            self.current_keys = []
 
-        current_key_sequence = ''.join(self.current_keys)
+        self.current_keys.append(key)
 
-        if context in self.commands:
-            for key_sequence in self.commands[context].keys():
+    def eval(self):
+        current_keys = self.current_keys
+        command_id = None
+        key_sequence_exists = False
+
+        current_key_sequence = ''.join(current_keys)
+        contexts = [self.default_context, self.current_context]
+
+        for context_iter in contexts:
+            for key_sequence in self.commands[context_iter].keys():
                 if key_sequence.startswith(current_key_sequence):
                     key_sequence_exists = True
 
         if key_sequence_exists:
-            if current_key_sequence in self.commands[context]:
-                command_id = self.commands[context][current_key_sequence]
+            for context_iter in contexts:
+                if current_key_sequence in self.commands[context_iter]:
+                    command_id = self.commands[context_iter][
+                        current_key_sequence]
 
         if not key_sequence_exists or command_id is not None:
             self.current_keys = []
 
-        import pudb; pu.db
-        return command_id
+        return command_id, current_keys
