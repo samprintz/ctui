@@ -199,54 +199,26 @@ class CustListBox(urwid.ListBox):
             case 'move_up':
                 self.jump_up(size, command_repeat)
             case 'jump_to_first':
-                self.core.keybindings.set_simulating(True)
                 # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'home')
                 super(CustListBox, self).keypress(size, 'home')
-                self.core.keybindings.set_simulating(False)
             case 'jump_to_last':
-                self.core.keybindings.set_simulating(True)
                 # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'end')
                 super(CustListBox, self).keypress(size, 'end')
-                self.core.keybindings.set_simulating(False)
-            case 'add_contact':
-                self.core.cli.add_contact()
-            case 'add_attribute':
-                focused_contact = self.core.frame.contact_list \
-                    .get_focused_contact()
-                self.core.cli.add_attribute(focused_contact)
-            case 'add_note':
-                focused_contact = self.core.frame.contact_list \
-                    .get_focused_contact()
-                self.core.cli.add_note(focused_contact)
-            case 'add_encrypted_note':
-                focused_contact = self.core.frame.contact_list. \
-                    get_focused_contact()
-                self.core.cli.add_encrypted_note(focused_contact)
-            case 'search_contact':
-                self.core.cli.search_contact()
-            case 'set_contact_filter':
-                self.core.cli.filter_contacts()
-            case 'clear_contact_filter':
-                self.core.cli.unfilter_contacts()
             case _:
                 self.core.keybindings.set_bubbling(True)
                 return key
 
     def jump_down(self, size, n):
         n = 1 if n == 0 else n  # at least once
-        self.core.keybindings.set_simulating(True)
         for i in range(0, n):
             super(CustListBox, self).keypress(size, 'down')
-        self.core.keybindings.set_simulating(False)
 
     def jump_up(self, size, n):
         n = 1 if n == 0 else n  # at least once
-        self.core.keybindings.set_simulating(True)
         for i in range(0, n):
             super(CustListBox, self).keypress(size, 'up')
-        self.core.keybindings.set_simulating(False)
 
 
 class ContactList(CustListBox):
@@ -322,9 +294,7 @@ class ContactList(CustListBox):
 
         match command_id:
             case 'move_right':
-                self.core.keybindings.set_simulating(True)
                 super(ContactList, self).keypress(size, 'right')
-                self.core.keybindings.set_simulating(False)
             case 'add_google_contact':
                 self.core.cli.add_google_contact()
             case _:
@@ -457,9 +427,7 @@ class ContactDetails(CustListBox):
 
         match command_id:
             case 'move_left':
-                self.core.keybindings.set_simulating(True)
                 super(ContactDetails, self).keypress(size, 'left')
-                self.core.keybindings.set_simulating(False)
             case 'add_gift':
                 focused_contact = self.core.frame.contact_list \
                     .get_focused_contact()
@@ -493,9 +461,7 @@ class ContactEntry(ListEntry):
 
     def keypress(self, size, key):
         if key == 'enter':
-            self.core.keybindings.set_simulating(True)
             super(ContactEntry, self).keypress(size, 'right')
-            self.core.keybindings.set_simulating(False)
 
         key = super(ContactEntry, self).keypress(size, key)
         if key is None:

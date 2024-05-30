@@ -5,7 +5,6 @@ class Keybindings:
     def __init__(self, config):
         self.commands = {}
         self.is_bubbling: bool = False  # true if lower widgets pass a keypress to a higher widget
-        self.is_simulating: bool = False  # true if a keypress is simulated (a key is mapped to another
         self.current_context = None
         self.current_keys: list = []  # used for multi-key-bindings
         self.current_repeat: int = 0  # some commands can be executed multiple times
@@ -25,9 +24,8 @@ class Keybindings:
                     self.commands[context][key_sequence] = command_id
 
     def set(self, keys, repeat):
-        if not self.is_simulating:
-            self.current_keys = keys
-            self.current_repeat = repeat
+        self.current_keys = keys
+        self.current_repeat = repeat
 
     def reset(self):
         self.is_bubbling = False
@@ -36,9 +34,6 @@ class Keybindings:
 
     def set_bubbling(self, value):
         self.is_bubbling = value
-
-    def set_simulating(self, value):
-        self.is_simulating = value
 
     def keypress(self, key, context):
         new_context = context != self.current_context
