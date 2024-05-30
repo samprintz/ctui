@@ -393,7 +393,7 @@ class TestKeybindings(unittest.TestCase):
 
     def test_init(self):
         commands = self.core.keybindings.commands
-        self.assertEqual(list(commands.keys()), ["global", "contact_list", "contact_details"])
+        self.assertEqual(list(commands.keys()), ["global", "contact_list", "contact_details", "contact_entry"])
         self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie"})
         self.assertSetEqual(set(commands["contact_list"].keys()), {"ig", "/", "zz", "Z"})
         self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})

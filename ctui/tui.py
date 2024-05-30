@@ -319,7 +319,8 @@ class ContactList(CustListBox):
                 self.core.cli.add_google_contact()
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
+
+                # call self-implemented super class after own keybindings
                 return super(ContactList, self).keypress(size, key)
 
 
@@ -453,7 +454,8 @@ class ContactDetails(CustListBox):
                 self.core.cli.add_gift(focused_contact)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
+
+                # call self-implemented super class after own keybindings
                 return super(ContactDetails, self).keypress(size, key)
 
 
@@ -474,17 +476,29 @@ class ListEntry(urwid.Button):
 class ContactEntry(ListEntry):
     def __init__(self, contact, pos, core):
         super(ContactEntry, self).__init__(contact.name, pos, core)
+        self.name = 'contact_entry'
         self.contact = contact
 
     def keypress(self, size, key):
-        if key == 'a':
-            self.core.cli.rename_contact(self.contact)
-        elif key == 'h':
-            self.core.cli.delete_contact(self.contact)
-        elif key == 'enter':
+        if key == 'enter':
             return super(ContactEntry, self).keypress(size, 'right')
-        else:
-            return super(ContactEntry, self).keypress(size, key)
+
+        key = super(ContactEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'rename_contact':
+                self.core.cli.rename_contact(self.contact)
+            case 'delete_contact':
+                self.core.cli.delete_contact(self.contact)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class DetailEntry(ListEntry):
