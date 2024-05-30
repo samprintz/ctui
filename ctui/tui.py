@@ -200,6 +200,14 @@ class CustListBox(urwid.ListBox):
                     self.jump_down(size, repeat_command)
                 case 'move_up':
                     self.jump_up(size, repeat_command)
+                case 'jump_to_first':
+                    # 2x as workaround, otherwise list focus not updated
+                    super(CustListBox, self).keypress(size, 'home')
+                    super(CustListBox, self).keypress(size, 'home')
+                case 'jump_to_last':
+                    # 2x as workaround, otherwise list focus not updated
+                    super(CustListBox, self).keypress(size, 'end')
+                    super(CustListBox, self).keypress(size, 'end')
                 case 'add_contact':
                     self.core.cli.add_contact()
                 case 'add_attribute':
@@ -214,42 +222,20 @@ class CustListBox(urwid.ListBox):
                     focused_contact = self.core.frame.contact_list. \
                         get_focused_contact()
                     self.core.cli.add_encrypted_note(focused_contact)
+                case 'search_contact':
+                    self.core.cli.search_contact()
+                case 'set_contact_filter':
+                    self.core.cli.filter_contacts()
+                case 'clear_contact_filter':
+                    self.core.cli.unfilter_contacts()
                 case _:
                     return super(CustListBox, self).keypress(size, key)
 
         '''
-        elif self.core.last_keypress == 'g':
-            if key == 'g':
-                self.core.last_keypress = None
-                # 2x as workaround, otherwise list focus not updated
-                super(CustListBox, self).keypress(size, 'home')
-                super(CustListBox, self).keypress(size, 'home')
-            else:
-                self.core.last_keypress = None
-        elif self.core.last_keypress == 'z':
-            if key == 'z':
-                self.core.last_keypress = None
-                self.core.cli.filter_contacts()
-            else:
-                self.core.last_keypress = None
         else:
-            elif key == '/':
-                self.core.cli.search_contact()
             elif key == 'f':
                 self.core.find_mode = True
                 self.core.find_string = ''
-            elif key == 'G':
-                # 2x as workaround, otherwise list focus not updated
-                super(CustListBox, self).keypress(size, 'end')
-                super(CustListBox, self).keypress(size, 'end')
-            elif key == 'g':
-                self.core.last_keypress = 'g'
-            elif key == 'z':
-                self.core.last_keypress = 'z'
-            elif key == 'Z':
-                self.core.cli.unfilter_contacts()
-            else:
-                return super(CustListBox, self).keypress(size, key)
         '''
 
     def jump_down(self, size, n):
