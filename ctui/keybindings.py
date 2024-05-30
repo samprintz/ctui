@@ -35,7 +35,7 @@ class Keybindings:
 
         if new_context:
             self.current_context = context
-            self.current_keys = []
+            self.reset()
 
         if key.isdigit():
             if self.current_repeat > 0:
@@ -47,7 +47,7 @@ class Keybindings:
 
     def eval(self):
         current_keys = self.current_keys
-        current_repeat = 1 if self.current_repeat == 0 else self.current_repeat
+        current_repeat = self.current_repeat
         command_id = None
         key_sequence_exists = False
 
