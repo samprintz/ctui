@@ -539,32 +539,54 @@ class AttributeEntry(DetailEntry):
         super(AttributeEntry, self).__init__(contact, attribute, label, pos,
                                              core)
         self.attribute = attribute
+        self.name = 'attribute_entry'
 
     def keypress(self, size, key):
-        if key == 'a':
-            self.core.cli.edit_attribute(self.contact, self.attribute)
-        elif key == 'h':
-            self.core.cli.delete_attribute(self.contact, self.attribute)
-        elif key == 'y':
-            pyperclip.copy(self.attribute.value)
-            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-            self.core.frame.console.show_message(msg)
-        else:
-            return super(ListEntry, self).keypress(size, key)
+        key = super(DetailEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'edit_attribute':
+                self.core.cli.edit_attribute(self.contact, self.attribute)
+            case 'delete_attribute':
+                self.core.cli.delete_attribute(self.contact, self.attribute)
+            case 'copy_attribute':
+                pyperclip.copy(self.attribute.value)
+                msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+                self.core.frame.console.show_message(msg)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class GiftEntry(DetailEntry):
     def __init__(self, contact, gift, pos, core):
         super(GiftEntry, self).__init__(contact, gift, gift.name, pos, core)
         self.gift = gift
+        self.name = 'gift_entry'
 
     def keypress(self, size, key):
-        if key == 'a':
-            self.core.cli.edit_gift(self.contact, self.gift)
-        elif key == 'h':
-            self.core.cli.delete_gift(self.contact, self.gift)
-        else:
-            return super(GiftEntry, self).keypress(size, key)
+        key = super(GiftEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'edit_gift':
+                self.core.cli.edit_attribute(self.contact, self.attribute)
+            case 'delete_gift':
+                self.core.cli.delete_attribute(self.contact, self.attribute)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class NoteEntry(DetailEntry):

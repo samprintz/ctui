@@ -393,7 +393,7 @@ class TestKeybindings(unittest.TestCase):
 
     def test_init(self):
         commands = self.core.keybindings.commands
-        self.assertEqual(list(commands.keys()), ["global", "contact_list", "contact_details", "contact_entry"])
+        self.assertEqual(set(commands.keys()), {"global", "contact_list", "contact_details", "contact_entry", "attribute_entry", "gift_entry"})
         self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie"})
         self.assertSetEqual(set(commands["contact_list"].keys()), {"ig", "/", "zz", "Z"})
         self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})
@@ -438,6 +438,17 @@ class TestKeybindings(unittest.TestCase):
         self.core.frame.keypress([50, 50], "g")
         contact_pos = self.core.frame.contact_list.get_focus_position()
         self.assertEqual(contact_pos, 0)
+
+    def test_widget_command_repeat_detail(self):
+        self.core.frame.keypress([50, 50], "t")
+        self.core.frame.keypress([50, 50], "n")
+        self.core.frame.keypress([50, 50], "t")
+        self.core.frame.keypress([50, 50], "t")
+        self.core.frame.keypress([50, 50], "d")
+        self.core.frame.keypress([50, 50], "t")
+        self.core.frame.keypress([50, 50], "t")
+        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.assertEqual(contact_pos, 3)
 
     def test_widget_command_repeat(self):
         self.core.frame.keypress([50, 50], "2")
