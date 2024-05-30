@@ -134,7 +134,7 @@ class ContactFrame(urwid.Frame):
     def keypress(self, size, key):
         if key == 'esc':
             self.core.keybindings.reset()
-            return
+            return super(ContactFrame, self).keypress(size, key)
 
         key = super(ContactFrame, self).keypress(size, key)
         if key is None:
@@ -205,6 +205,7 @@ class CustListBox(urwid.ListBox):
 
         self.core.frame.watch_focus()
 
+        self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
 
         match command_id:
@@ -213,26 +214,35 @@ class CustListBox(urwid.ListBox):
             case 'move_up':
                 self.jump_up(size, command_repeat)
             case 'jump_to_first':
+                self.core.keybindings.set_simulating(True)
                 # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'home')
                 super(CustListBox, self).keypress(size, 'home')
+                self.core.keybindings.set_simulating(False)
             case 'jump_to_last':
+                self.core.keybindings.set_simulating(True)
                 # 2x as workaround, otherwise list focus not updated
                 super(CustListBox, self).keypress(size, 'end')
                 super(CustListBox, self).keypress(size, 'end')
+                self.core.keybindings.set_simulating(False)
             case _:
+                self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
                 return key
 
     def jump_down(self, size, n):
         n = 1 if n == 0 else n  # at least once
+        self.core.keybindings.set_simulating(True)
         for i in range(0, n):
             super(CustListBox, self).keypress(size, 'down')
+        self.core.keybindings.set_simulating(False)
 
     def jump_up(self, size, n):
         n = 1 if n == 0 else n  # at least once
+        self.core.keybindings.set_simulating(True)
         for i in range(0, n):
             super(CustListBox, self).keypress(size, 'up')
+        self.core.keybindings.set_simulating(False)
 
 
 class ContactList(CustListBox):
@@ -303,12 +313,19 @@ class ContactList(CustListBox):
         return False
 
     def keypress(self, size, key):
+        key = super(ContactList, self).keypress(size, key)
+        if key is None:
+            return
+
         self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
 
         match command_id:
             case 'move_right':
-                super(ContactList, self).keypress(size, 'right')
+                self.core.keybindings.set_simulating(True)
+                key = super(ContactList, self).keypress(size, 'right')
+                self.core.keybindings.set_simulating(False)
+                return key
             case 'search_contact':
                 self.core.cli.search_contact()
             case 'set_contact_filter':
@@ -319,9 +336,8 @@ class ContactList(CustListBox):
                 self.core.cli.add_google_contact()
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
-
-                # call self-implemented super class after own keybindings
-                return super(ContactList, self).keypress(size, key)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class ContactDetails(CustListBox):
@@ -442,21 +458,27 @@ class ContactDetails(CustListBox):
         return None
 
     def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
         self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
 
         match command_id:
             case 'move_left':
-                super(ContactDetails, self).keypress(size, 'left')
+                self.core.keybindings.set_simulating(True)
+                key = super(ContactDetails, self).keypress(size, 'left')
+                self.core.keybindings.set_simulating(False)
+                return key
             case 'add_gift':
                 focused_contact = self.core.frame.contact_list \
                     .get_focused_contact()
                 self.core.cli.add_gift(focused_contact)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
-
-                # call self-implemented super class after own keybindings
-                return super(ContactDetails, self).keypress(size, key)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class ListEntry(urwid.Button):
@@ -481,7 +503,10 @@ class ContactEntry(ListEntry):
 
     def keypress(self, size, key):
         if key == 'enter':
-            super(ContactEntry, self).keypress(size, 'right')
+            self.core.keybindings.set_simulating(True)
+            key = super(ContactEntry, self).keypress(size, 'right')
+            self.core.keybindings.set_simulating(False)
+            return key
 
         key = super(ContactEntry, self).keypress(size, key)
         if key is None:
