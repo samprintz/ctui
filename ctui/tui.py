@@ -27,7 +27,6 @@ class ContactFrame(urwid.Frame):
         self.current_contact_pos = None
         self.current_detail = None
         self.current_detail_pos = None
-        self.core.find_mode = False
         self.core.filter_mode = False
         self.set_footer()
 
@@ -177,21 +176,6 @@ class CustListBox(urwid.ListBox):
 
         if key == 'esc':
             self.core.last_keypress = None
-            self.core.find_mode = False
-            self.core.find_string = ''
-        elif self.core.find_mode is True:
-            if key == 'enter':
-                self.core.find_mode = False
-                self.core.find_string = ''
-            else:
-                self.core.find_string += str(key)
-                found = self.core.frame.contact_list.jump_to_contact(
-                    self.core.find_string)
-                # workaround, otherwise list focus not updated
-                super(CustListBox, self).keypress(size, 'left')
-                if not found:
-                    self.core.find_mode = False
-                    self.core.find_string = ''
         else:
             command_id, key_sequence, repeat_command \
                 = self.core.keybindings.eval()
@@ -230,13 +214,6 @@ class CustListBox(urwid.ListBox):
                     self.core.cli.unfilter_contacts()
                 case _:
                     return super(CustListBox, self).keypress(size, key)
-
-        '''
-        else:
-            elif key == 'f':
-                self.core.find_mode = True
-                self.core.find_string = ''
-        '''
 
     def jump_down(self, size, n):
         for i in range(0, n):
@@ -315,7 +292,7 @@ class ContactList(CustListBox):
 
     def keypress(self, size, key):
         self.core.keybindings.keypress(key, self.name)
-        if self.core.last_keypress is None and self.core.find_mode is False:
+        if self.core.last_keypress is None:
             command_id, key_sequence, command_repeat \
                 = self.core.keybindings.eval()
             match command_id:
