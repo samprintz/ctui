@@ -4,7 +4,8 @@ class Keybindings:
 
     def __init__(self, config):
         self.commands = {}
-        self.current_context: str = None
+        self.is_bubbling: bool = False
+        self.current_context = None
         self.current_keys: list = []  # Used for multi-key-bindings
         self.current_repeat: int = 0  # Some commands can be executed multiple times
         self.load(config)
@@ -27,11 +28,19 @@ class Keybindings:
         self.current_repeat = repeat
 
     def reset(self):
+        self.is_bubbling = False
         self.current_keys = []
         self.current_repeat = 0
 
+    def set_bubbling(self, value):
+        self.is_bubbling = value
+
     def keypress(self, key, context):
         new_context = context != self.current_context
+
+        if self.is_bubbling:
+            self.is_bubbling = False
+            return
 
         if new_context:
             self.current_context = context

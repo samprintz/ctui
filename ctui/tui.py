@@ -132,6 +132,10 @@ class ContactFrame(urwid.Frame):
         return self.body.get_focus_column() == 1
 
     def keypress(self, size, key):
+        key = super(ContactFrame, self).keypress(size, key)
+        if key is None:
+            return
+
         self.core.keybindings.keypress(key, self.name)
         command_id, command_key, command_repeat = self.core.keybindings.eval()
         match command_id:
@@ -140,7 +144,8 @@ class ContactFrame(urwid.Frame):
                 self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
                                                      self.core.filter_string)
             case _:
-                return super(ContactFrame, self).keypress(size, key)
+                # no set_bubbling(True) for root widget
+                return key
 
 
 class ContactFrameColumns(urwid.Columns):
@@ -175,6 +180,10 @@ class CustListBox(urwid.ListBox):
         self.core = core
 
     def keypress(self, size, key):
+        key = super(CustListBox, self).keypress(size, key)
+        if key is None:
+            return
+
         self.core.frame.watch_focus()
 
         if key == 'esc':
@@ -216,7 +225,8 @@ class CustListBox(urwid.ListBox):
                 case 'clear_contact_filter':
                     self.core.cli.unfilter_contacts()
                 case _:
-                    return super(CustListBox, self).keypress(size, key)
+                    self.core.keybindings.set_bubbling(True)
+                    return key
 
     def jump_down(self, size, n):
         n = 1 if n == 0 else n  # at least once
@@ -308,8 +318,10 @@ class ContactList(CustListBox):
                     self.core.cli.add_google_contact()
                 case _:
                     self.core.keybindings.set(command_key, command_repeat)
+                    self.core.keybindings.set_bubbling(True)
                     return super(ContactList, self).keypress(size, key)
         else:
+            self.core.keybindings.set_bubbling(True)
             return super(ContactList, self).keypress(size, key)
 
 
@@ -442,6 +454,7 @@ class ContactDetails(CustListBox):
                 self.core.cli.add_gift(focused_contact)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
                 return super(ContactDetails, self).keypress(size, key)
 
 
