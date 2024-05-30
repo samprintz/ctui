@@ -391,15 +391,38 @@ class TestKeybindings(unittest.TestCase):
     def setUp(self):
         self.core = Core(config, True)
 
-    def test_init_keybindings(self):
+    def test_init(self):
         commands = self.core.keybindings.commands
         self.assertEqual(list(commands.keys()), ["global", "contact_list", "contact_details"])
-        self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "I", "ii", "in", "ie"})
+        self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie"})
         self.assertSetEqual(set(commands["contact_list"].keys()), {"ig", "/", "zz", "Z"})
         self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})
         self.assertEqual(commands["global"]["I"], "add_contact")
         self.assertEqual(commands["contact_list"]["ig"], "add_google_contact")
         self.assertEqual(commands["contact_details"]["ig"], "add_gift")
+
+    def test_keypress(self):
+        self.core.keybindings.keypress("t", "global")
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        self.assertEqual(command_id, "move_down")
+
+    def test_composed_keypress(self):
+        self.core.keybindings.keypress("ctrl r", "global")
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        self.assertEqual(command_id, "reload")
+
+    def test_multi_keypress(self):
+        self.core.keybindings.keypress("g", "global")
+        self.core.keybindings.keypress("g", "global")
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        self.assertEqual(command_id, "jump_to_first")
+
+    def test_command_repeat(self):
+        self.core.keybindings.keypress("5", "global")
+        self.core.keybindings.keypress("t", "global")
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        self.assertEqual(command_id, "move_down")
+        self.assertEqual(command_repeat, 5)
 
     @classmethod
     def tearDown(self):
