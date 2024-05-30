@@ -424,6 +424,27 @@ class TestKeybindings(unittest.TestCase):
         self.assertEqual(command_id, "move_down")
         self.assertEqual(command_repeat, 5)
 
+    def test_widget_keypress(self):
+        self.core.frame.keypress([50, 50], "t")
+        self.core.frame.keypress([50, 50], "t")
+        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.assertEqual(contact_pos, 2)
+
+    def test_widget_multi_keypress(self):
+        self.core.frame.keypress([50, 50], "G")
+        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.assertEqual(contact_pos, 3)
+        self.core.frame.keypress([50, 50], "g")
+        self.core.frame.keypress([50, 50], "g")
+        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.assertEqual(contact_pos, 0)
+
+    def test_widget_command_repeat(self):
+        self.core.frame.keypress([50, 50], "2")
+        self.core.frame.keypress([50, 50], "t")
+        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.assertEqual(contact_pos, 2)
+
     @classmethod
     def tearDown(self):
         pass

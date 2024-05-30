@@ -2,3 +2,8 @@
 
 [] c:givenName "Maria Mustermann" .
 
+[] c:givenName "Max Mustermann" .
+
+[] c:givenName "Mia Mustermann" .
+
+[] c:givenName "Martin Mustermann" .
