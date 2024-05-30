@@ -148,6 +148,20 @@ class ContactFrame(urwid.Frame):
                 self.core.frame.watch_focus()
                 self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
                                                      self.core.filter_string)
+            case 'add_contact':
+                self.core.cli.add_contact()
+            case 'add_attribute':
+                focused_contact = self.core.frame.contact_list \
+                    .get_focused_contact()
+                self.core.cli.add_attribute(focused_contact)
+            case 'add_note':
+                focused_contact = self.core.frame.contact_list \
+                    .get_focused_contact()
+                self.core.cli.add_note(focused_contact)
+            case 'add_encrypted_note':
+                focused_contact = self.core.frame.contact_list. \
+                    get_focused_contact()
+                self.core.cli.add_encrypted_note(focused_contact)
             case _:
                 # no set_bubbling(True) for root widget
                 return key
@@ -295,6 +309,12 @@ class ContactList(CustListBox):
         match command_id:
             case 'move_right':
                 super(ContactList, self).keypress(size, 'right')
+            case 'search_contact':
+                self.core.cli.search_contact()
+            case 'set_contact_filter':
+                self.core.cli.filter_contacts()
+            case 'clear_contact_filter':
+                self.core.cli.unfilter_contacts()
             case 'add_google_contact':
                 self.core.cli.add_google_contact()
             case _:
