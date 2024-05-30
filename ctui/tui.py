@@ -21,6 +21,7 @@ class ContactFrame(urwid.Frame):
     def __init__(self, config, core):
         super(ContactFrame, self).__init__(None)
         self.config = config
+        self.name = 'frame'
         self.core = core
         self.first_detail_pos = 2
         self.current_contact = None
@@ -130,6 +131,17 @@ class ContactFrame(urwid.Frame):
     def details_focused(self):
         return self.body.get_focus_column() == 1
 
+    def keypress(self, size, key):
+        self.core.keybindings.keypress(key, self.name)
+        command_id, key_sequence, command_repeat = self.core.keybindings.eval()
+        match command_id:
+            case 'reload':
+                self.core.frame.watch_focus()
+                self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
+                                                     self.core.filter_string)
+            case _:
+                return super(ContactFrame, self).keypress(size, key)
+
 
 class ContactFrameColumns(urwid.Columns):
     def __init__(self, core, config):
@@ -156,20 +168,11 @@ class ContactFrameColumns(urwid.Columns):
         else:
             self.contents[1] = column
 
-    def keypress(self, size, key):
-        if key == 'ctrl r':
-            self.core.frame.watch_focus()
-            self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
-                                                 self.core.filter_string)
-        else:
-            return super(ContactFrameColumns, self).keypress(size, key)
-
 
 class CustListBox(urwid.ListBox):
-    def __init__(self, listwalker, core, name):
+    def __init__(self, listwalker, core):
         super(CustListBox, self).__init__(listwalker)
         self.core = core
-        self.name = name
 
     def keypress(self, size, key):
         self.core.frame.watch_focus()
@@ -227,8 +230,9 @@ class CustListBox(urwid.ListBox):
 class ContactList(CustListBox):
     def __init__(self, contact_list, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactList, self).__init__(listwalker, core, 'contact_list')
+        super(ContactList, self).__init__(listwalker, core)
         self.core = core
+        self.name = 'contact_list'
         self.set(contact_list)
 
     def set(self, contact_list):
@@ -310,9 +314,9 @@ class ContactList(CustListBox):
 class ContactDetails(CustListBox):
     def __init__(self, contact, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactDetails, self).__init__(listwalker, core,
-                                             'contact_details')
+        super(ContactDetails, self).__init__(listwalker, core)
         self.core = core
+        self.name = 'contact_details'
         self.set(contact)
 
     def set(self, contact):

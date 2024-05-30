@@ -55,15 +55,17 @@ class Keybindings:
         contexts = [Keybindings.default_context, self.current_context]
 
         for context_iter in contexts:
-            for key_sequence in self.commands[context_iter].keys():
-                if key_sequence.startswith(current_key_sequence):
-                    key_sequence_exists = True
+            if context_iter in self.commands:
+                for key_sequence in self.commands[context_iter].keys():
+                    if key_sequence.startswith(current_key_sequence):
+                        key_sequence_exists = True
 
         if key_sequence_exists:
             for context_iter in contexts:
-                if current_key_sequence in self.commands[context_iter]:
-                    command_id = self.commands[context_iter][
-                        current_key_sequence]
+                if context_iter in self.commands:
+                    if current_key_sequence in self.commands[context_iter]:
+                        command_id = self.commands[context_iter][
+                            current_key_sequence]
 
         if not key_sequence_exists or command_id is not None:
             self.reset()
