@@ -580,9 +580,9 @@ class GiftEntry(DetailEntry):
 
         match command_id:
             case 'edit_gift':
-                self.core.cli.edit_attribute(self.contact, self.attribute)
+                self.core.cli.edit_gift(self.contact, self.gift)
             case 'delete_gift':
-                self.core.cli.delete_attribute(self.contact, self.attribute)
+                self.core.cli.delete_gift(self.contact, self.gift)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
@@ -593,34 +593,35 @@ class NoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core):
         super(NoteEntry, self).__init__(contact, note, note.content, pos, core)
         self.note = note
+        self.name = 'note_entry'
 
     def keypress(self, size, key):
-        if self.core.last_keypress is None:
-            if key == 'enter':
+        key = super(NoteEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'edit_note':
                 self.core.cli.edit_note(self.contact, self.note)
-            elif key == 'a':
+            case 'rename_note':
                 self.core.cli.rename_note(self.contact, self.note)
-            elif key == 'h':
+            case 'delete_note':
                 self.core.cli.delete_note(self.contact, self.note)
-            elif key == 'e':
-                self.core.last_keypress = 'e'
-            else:
-                return super(NoteEntry, self).keypress(size, key)
-        elif self.core.last_keypress == 'e':
-            if key == 'e':
+            case 'encrypt_note':
                 self.core.cli.encrypt_note(self.contact, self.note)
-                self.core.last_keypress = None
-            elif key == 'v':
+            case 'toggle_note_encryption':
                 self.core.cli.toggle_note_encryption(self.contact, self.note)
-                self.core.last_keypress = None
-            elif key == 's':
+            case 'show_all_encrypted_notes':
                 self.core.cli.show_all_encrypted_notes(self.contact)
-                self.core.last_keypress = None
-            elif key == 'h':
+            case 'hide_all_encrypted_notes':
                 self.core.cli.hide_all_encrypted_notes(self.contact)
-                self.core.last_keypress = None
-            else:
-                self.core.last_keypress = None
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class EncryptedNoteEntry(DetailEntry):
@@ -633,37 +634,37 @@ class EncryptedNoteEntry(DetailEntry):
             super(EncryptedNoteEntry, self).__init__(contact, note,
                                                      '(encrypted)', pos, core)
         self.note = note
+        self.name = 'note_entry'
 
     def keypress(self, size, key):
-        if self.core.last_keypress is None:
-            if key == 'enter':
+        key = super(EncryptedNoteEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            case 'edit_note':
                 self.core.cli.edit_note(self.contact, self.note)
-            elif key == 'a':
+            case 'rename_note':
                 self.core.cli.rename_note(self.contact, self.note)
-            elif key == 'h':
+            case 'delete_note':
                 self.core.cli.delete_note(self.contact, self.note)
-            elif key == 'e':
-                self.core.last_keypress = 'e'
-            else:
-                return super(EncryptedNoteEntry, self).keypress(size, key)
-        elif self.core.last_keypress == 'e':
-            if key == 'left':  # 'd' is mapped to 'left'
-                self.core.cli.decrypt_note(self.contact, self.note)
-                self.core.last_keypress = None
-            elif key == 'e':
+            case 'encrypt_note':
                 self.core.cli.encrypt_note(self.contact, self.note)
-                self.core.last_keypress = None
-            elif key == 'v':
+            case 'decrypt_note':
+                self.core.cli.decrypt_note(self.contact, self.note)
+            case 'toggle_note_encryption':
                 self.core.cli.toggle_note_encryption(self.contact, self.note)
-                self.core.last_keypress = None
-            elif key == 's':
+            case 'show_all_encrypted_notes':
                 self.core.cli.show_all_encrypted_notes(self.contact)
-                self.core.last_keypress = None
-            elif key == 'h':
+            case 'hide_all_encrypted_notes':
                 self.core.cli.hide_all_encrypted_notes(self.contact)
-                self.core.last_keypress = None
-            else:
-                self.core.last_keypress = None
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class GoogleNoteEntry(DetailEntry):
@@ -679,24 +680,36 @@ class GoogleAttributeEntry(DetailEntry):
         super(GoogleAttributeEntry, self).__init__(contact, attribute, label,
                                                    pos, core)
         self.attribute = attribute
+        self.name = 'attribute_entry'
 
     def keypress(self, size, key):
-        # if key == 'a':
-        #    self.core.cli.edit_attribute(self.contact, self.attribute)
-        # elif key == 'h':
-        #    self.core.cli.delete_attribute(self.contact, self.attribute)
-        if key == 'y':
-            pyperclip.copy(self.attribute.value)
-            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-            self.core.frame.console.show_message(msg)
-        else:
-            return super(ListEntry, self).keypress(size, key)
+        key = super(GoogleAttributeEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        self.core.keybindings.keypress(key, self.name)
+        command_id, command_key, command_repeat = self.core.keybindings.eval()
+
+        match command_id:
+            # case 'edit_attribute':
+            #     self.core.cli.edit_attribute(self.contact, self.attribute)
+            # case 'delete_attribute':
+            #     self.core.cli.delete_attribute(self.contact, self.attribute)
+            case 'copy_attribute':
+                pyperclip.copy(self.attribute.value)
+                msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+                self.core.frame.console.show_message(msg)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
 
 
 class Console(urwid.Filler):
     def __init__(self, core):
         super(Console, self).__init__(urwid.Text(""))
         self.core = core
+        self.name = 'console'
         self.filter_mode = False
 
     def show_console(self, command=''):
