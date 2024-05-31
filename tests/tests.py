@@ -1,6 +1,7 @@
 import unittest
 
 import ctui.util as util
+from ctui.cli import Mode
 from ctui.core import *
 from ctui.tui import *
 from ctui.objects import *
@@ -393,7 +394,15 @@ class TestKeybindings(unittest.TestCase):
 
     def test_init(self):
         commands = self.core.keybindings.commands
-        self.assertEqual(set(commands.keys()), {"global", "contact_list", "contact_details", "contact_entry", "attribute_entry", "gift_entry"})
+        self.assertEqual(set(commands.keys()), {
+            "global",
+            "contact_list",
+            "contact_details",
+            "contact_entry",
+            "attribute_entry",
+            "gift_entry",
+            "note_entry"
+        })
         self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie"})
         self.assertSetEqual(set(commands["contact_list"].keys()), {"ig", "/", "zz", "Z"})
         self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})
@@ -455,6 +464,24 @@ class TestKeybindings(unittest.TestCase):
         self.core.frame.keypress([50, 50], "t")
         contact_pos = self.core.frame.contact_list.get_focus_position()
         self.assertEqual(contact_pos, 2)
+
+    def test_widget_command_filter_contact_list(self):
+        self.core.frame.keypress([50, 50], "z")
+        self.core.frame.keypress([50, 50], "z")
+        mode = self.core.cli.mode
+        self.assertEqual(mode, Mode.FILTER)
+
+    def test_widget_command_filter_contact_details_noop(self):
+        self.core.frame.keypress([50, 50], "right")
+        self.core.frame.keypress([50, 50], "z")
+        self.core.frame.keypress([50, 50], "z")
+        mode = self.core.cli.mode
+        self.assertEqual(mode, None)
+        self.core.frame.keypress([50, 50], "left")
+        self.core.frame.keypress([50, 50], "z")
+        self.core.frame.keypress([50, 50], "z")
+        mode = self.core.cli.mode
+        self.assertEqual(mode, Mode.FILTER)
 
     @classmethod
     def tearDown(self):
