@@ -598,6 +598,10 @@ class NoteEntry(DetailEntry):
         self.name = 'note_entry'
 
     def keypress(self, size, key):
+        if key == 'enter':
+            self.core.cli.edit_note(self.contact, self.note)
+            return
+
         key = super(NoteEntry, self).keypress(size, key)
         if key is None:
             return
