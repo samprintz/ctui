@@ -138,6 +138,7 @@ class ContactFrame(urwid.Frame):
 
         key = super(ContactFrame, self).keypress(size, key)
         if key is None:
+            self.core.keybindings.reset()
             return
 
         self.core.keybindings.keypress(key, self.name)
