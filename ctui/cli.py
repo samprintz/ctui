@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 
-from ctui.objects import Attribute, Gift, Note, EncryptedNote
+from ctui.objects import Attribute, Contact, Gift, Note, EncryptedNote
 
 
 class CLI:
