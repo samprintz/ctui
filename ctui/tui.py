@@ -195,9 +195,10 @@ class ContactFrameColumns(urwid.Columns):
 
 
 class CustListBox(urwid.ListBox):
-    def __init__(self, listwalker, core):
+    def __init__(self, listwalker, core, name):
         super(CustListBox, self).__init__(listwalker)
         self.core = core
+        self.name = name
 
     def keypress(self, size, key):
         key = super(CustListBox, self).keypress(size, key)
@@ -249,9 +250,8 @@ class CustListBox(urwid.ListBox):
 class ContactList(CustListBox):
     def __init__(self, contact_list, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactList, self).__init__(listwalker, core)
+        super(ContactList, self).__init__(listwalker, core, 'contact_list')
         self.core = core
-        self.name = 'contact_list'
         self.set(contact_list)
 
     def set(self, contact_list):
@@ -344,9 +344,8 @@ class ContactList(CustListBox):
 class ContactDetails(CustListBox):
     def __init__(self, contact, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactDetails, self).__init__(listwalker, core)
+        super(ContactDetails, self).__init__(listwalker, core, 'contact_details')
         self.core = core
-        self.name = 'contact_details'
         self.set(contact)
 
     def set(self, contact):
