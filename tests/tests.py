@@ -411,25 +411,21 @@ class TestKeybindings(unittest.TestCase):
         self.assertEqual(commands["contact_details"]["ig"], "add_gift")
 
     def test_keypress(self):
-        self.core.keybindings.keypress("t", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat = self.core.keybindings.keypress("t", "global")
         self.assertEqual(command_id, "move_down")
 
     def test_composed_keypress(self):
-        self.core.keybindings.keypress("ctrl r", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat = self.core.keybindings.keypress("ctrl r", "global")
         self.assertEqual(command_id, "reload")
 
     def test_multi_keypress(self):
         self.core.keybindings.keypress("g", "global")
-        self.core.keybindings.keypress("g", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat = self.core.keybindings.keypress("g", "global")
         self.assertEqual(command_id, "jump_to_first")
 
     def test_command_repeat(self):
         self.core.keybindings.keypress("5", "global")
-        self.core.keybindings.keypress("t", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat = self.core.keybindings.keypress("t", "global")
         self.assertEqual(command_id, "move_down")
         self.assertEqual(command_repeat, 5)
 
@@ -472,12 +468,12 @@ class TestKeybindings(unittest.TestCase):
         self.assertEqual(mode, Mode.FILTER)
 
     def test_widget_command_filter_contact_details_noop(self):
-        self.core.frame.keypress([50, 50], "right")
+        self.core.frame.keypress([50, 50], "n")
         self.core.frame.keypress([50, 50], "z")
         self.core.frame.keypress([50, 50], "z")
         mode = self.core.cli.mode
         self.assertEqual(mode, None)
-        self.core.frame.keypress([50, 50], "left")
+        self.core.frame.keypress([50, 50], "d")
         self.core.frame.keypress([50, 50], "z")
         self.core.frame.keypress([50, 50], "z")
         mode = self.core.cli.mode

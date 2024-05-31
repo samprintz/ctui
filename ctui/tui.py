@@ -141,8 +141,8 @@ class ContactFrame(urwid.Frame):
             self.core.keybindings.reset()
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'reload':
@@ -164,7 +164,9 @@ class ContactFrame(urwid.Frame):
                     get_focused_contact()
                 self.core.cli.add_encrypted_note(focused_contact)
             case _:
-                # no set_bubbling(True) for root widget
+                self.core.keybindings.set_bubbling(False)
+                if not self.core.keybindings.is_prefix(command_key):
+                    self.core.keybindings.reset()
                 return key
 
 
@@ -207,8 +209,8 @@ class CustListBox(urwid.ListBox):
 
         self.core.frame.watch_focus()
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'move_down':
@@ -318,8 +320,8 @@ class ContactList(CustListBox):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'move_right':
@@ -462,8 +464,8 @@ class ContactDetails(CustListBox):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'move_left':
@@ -512,8 +514,8 @@ class ContactEntry(ListEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'rename_contact':
@@ -546,8 +548,8 @@ class AttributeEntry(DetailEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'edit_attribute':
@@ -575,8 +577,8 @@ class GiftEntry(DetailEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'edit_gift':
@@ -600,8 +602,8 @@ class NoteEntry(DetailEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'edit_note':
@@ -641,8 +643,8 @@ class EncryptedNoteEntry(DetailEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             case 'edit_note':
@@ -687,8 +689,8 @@ class GoogleAttributeEntry(DetailEntry):
         if key is None:
             return
 
-        self.core.keybindings.keypress(key, self.name)
-        command_id, command_key, command_repeat = self.core.keybindings.eval()
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
             # case 'edit_attribute':
