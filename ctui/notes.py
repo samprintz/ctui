@@ -1,26 +1,23 @@
-from datetime import date,datetime
+from datetime import datetime
 import gnupg
 import os
 import shutil
-from subprocess import call
 
-from objects import Note, EncryptedNote
+from ctui.objects import Note, EncryptedNote
 
 
-"""
-Store for interaction with the directory with notes about the contacts.
-"""
 class NotesStore:
+    """
+    Store for interaction with the directory with notes about the contacts.
+    """
 
     def __init__(self, path, gpg_keyid):
         self.path = path
         self.gpg = gnupg.GPG()
         self.gpg_keyid = gpg_keyid
 
-
     def get_notes_path(self, contact):
         return self.path + contact.name.replace(' ', '_')
-
 
     def get_all_contact_names(self):
         contact_names = []
@@ -29,15 +26,12 @@ class NotesStore:
             contact_names.append(dirname.replace('_', ' '))
         return sorted(contact_names)
 
-
     def contains_contact(self, contact):
         return self.contains_contact_name(contact.name)
-
 
     def contains_contact_name(self, name):
         dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
-
 
     def add_contact(self, contact):
         dirname = self.path + contact.name.replace(' ', '_')
@@ -45,7 +39,6 @@ class NotesStore:
             os.makedirs(dirname)
         except OSError:
             return "Couldn't create directory \"{}\".".format(dirname)
-
 
     def rename_contact(self, contact, new_name):
         assert self.contains_contact(contact)
@@ -58,8 +51,7 @@ class NotesStore:
             os.rename(dirname, new_dirname)
         except OSError:
             return "Couldn't rename directory \"{}\" to \"{}\"." \
-                    .format(dirname, new_dirname)
-
+                .format(dirname, new_dirname)
 
     def delete_contact(self, contact):
         assert self.contains_contact(contact)
@@ -71,11 +63,9 @@ class NotesStore:
         except Exception:
             return "Couldn't delete directory \"{}\".".format(dirname)
 
-
     def has_notes(self, contact):
         dirname = self.path + contact.name.replace(' ', '_')
         return os.path.isdir(dirname) and len(os.listdir(dirname)) > 0
-
 
     def has_encrypted_notes(self, contact):
         dirname = self.path + contact.name.replace(' ', '_')
@@ -84,7 +74,6 @@ class NotesStore:
         for file in os.listdir(dirname):
             if file.endswith(".gpg"):
                 return True
-
 
     def get_notes(self, contact):
         """
@@ -114,7 +103,6 @@ class NotesStore:
         except FileNotFoundError:
             return None
 
-
     def get_encrypted_notes(self, contact):
         """
         Read encrypted notes of a given contact and return a list of them.
@@ -131,20 +119,18 @@ class NotesStore:
         except FileNotFoundError:
             return None
 
-
     def contains_note(self, contact, date):
         dirname = self.path + contact.name.replace(' ', '_')
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
-        return os.path.isfile(path) or os.path.isfile(path + ".gpg") # plain or encrypted notes
-
+        return os.path.isfile(path) or os.path.isfile(
+            path + ".gpg")  # plain or encrypted notes
 
     def note_is_encrypted(self, contact, date):
         dirname = self.path + contact.name.replace(' ', '_')
         filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
         path = dirname + '/' + filename
         return os.path.isfile(path)
-
 
     def get_note(self, contact, date):
         assert self.contains_note(contact, date)
@@ -159,7 +145,6 @@ class NotesStore:
                 return content.strip()
         except OSError:
             return "Couldn't read note"
-
 
     def add_note(self, contact, note):
         assert not self.contains_note(contact, note.date)
@@ -177,7 +162,6 @@ class NotesStore:
             return "Note added."
         except OSError:
             return "Error: Note not created."
-
 
     def add_encrypted_note(self, contact, note):
         assert not self.contains_note(contact, note.date)
@@ -203,7 +187,6 @@ class NotesStore:
         except OSError:
             return "Error: Note not created."
 
-
     def rename_note(self, contact, note, new_date):
         assert note.date != new_date
         assert self.contains_note(contact, note.date)
@@ -226,7 +209,6 @@ class NotesStore:
         except OSError:
             return "Error: Note not renamed."
 
-
     def delete_note(self, contact, date):
         assert self.contains_note(contact, date)
 
@@ -247,7 +229,6 @@ class NotesStore:
         except OSError:
             return "Error: Note not deleted."
 
-
     def edit_note(self, contact, date, new_content):
         assert self.contains_contact(contact)
         assert self.contains_note(contact, date)
@@ -263,7 +244,6 @@ class NotesStore:
         except OSError:
             return "Error: Note not edited."
 
-
     def encrypt_note(self, contact, date):
         assert self.contains_note(contact, date)
 
@@ -278,7 +258,8 @@ class NotesStore:
 
         try:
             # encrypt file
-            with open(path_plain, 'rb') as f: # "rb" is important, "r" doesn't work
+            with open(path_plain,
+                      'rb') as f:  # "rb" is important, "r" doesn't work
                 status = self.gpg.encrypt_file(
                     f, recipients=[self.gpg_keyid], output=path_encrypt)
             # delete plain file
@@ -287,7 +268,6 @@ class NotesStore:
             return f"Note encrypted (ok: {status.ok})."
         except OSError:
             return "Error: Note not encrypted."
-
 
     def decrypt_note(self, contact, date, passphrase=None):
         assert self.contains_note(contact, date)
@@ -306,7 +286,7 @@ class NotesStore:
             with open(path_encrypt, 'rb') as f:
                 # passphrase is always None, the gpg-agent is taking care of it
                 status = self.gpg.decrypt_file(
-                        f, passphrase=passphrase, output=path_plain)
+                    f, passphrase=passphrase, output=path_plain)
             if status.ok:
                 # delete encrypted file
                 os.remove(path_encrypt)
@@ -315,7 +295,6 @@ class NotesStore:
                 return "Wrong passphrase"
         except OSError:
             return "Error: Note not decrypted."
-
 
     def get_encrypted_note_text(self, contact, date, passphrase=None):
         assert self.contains_note(contact, date)
@@ -330,7 +309,7 @@ class NotesStore:
             with open(path_encrypt, 'rb') as f:
                 # passphrase is always None, the gpg-agent is taking care of it
                 status = self.gpg.decrypt_file(
-                        f, passphrase=passphrase, output=path_plain)
+                    f, passphrase=passphrase, output=path_plain)
             if status.ok:
                 # read decrypted file
                 with open(path_plain) as f:
@@ -343,7 +322,6 @@ class NotesStore:
                 return "Wrong passphrase"
         except OSError:
             return "Error: Note not decrypted."
-
 
     def is_key_in_keyring(self):
         found_public_key = False

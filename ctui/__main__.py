@@ -2,9 +2,8 @@
 import os.path
 from argparse import ArgumentParser
 
-import util as util
-
-import core
+import ctui.core as core
+import ctui.util as util
 
 
 def main():
@@ -29,4 +28,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
