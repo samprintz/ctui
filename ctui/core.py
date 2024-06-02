@@ -43,7 +43,6 @@ class Core:
         self.filter_string = ''
 
         self.frame = ContactFrame(config, self)
-        self.frame.init_contact_list(self.contact_list)
 
         if not test:
             loop = ContactLoop(self.frame, config)

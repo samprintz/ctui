@@ -29,24 +29,29 @@ class ContactFrame(urwid.Frame):
         self.current_detail = None
         self.current_detail_pos = None
         self.core.filter_mode = False
-        self.set_footer()
 
-    def init_contact_list(self, contact_list):
         self.body = ContactFrameColumns(self.core, self.config)
-        self.set_contact_list(contact_list)
-        self.set_contact_details()
-        self.watch_focus()
+        self.footer = urwid.BoxAdapter(Console(self.core), height=1)
 
-    def set_contact_list(self, contact_list):
-        self.body.set_contact_list(contact_list)
-        self.contact_list = self.body.contents[0][0].base_widget
+        self.set_contacts(core.contact_list)
 
-    def set_contact_details(self, contact=None):
-        if contact is None:
-            contact = self.contact_list.get_focused_contact()
-        contact.get_details()  # augment existing contact with details (not before for performance)
-        self.body.set_contact_details(contact)
-        self.contact_details = self.body.contents[-1][0].base_widget
+    def get_contact_list_column(self):
+        return self.body.contents[0][0].base_widget
+
+    def get_contact_details_column(self):
+        return self.body.contents[1][0].base_widget
+
+    def get_console(self):
+        return self.footer.original_widget
+
+    def set_contacts(self, contacts):
+        self.get_contact_list_column().set_contact_list(contacts)
+
+        focused_contact = self.get_contact_list_column().get_focused_contact()
+        focused_contact.get_details()  # augment existing contact with details (not before for performance)
+        self.get_contact_details_column().set_contact_details(focused_contact)
+
+        # self.watch_focus()
 
     def refresh_contact_list(self, action=None, contact=None, detail=None,
                              filter_string=''):
@@ -59,8 +64,8 @@ class ContactFrame(urwid.Frame):
                 action is Action.FILTERING or \
                 action is Action.FILTERED or \
                 action is Action.REFRESH:
-            self.set_contact_list(contact_list)
-        self.set_contact_details(contact)
+            self.get_contact_list_column().set_contact_list(contact_list)
+        self.get_contact_details_column().set_contact_details(contact)
         if action is not Action.FILTERING:
             self.refresh_focus(action, contact, detail)
 
@@ -116,13 +121,6 @@ class ContactFrame(urwid.Frame):
         # focus_str = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
         # self.console.show_meta(focus_str)
 
-    def set_header(self):
-        pass
-
-    def set_footer(self):
-        self.footer = urwid.BoxAdapter(Console(self.core), height=1)
-        self.console = self.footer.original_widget
-
     def clear_footer(self):
         self.footer = urwid.BoxAdapter(Console(self.core), height=1)
         self.console = self.footer.original_widget
@@ -175,25 +173,24 @@ class ContactFrameColumns(urwid.Columns):
         self.core = core
         self.focus_map = {'options': 'focus options'}
         self.nav_width = int(config['display']['nav_width'])
+
+        widget_list = [
+            (urwid.AttrMap(ContactList(contact_list, self.core),
+                                'options', self.focus_map),
+                  self.options('given', self.nav_width)),
+            (ContactDetails(contact, self.core), self.options('weight', 1, True))
+        ]
+
         super(ContactFrameColumns, self).__init__([], dividechars=1)
 
     def set_contact_list(self, contact_list):
-        column = (urwid.AttrMap(ContactList(contact_list, self.core),
+        self.contents[0] = (urwid.AttrMap(ContactList(contact_list, self.core),
                                 'options', self.focus_map),
                   self.options('given', self.nav_width))
-        if len(self.contents) < 1:
-            self.contents.append(column)
-        else:
-            self.contents[0] = column
 
     def set_contact_details(self, contact):
-        column = (urwid.AttrMap(ContactDetails(contact, self.core),
-                                'options', self.focus_map),
+        self.contents[1] = (ContactDetails(contact, self.core),
                   self.options('weight', 1, True))
-        if len(self.contents) < 2:
-            self.contents.append(column)
-        else:
-            self.contents[1] = column
 
 
 class CustListBox(urwid.ListBox):
@@ -343,10 +340,54 @@ class ContactList(CustListBox):
                 return key
 
 
-class ContactDetails(CustListBox):
+class ContactDetails(urwid.Pile):
+    def __init__(self, contact, core):
+        widget_list = [
+            urwid.Text(contact.name, align='center'),
+            urwid.Text("test", align='center')
+            #ContactTabs(contact, core)
+        ]
+
+        super(ContactDetails, self).__init__(widget_list)
+        self.core = core
+
+
+class ContactTabs(urwid.Pile):
+    def __init__(self, contact, core):
+        tab_buttons = urwid.Columns([
+            urwid.Button("General", on_press=self.on_tab_click, user_data='General'),
+            urwid.Button("Gifts", on_press=self.on_tab_click, user_data='Gifts'),
+            urwid.Button("Notes", on_press=self.on_tab_click, user_data='Notes'),
+        ])
+
+        # general_tab = ContactDetails(contact, core)
+        general_tab = urwid.Text("general...", align='center'),
+        gift_tab = urwid.Text("gifts...", align='center'),
+        note_tab = urwid.Text("notes...", align='center'),
+
+        widget_list = [
+            tab_buttons,
+            #urwid.WidgetPlaceholder(general_tab)
+            general_tab
+        ]
+
+        super(ContactTabs, self).__init__(widget_list)
+
+        self.core = core
+        self.tab_content = {
+            'General': general_tab,
+            'Gifts': gift_tab,
+            'Notes': note_tab,
+        }
+
+    def on_tab_click(self, button, tab_name):
+        self.original_widget = self.tab_content[tab_name]
+
+
+class ContactDetailsOld(CustListBox):
     def __init__(self, contact, core):
         listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactDetails, self).__init__(listwalker, core, 'contact_details')
+        super(ContactDetailsOld, self).__init__(listwalker, core, 'contact_details')
         self.core = core
         self.set(contact)
 
