@@ -1,32 +1,31 @@
-from httplib2 import ServerNotFoundError
-from subprocess import call
 import os
 import socket
-import tempfile
+from subprocess import call
 
-from ctui.objects import *
+from httplib2 import ServerNotFoundError
+
 from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
 from ctui.keybindings import Keybindings
 from ctui.memory import MemoryStore
 from ctui.notes import NotesStore
+from ctui.objects import *
 from ctui.rdf import RDFStore
-from ctui.tui import ContactFrame, ContactLoop
 
 
 class Core:
-    """
-    Business logic of the contact TUI.
-    """
-
     def __init__(self, config, test=False):
+        self.ui = None
+        self.current_contact = None
+        self.current_contact_pos = None
+
         self.rdfstore = RDFStore(config['path']['rdf_file'],
                                  config['rdf']['namespace'])
         self.notesstore = NotesStore(config['path']['notes_dir'],
                                      config['encryption']['keyid'])
         self.memorystore = MemoryStore()
 
-        if self.is_connected() and not test:
+        if False and self.is_connected() and not test:  # TODO
             try:
                 self.googlestore = GoogleStore(self, config['google'][
                     'credentials_file'], config['google']['token_file'])
@@ -39,13 +38,13 @@ class Core:
         self.keybindings = Keybindings(config)
         self.editor = Editor(config['editor']['editor'])
         self.last_keypress = None
+
         self.contact_list = self.get_all_contacts()
+
         self.filter_string = ''
 
-        self.frame = ContactFrame(config, self)
-
-        if not test:
-            loop = ContactLoop(self.frame, config)
+    def register_ui(self, ui):
+        self.ui = ui
 
     """
     Check if connected to the internet
@@ -117,6 +116,10 @@ class Core:
         for contact in self.contact_list:
             if contact.name == name:
                 return contact
+
+    def select_contact(self, contact):
+        contact.get_details()  # augment existing contact with details (not before for performance)
+        self.ui.set_contact_details(contact)
 
     def search_contact(self, name):
         self.frame.contact_list.jump_to_contact(name)

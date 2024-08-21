@@ -2,8 +2,9 @@
 import os.path
 from argparse import ArgumentParser
 
-import ctui.core as core
 import ctui.util as util
+from ctui.core import Core
+from ctui.ui import UI
 
 
 def main():
@@ -23,7 +24,11 @@ def main():
         exit(0)
 
     config = util.load_config(config_path)
-    core.Core(config)
+
+    core = Core(config)
+
+    ui = UI(core, config)
+    ui.run()
 
 
 if __name__ == "__main__":
