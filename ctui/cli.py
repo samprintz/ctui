@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 
+from ctui.commands import Command
 from ctui.objects import Attribute, Contact, Gift, Note, EncryptedNote
 
 
@@ -47,119 +48,124 @@ class CLI:
 
         else:
             command = args[0]
-            if command in ('add-contact'):
-                name = " ".join(args[1:])
-                contact = Contact(name, self.core)
-                msg = self.core.add_contact(contact)
-                self.contact = contact  # to focus it when refreshing contact list
-                self.action = Action.CONTACT_ADDED_OR_EDITED
-            elif command in ('rename-contact'):
-                contact = self.contact
-                new_name = " ".join(args[1:])
-                msg = self.core.rename_contact(contact, new_name)
-                contact.name = new_name  # TODO
-                self.contact = contact  # to focus it when refreshing contact list
-                self.action = Action.CONTACT_ADDED_OR_EDITED
-            elif command in ('delete-contact'):
-                name = " ".join(args[1:])
-                msg = self.core.delete_contact_by_name(name)
-                self.contact = None  # to focus other when refreshing contact list
-                self.action = Action.CONTACT_DELETED
-            elif command in ('add-attribute'):
-                key = args[1]
-                value = " ".join(args[2:])
-                attribute = Attribute(key, value)
-                msg = self.contact.add_attribute(attribute)
-                self.detail = attribute
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('edit-attribute'):
-                key = args[1]
-                value = " ".join(args[2:])
-                new_attr = Attribute(key, value)
-                old_attr = self.detail
-                msg = self.contact.edit_attribute(old_attr, new_attr)
-                self.detail = new_attr
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('delete-attribute'):
-                key = args[1]
-                value = " ".join(args[2:])
-                attribute = Attribute(key, value)
-                msg = self.contact.delete_attribute(attribute)
-                self.action = Action.DETAIL_DELETED
-            elif command in ('add-gift'):
-                name = " ".join(args[1:])
-                gift = Gift(name)
-                msg = self.contact.add_gift(gift)
-                self.detail = gift
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('edit-gift'):
-                name = " ".join(args[1:])
-                new_gift = Gift(name)
-                old_gift = self.detail
-                msg = self.contact.edit_gift(old_gift, new_gift)
-                self.detail = new_gift
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('delete-gift'):
-                name = " ".join(args[1:])
-                gift = Gift(name)
-                msg = self.contact.delete_gift(gift)
-                self.action = Action.DETAIL_DELETED
-            elif command in ('add-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.add_note(date_str)
-                self.detail = Note(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('add-encrypted-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.add_encrypted_note(date_str)
-                self.detail = EncryptedNote(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('rename-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.rename_note(self.detail, date_str)
-                self.detail = Note(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('delete-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.delete_note(date_str)
-                self.action = Action.DETAIL_DELETED
-            elif command in ('edit-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.edit_note(date_str)
-                self.detail = Note(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('encrypt-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.encrypt_note(date_str)
-                self.detail = EncryptedNote(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('decrypt-note'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.decrypt_note(date_str)
-                self.detail = Note(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('toggle-note-encryption'):
-                date_str = " ".join(args[1:])
-                msg = self.contact.toggle_note_encryption(date_str)
-                self.detail = EncryptedNote(date_str, None)
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('show-all-encrypted-notes'):
-                msg = self.contact.show_all_encrypted_notes()
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('hide-all-encrypted-notes'):
-                msg = self.contact.hide_all_encrypted_notes()
-                self.action = Action.DETAIL_ADDED_OR_EDITED
-            elif command in ('add-google-contact'):
-                name = " ".join(args[1:])
-                contact, msg = self.core.add_google_contact(name)
-                self.contact = contact  # to focus it when refreshing contact list
-                self.action = Action.CONTACT_ADDED_OR_EDITED
-            else:
-                msg = 'Not a valid command.'
 
-            self.core.ui.refresh_contact_list(self.action, self.contact,
-                                              self.detail,
-                                              self.filter_string)
+            found_in_new_commands = False
+
+            for command_class in Command.__subclasses__():
+                if command in command_class.names:
+                    command_instance = command_class(self.core)
+                    msg = command_instance.execute(args[1:])
+                    found_in_new_commands = True
+
+            if not found_in_new_commands:
+                if command in ('add-contact'):
+                    name = " ".join(args[1:])
+                    contact = Contact(name, self.core)
+                    msg = self.core.add_contact(contact)
+                    self.contact = contact  # to focus it when refreshing contact list
+                    self.action = Action.CONTACT_ADDED_OR_EDITED
+                elif command in ('rename-contact'):
+                    contact = self.contact
+                    new_name = " ".join(args[1:])
+                    msg = self.core.rename_contact(contact, new_name)
+                    contact.name = new_name  # TODO
+                    self.contact = contact  # to focus it when refreshing contact list
+                    self.action = Action.CONTACT_ADDED_OR_EDITED
+                elif command in ('delete-contact'):
+                    name = " ".join(args[1:])
+                    msg = self.core.delete_contact_by_name(name)
+                    self.contact = None  # to focus other when refreshing contact list
+                    self.action = Action.CONTACT_DELETED
+                elif command in ('add-attribute'):
+                    key = args[1]
+                    value = " ".join(args[2:])
+                    attribute = Attribute(key, value)
+                    msg = self.contact.add_attribute(attribute)
+                    self.detail = attribute
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('edit-attribute'):
+                    key = args[1]
+                    value = " ".join(args[2:])
+                    new_attr = Attribute(key, value)
+                    old_attr = self.detail
+                    msg = self.contact.edit_attribute(old_attr, new_attr)
+                    self.detail = new_attr
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('delete-attribute'):
+                    key = args[1]
+                    value = " ".join(args[2:])
+                    attribute = Attribute(key, value)
+                    msg = self.contact.delete_attribute(attribute)
+                    self.action = Action.DETAIL_DELETED
+                elif command in ('edit-gift'):
+                    name = " ".join(args[1:])
+                    new_gift = Gift(name)
+                    old_gift = self.detail
+                    msg = self.contact.edit_gift(old_gift, new_gift)
+                    self.detail = new_gift
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('delete-gift'):
+                    name = " ".join(args[1:])
+                    gift = Gift(name)
+                    msg = self.contact.delete_gift(gift)
+                    self.action = Action.DETAIL_DELETED
+                elif command in ('add-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.add_note(date_str)
+                    self.detail = Note(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('add-encrypted-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.add_encrypted_note(date_str)
+                    self.detail = EncryptedNote(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('rename-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.rename_note(self.detail, date_str)
+                    self.detail = Note(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('delete-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.delete_note(date_str)
+                    self.action = Action.DETAIL_DELETED
+                elif command in ('edit-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.edit_note(date_str)
+                    self.detail = Note(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('encrypt-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.encrypt_note(date_str)
+                    self.detail = EncryptedNote(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('decrypt-note'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.decrypt_note(date_str)
+                    self.detail = Note(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('toggle-note-encryption'):
+                    date_str = " ".join(args[1:])
+                    msg = self.contact.toggle_note_encryption(date_str)
+                    self.detail = EncryptedNote(date_str, None)
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('show-all-encrypted-notes'):
+                    msg = self.contact.show_all_encrypted_notes()
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('hide-all-encrypted-notes'):
+                    msg = self.contact.hide_all_encrypted_notes()
+                    self.action = Action.DETAIL_ADDED_OR_EDITED
+                elif command in ('add-google-contact'):
+                    name = " ".join(args[1:])
+                    contact, msg = self.core.add_google_contact(name)
+                    self.contact = contact  # to focus it when refreshing contact list
+                    self.action = Action.CONTACT_ADDED_OR_EDITED
+                else:
+                    msg = 'Not a valid command.'
+
+                self.core.ui.refresh_contact_list(self.action, self.contact,
+                                                  self.detail,
+                                                  self.filter_string)
+
             self.core.ui.frame.focus_position = 'body'
             self.core.ui.console.show_message(msg)
 

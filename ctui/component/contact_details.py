@@ -1,6 +1,7 @@
 import urwid
 from datetime import datetime
 
+from ctui.commands import AddGift
 from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
     GoogleAttributeEntry, GiftEntry, GoogleNoteEntry, NoteEntry, \
     EncryptedNoteEntry
@@ -76,9 +77,7 @@ class ContactDetails(CListBox):
                 self.core.keybindings.set_simulating(False)
                 return key
             case 'add_gift':
-                focused_contact = self.core.ui.list_view \
-                    .get_focused_contact()
-                self.core.cli.add_gift(focused_contact)
+                self.core.ui.console.show_console(AddGift.name)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
