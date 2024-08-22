@@ -43,4 +43,7 @@ class CDetailsFrame(urwid.Frame):
 
     def focus_detail(self, detail):
         detail_pos = self.get_tab_body().get_detail_position(detail)
+        self.focus_detail_pos(detail_pos)
+
+    def focus_detail_pos(self, detail_pos):
         self.get_tab_body().set_focus_position(detail_pos)

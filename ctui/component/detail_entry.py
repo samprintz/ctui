@@ -1,5 +1,6 @@
 import pyperclip
 
+from ctui.commands import EditAttribute, DeleteAttribute
 from ctui.component.list_entry import CListEntry
 
 
@@ -28,9 +29,11 @@ class AttributeEntry(DetailEntry):
 
         match command_id:
             case 'edit_attribute':
-                self.core.cli.edit_attribute(self.contact, self.attribute)
+                command = f'{EditAttribute.name} {self.attribute.key} {self.attribute.value}'
+                self.core.ui.console.show_console(command)
             case 'delete_attribute':
-                self.core.cli.delete_attribute(self.contact, self.attribute)
+                command = f'{DeleteAttribute.name} {self.attribute.key} {self.attribute.value}'
+                self.core.ui.console.show_console(command)
             case 'copy_attribute':
                 pyperclip.copy(self.attribute.value)
                 msg = "Copied \"" + self.attribute.value + "\" to clipboard."

@@ -1,6 +1,7 @@
 import urwid
 
 from ctui.cli import Action
+from ctui.commands import AddAttribute
 
 
 class CFrame(urwid.Frame):
@@ -32,9 +33,8 @@ class CFrame(urwid.Frame):
             case 'add_contact':
                 self.core.cli.add_contact()
             case 'add_attribute':
-                focused_contact = self.core.ui.list_view \
-                    .get_focused_contact()
-                self.core.cli.add_attribute(focused_contact)
+                command = f'{AddAttribute.name} '
+                self.core.ui.console.show_console(command)
             case 'add_note':
                 focused_contact = self.core.ui.list_view \
                     .get_focused_contact()

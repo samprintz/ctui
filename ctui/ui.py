@@ -54,8 +54,14 @@ class UI:
         self.frame.body.focus_position = 1
 
     def focus_detail(self, detail):
+        # TODO remove this or focus_detail_pos?
         self.focus_detail_view()
         self.detail_view.focus_detail(detail)
+
+    def focus_detail_pos(self, detail_pos):
+        # TODO remove this or focus_detail?
+        self.focus_detail_view()
+        self.detail_view.focus_detail_pos(detail_pos)
 
     def refresh_contact_list(self, action=None, contact=None, detail=None,
                              filter_string=''):

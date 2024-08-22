@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 
-from ctui.commands import Command
+from ctui.commands import Command, AddAttribute
 from ctui.objects import Attribute, Contact, Gift, Note, EncryptedNote
 
 
@@ -76,27 +76,6 @@ class CLI:
                     msg = self.core.delete_contact_by_name(name)
                     self.contact = None  # to focus other when refreshing contact list
                     self.action = Action.CONTACT_DELETED
-                elif command in ('add-attribute'):
-                    key = args[1]
-                    value = " ".join(args[2:])
-                    attribute = Attribute(key, value)
-                    msg = self.contact.add_attribute(attribute)
-                    self.detail = attribute
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('edit-attribute'):
-                    key = args[1]
-                    value = " ".join(args[2:])
-                    new_attr = Attribute(key, value)
-                    old_attr = self.detail
-                    msg = self.contact.edit_attribute(old_attr, new_attr)
-                    self.detail = new_attr
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('delete-attribute'):
-                    key = args[1]
-                    value = " ".join(args[2:])
-                    attribute = Attribute(key, value)
-                    msg = self.contact.delete_attribute(attribute)
-                    self.action = Action.DETAIL_DELETED
                 elif command in ('edit-gift'):
                     name = " ".join(args[1:])
                     new_gift = Gift(name)
@@ -212,32 +191,7 @@ class CLI:
         self.core.ui.console.clear()
         self.core.ui.frame.focus_position = 'body'
 
-    # attributes
-
-    def add_attribute(self, contact):
-        self.contact = contact
-        command = 'add-attribute '
-        self.core.ui.console.show_console(command)
-
-    def edit_attribute(self, contact, attribute):
-        self.contact = contact
-        self.detail = attribute
-        command = 'edit-attribute {} {}'.format(attribute.key, attribute.value)
-        self.core.ui.console.show_console(command)
-
-    def delete_attribute(self, contact, attribute):
-        self.contact = contact
-        self.detail = attribute
-        command = 'delete-attribute {} {}'.format(attribute.key,
-                                                  attribute.value)
-        self.core.ui.console.show_console(command)
-
     # gifts
-
-    def add_gift(self, contact):
-        self.contact = contact
-        command = 'add-gift '
-        self.core.ui.console.show_console(command)
 
     def edit_gift(self, contact, gift):
         self.contact = contact

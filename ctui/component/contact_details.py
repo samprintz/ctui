@@ -45,6 +45,9 @@ class ContactDetails(CListBox):
         except TypeError:
             pass
 
+    def get_count(self):
+        return len(self.body)
+
     def get_detail_position(self, detail):
         pos = 0
         for entry in self.body:
@@ -77,7 +80,8 @@ class ContactDetails(CListBox):
                 self.core.keybindings.set_simulating(False)
                 return key
             case 'add_gift':
-                self.core.ui.console.show_console(AddGift.name)
+                command = f'{AddGift.name} '
+                self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
@@ -104,7 +108,7 @@ class GeneralDetails(ContactDetails):
                 pos = pos + 1
 
         if contact.gifts is not None:
-            if len(entries) > 2:
+            if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"GESCHENKE"))
@@ -114,7 +118,7 @@ class GeneralDetails(ContactDetails):
                 pos = pos + 1
 
         if type(contact) is GoogleContact and len(contact.google_notes) > 0:
-            if len(entries) > 2:
+            if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN GOOGLE"))
@@ -124,7 +128,7 @@ class GeneralDetails(ContactDetails):
                 pos = pos + 1
 
         if contact.notes is not None:
-            if len(entries) > 2:
+            if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN"))
