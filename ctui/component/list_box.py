@@ -12,7 +12,7 @@ class CListBox(urwid.ListBox):
         if key is None:
             return
 
-        self.core.frame.watch_focus()
+        # self.core.frame.watch_focus() # TODO
 
         command_id, command_key, command_repeat \
             = self.core.keybindings.keypress(key, self.name)
