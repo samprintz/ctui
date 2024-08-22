@@ -311,7 +311,8 @@ class Note:
             try:
                 date = datetime.strptime(date, '%Y%m%d')
             except ValueError:
-                raise ValueError(f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
+                raise ValueError(
+                    f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
         self.date = date
         self.content = content
 
@@ -326,7 +327,8 @@ class EncryptedNote(Note):
             try:
                 date = datetime.strptime(date, '%Y%m%d')
             except ValueError:
-                raise ValueError(f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
+                raise ValueError(
+                    f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
         self.date = date
         self.content = content
 

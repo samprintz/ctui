@@ -118,11 +118,10 @@ class Core:
                 return contact
 
     def select_contact(self, contact):
-        contact.get_details()  # augment existing contact with details (not before for performance)
         self.ui.set_contact_details(contact)
 
     def search_contact(self, name):
-        self.frame.contact_list.jump_to_contact(name)
+        self.ui.list_view.jump_to_contact(name)
         return ""
 
     def filter_contacts(self, filter_string):

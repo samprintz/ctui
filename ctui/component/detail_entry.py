@@ -1,3 +1,5 @@
+import pyperclip
+
 from ctui.component.list_entry import CListEntry
 
 
@@ -32,7 +34,7 @@ class AttributeEntry(DetailEntry):
             case 'copy_attribute':
                 pyperclip.copy(self.attribute.value)
                 msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-                self.core.frame.console.show_message(msg)
+                self.core.ui.console.show_message(msg)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
@@ -177,7 +179,7 @@ class GoogleAttributeEntry(DetailEntry):
             case 'copy_attribute':
                 pyperclip.copy(self.attribute.value)
                 msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-                self.core.frame.console.show_message(msg)
+                self.core.ui.console.show_message(msg)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)

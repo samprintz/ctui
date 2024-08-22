@@ -26,22 +26,24 @@ class CFrame(urwid.Frame):
             case 'quit':
                 raise urwid.ExitMainLoop()
             case 'reload':
-                self.core.frame.watch_focus()
-                self.core.frame.refresh_contact_list(Action.REFRESH, None, None,
-                                                     self.core.filter_string)
+                # TODO
+                self.core.ui.frame.watch_focus()
+                self.core.ui.frame.refresh_contact_list(Action.REFRESH, None,
+                                                        None,
+                                                        self.core.filter_string)
             case 'add_contact':
                 self.core.cli.add_contact()
             case 'add_attribute':
-                focused_contact = self.core.frame.contact_list \
+                focused_contact = self.core.ui.list_view \
                     .get_focused_contact()
                 self.core.cli.add_attribute(focused_contact)
             case 'add_note':
-                focused_contact = self.core.frame.contact_list \
+                focused_contact = self.core.ui.list_view \
                     .get_focused_contact()
                 self.core.cli.add_note(focused_contact)
             case 'add_encrypted_note':
-                focused_contact = self.core.frame.contact_list. \
-                    get_focused_contact()
+                focused_contact = self.core.ui.list_view \
+                    .get_focused_contact()
                 self.core.cli.add_encrypted_note(focused_contact)
             case _:
                 self.core.keybindings.set_bubbling(False)

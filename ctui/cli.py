@@ -23,8 +23,8 @@ class CLI:
             msg = self.core.search_contact(name)
             self.mode = None
             self.action = None
-            self.core.frame.set_focus('body')
-            self.core.frame.console.show_message(msg)
+            self.core.ui.frame.focus_position = 'body'
+            self.core.ui.console.show_message(msg)
 
         elif self.mode is Mode.FILTER:
             if args is not False:
@@ -32,17 +32,17 @@ class CLI:
                 self.core.filter_string = filter_string
                 self.filter_string = filter_string
                 self.action = Action.FILTERING
-                self.core.frame.refresh_contact_list(self.action, self.contact,
-                                                     self.detail,
-                                                     self.filter_string)
+                self.core.ui.refresh_contact_list(self.action, self.contact,
+                                                  self.detail,
+                                                  self.filter_string)
             else:  # enter was pressed
                 self.action = Action.FILTERED
-                self.core.frame.refresh_contact_list(self.action, self.contact,
-                                                     self.detail,
-                                                     self.filter_string)
-                self.core.frame.set_focus('body')
+                self.core.ui.refresh_contact_list(self.action, self.contact,
+                                                  self.detail,
+                                                  self.filter_string)
+                self.core.ui.frame.focus_position = 'body'
                 msg = 'f={}'.format(self.core.filter_string)
-                self.core.frame.console.show_message(msg)
+                self.core.ui.frame.console.show_message(msg)
                 self.mode = None
 
         else:
@@ -157,35 +157,35 @@ class CLI:
             else:
                 msg = 'Not a valid command.'
 
-            self.core.frame.refresh_contact_list(self.action, self.contact,
-                                                 self.detail,
-                                                 self.filter_string)
-            self.core.frame.set_focus('body')
-            self.core.frame.console.show_message(msg)
+            self.core.ui.refresh_contact_list(self.action, self.contact,
+                                              self.detail,
+                                              self.filter_string)
+            self.core.ui.frame.focus_position = 'body'
+            self.core.ui.console.show_message(msg)
 
     # contacts
 
     def add_contact(self):
         command = 'add-contact '
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def add_google_contact(self):
         command = 'add-google-contact '
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def rename_contact(self, contact):
         self.contact = contact
         command = 'rename-contact {}'.format(contact.name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def delete_contact(self, contact):
         self.contact = contact
         command = 'delete-contact {}'.format(contact.name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def search_contact(self):
         self.mode = Mode.SEARCH
-        self.core.frame.console.show_search()
+        self.core.ui.console.show_search()
 
     def filter_contacts(self):
         self.mode = Mode.FILTER
@@ -193,7 +193,7 @@ class CLI:
             self.core.filter_string = ''
         self.core.filter_mode = True
         command = 'filter {}'.format(self.core.filter_string)
-        self.core.frame.console.show_filter(command)
+        self.core.ui.console.show_filter(command)
 
     def unfilter_contacts(self):
         self.mode = None
@@ -201,62 +201,63 @@ class CLI:
         self.filter_string = ''
         self.core.filter_mode = False
         self.core.filter_string = ''
-        self.core.frame.refresh_contact_list(self.action, self.contact,
-                                             self.detail, self.filter_string)
-        self.core.frame.clear_footer()
+        self.core.ui.refresh_contact_list(self.action, self.contact,
+                                          self.detail, self.filter_string)
+        self.core.ui.console.clear()
+        self.core.ui.frame.focus_position = 'body'
 
     # attributes
 
     def add_attribute(self, contact):
         self.contact = contact
         command = 'add-attribute '
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def edit_attribute(self, contact, attribute):
         self.contact = contact
         self.detail = attribute
         command = 'edit-attribute {} {}'.format(attribute.key, attribute.value)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def delete_attribute(self, contact, attribute):
         self.contact = contact
         self.detail = attribute
         command = 'delete-attribute {} {}'.format(attribute.key,
                                                   attribute.value)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     # gifts
 
     def add_gift(self, contact):
         self.contact = contact
         command = 'add-gift '
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def edit_gift(self, contact, gift):
         self.contact = contact
         self.detail = gift
         command = 'edit-gift {}'.format(gift.name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def delete_gift(self, contact, gift):
         self.contact = contact
         self.detail = gift
         command = 'delete-gift {}'.format(gift.name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def mark_gifted(self, contact, gift):
         self.contact = contact
         self.detail = gift
         new_name = "x " + gift.name[2:]
         command = 'edit-gift {}'.format(new_name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def unmark_gifted(self, contact, gift):
         self.contact = contact
         self.detail = gift
         new_name = gift.name[2:]
         command = 'edit-gift {}'.format(new_name)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     # notes
 
@@ -264,27 +265,27 @@ class CLI:
         self.contact = contact
         date_str = datetime.strftime(date.today(), "%Y%m%d")
         command = 'add-note {}'.format(date_str)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def add_encrypted_note(self, contact):
         self.contact = contact
         date_str = datetime.strftime(date.today(), "%Y%m%d")
         command = 'add-encrypted-note {}'.format(date_str)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def rename_note(self, contact, note):
         self.contact = contact
         self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'rename-note {}'.format(date_str)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def delete_note(self, contact, note):
         self.contact = contact
         self.detail = note
         date_str = datetime.strftime(note.date, "%Y%m%d")
         command = 'delete-note {}'.format(date_str)
-        self.core.frame.console.show_console(command)
+        self.core.ui.console.show_console(command)
 
     def edit_note(self, contact, note):
         self.contact = contact

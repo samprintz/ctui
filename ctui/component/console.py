@@ -3,25 +3,25 @@ import urwid
 
 class Console(urwid.Filler):
     def __init__(self, core):
-        super(Console, self).__init__(urwid.Text(""))
+        super(Console, self).__init__(urwid.Text(''))
         self.core = core
         self.name = 'console'
         self.filter_mode = False
 
     def show_console(self, command=''):
         self.body = urwid.Edit(":", command)
-        self.core.frame.set_focus('footer')
+        self.core.ui.frame.focus_position = 'footer'
 
     def show_message(self, message):
         self.body = urwid.Text(message)
 
     def show_input(self, request):
         self.body = urwid.Edit("{}?".format(request))
-        self.core.frame.set_focus('footer')
+        self.core.ui.frame.focus_position = 'footer'
 
     def show_search(self):
         self.body = urwid.Edit("/")
-        self.core.frame.set_focus('footer')
+        self.core.ui.frame.focus_position = 'footer'
 
     def show_filter(self, command):
         self.filter_mode = True
@@ -29,10 +29,13 @@ class Console(urwid.Filler):
 
     def show_passphrase_input(self):
         self.body = urwid.Edit("Passphrase: ", mask="*")
-        self.core.frame.set_focus('footer')
+        self.core.ui.frame.focus_position = 'footer'
 
     def show_meta(self, meta):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
+
+    def clear(self):
+        self.body = urwid.Text('')
 
     def keypress(self, size, key):
         if key == 'ctrl w':
@@ -47,7 +50,8 @@ class Console(urwid.Filler):
             if key == 'esc':
                 self.filter_mode = False
                 self.core.cli.unfilter_contacts()
-                self.core.frame.clear_footer()
+                self.clear()
+                self.core.ui.frame.focus_position = 'body'
             elif key == 'enter':
                 self.filter_mode = False
                 args = self.original_widget.edit_text.split()
@@ -58,7 +62,8 @@ class Console(urwid.Filler):
                 return self.core.cli.handle(args)
         else:
             if key == 'esc':
-                self.core.frame.clear_footer()
+                self.clear()
+                self.core.ui.frame.focus_position = 'body'
             elif key == 'enter':
                 args = self.original_widget.edit_text.split()
                 return self.core.cli.handle(args)

@@ -19,19 +19,13 @@ class ContactDetails(CListBox):
         urwid.connect_signal(self.body, 'modified', self.show_meta)
 
     def show_meta(self):
-        if self.core.ui.is_focus_on_details() is True:
-            if type(self.focus) is NoteEntry or type(
-                    self.focus) is EncryptedNoteEntry:
-                date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
-                self.core.ui.console.show_meta(date)
-            elif isinstance(self.focus, DetailEntry):
-                self.core.ui.console.show_meta("")
-                # self.core.ui.console.show_meta(str(self.focus.pos))
-        else:
-            self.core.ui.clear_footer()
-
-    def number_of_details(self):
-        return len(self.body) - 2
+        if type(self.focus) is NoteEntry or type(
+                self.focus) is EncryptedNoteEntry:
+            date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
+            self.core.ui.console.show_meta(date)
+        elif isinstance(self.focus, DetailEntry):
+            self.core.ui.console.show_meta("")
+            # self.core.ui.console.show_meta(str(self.focus.pos))
 
     def get_focused_detail(self):
         #        if not hasattr(self.focus, 'detail'):
@@ -39,12 +33,14 @@ class ContactDetails(CListBox):
         return self.focus.detail
 
     def get_focus_position(self):
-        return self.focus_position
+        if len(self.contents) > 0:
+            return self.focus_position
 
     def set_focus_position(self, pos):
         try:  # fix for frequent problem: # TODO undo this after improving get_detail_position()
             # "'<' not supported between instances of 'NoneType' and 'int'"
-            self.focus_position = pos
+            if len(self.contents) > 0:
+                self.focus_position = pos
         except TypeError:
             pass
 
@@ -80,7 +76,7 @@ class ContactDetails(CListBox):
                 self.core.keybindings.set_simulating(False)
                 return key
             case 'add_gift':
-                focused_contact = self.core.frame.contact_list \
+                focused_contact = self.core.ui.list_view \
                     .get_focused_contact()
                 self.core.cli.add_gift(focused_contact)
             case _:
