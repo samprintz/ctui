@@ -10,85 +10,25 @@ from ctui.objects import Name, Attribute, Gift, Note, GoogleContact
 
 
 class ContactDetails(CListBox):
-    def __init__(self, core):
-        listwalker = urwid.SimpleFocusListWalker([])
-        super(ContactDetails, self).__init__(listwalker, core,
-                                             'contact_details')
+    def __init__(self, entries, core, name):
         self.core = core
-
-    def set(self, contact):
-        name = DetailEntry(contact, Name(contact.name), contact.name, 0,
-                           self.core)
-        entries = [name, urwid.Divider()]
-        pos = len(entries)
-
-        if contact.attributes is not None:
-            for a in contact.attributes:
-                entries.append(
-                    AttributeEntry(contact, Attribute(a[0], a[1]), pos,
-                                   self.core))
-                pos = pos + 1
-
-        if type(contact) is GoogleContact and contact.google_attributes is not None:
-            for a in contact.google_attributes:
-                entries.append(GoogleAttributeEntry(contact, a, pos, self.core))
-                pos = pos + 1
-
-        if contact.gifts is not None:
-            if len(entries) > 2:
-                entries.append(urwid.Divider())
-                pos = pos + 1
-            entries.append(urwid.Text(u"GESCHENKE"))
-            pos = pos + 1
-            for a in contact.gifts:
-                entries.append(GiftEntry(contact, Gift(a), pos, self.core))
-                pos = pos + 1
-
-        if type(contact) is GoogleContact and len(contact.google_notes) > 0:
-            if len(entries) > 2:
-                entries.append(urwid.Divider())
-                pos = pos + 1
-            entries.append(urwid.Text(u"NOTIZEN GOOGLE"))
-            pos = pos + 1
-            for note in contact.google_notes:
-                entries.append(GoogleNoteEntry(contact, note, pos, self.core))
-                pos = pos + 1
-
-        if contact.notes is not None:
-            if len(entries) > 2:
-                entries.append(urwid.Divider())
-                pos = pos + 1
-            entries.append(urwid.Text(u"NOTIZEN"))
-            pos = pos + 1
-            for note in contact.notes:
-                if type(note) is Note:  # plain note
-                    entries.append(NoteEntry(contact, note, pos, self.core))
-                else:  # encrypted note
-                    # check if made visible
-                    if contact.has_visible_note(note):
-                        visible_note = contact.get_visible_note(note)
-                        entries.append(
-                            EncryptedNoteEntry(contact, visible_note, pos,
-                                               self.core, visible=True))
-                    else:
-                        entries.append(
-                            EncryptedNoteEntry(contact, note, pos, self.core))
-                pos = pos + 1
+        listwalker = urwid.SimpleFocusListWalker([])
+        super(ContactDetails, self).__init__(listwalker, core, name)
 
         self.body = urwid.SimpleFocusListWalker(entries)
         urwid.connect_signal(self.body, 'modified', self.show_meta)
 
     def show_meta(self):
-        if self.core.frame.details_focused() is True:
+        if self.core.ui.is_focus_on_details() is True:
             if type(self.focus) is NoteEntry or type(
                     self.focus) is EncryptedNoteEntry:
                 date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
-                self.core.frame.console.show_meta(date)
+                self.core.ui.console.show_meta(date)
             elif isinstance(self.focus, DetailEntry):
-                self.core.frame.console.show_meta("")
-                # self.core.frame.console.show_meta(str(self.focus.pos))
+                self.core.ui.console.show_meta("")
+                # self.core.ui.console.show_meta(str(self.focus.pos))
         else:
-            self.core.frame.clear_footer()
+            self.core.ui.clear_footer()
 
     def number_of_details(self):
         return len(self.body) - 2
@@ -147,3 +87,110 @@ class ContactDetails(CListBox):
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
                 return key
+
+
+class GeneralDetails(ContactDetails):
+    def __init__(self, contact, core):
+        self.core = core
+
+        entries = []
+        pos = 0
+
+        if contact.attributes is not None:
+            for a in contact.attributes:
+                entries.append(
+                    AttributeEntry(contact, Attribute(a[0], a[1]), pos,
+                                   self.core))
+                pos = pos + 1
+
+        if type(contact) is GoogleContact and contact.google_attributes is not None:
+            for a in contact.google_attributes:
+                entries.append(GoogleAttributeEntry(contact, a, pos, self.core))
+                pos = pos + 1
+
+        if contact.gifts is not None:
+            if len(entries) > 2:
+                entries.append(urwid.Divider())
+                pos = pos + 1
+            entries.append(urwid.Text(u"GESCHENKE"))
+            pos = pos + 1
+            for a in contact.gifts:
+                entries.append(GiftEntry(contact, Gift(a), pos, self.core))
+                pos = pos + 1
+
+        if type(contact) is GoogleContact and len(contact.google_notes) > 0:
+            if len(entries) > 2:
+                entries.append(urwid.Divider())
+                pos = pos + 1
+            entries.append(urwid.Text(u"NOTIZEN GOOGLE"))
+            pos = pos + 1
+            for note in contact.google_notes:
+                entries.append(GoogleNoteEntry(contact, note, pos, self.core))
+                pos = pos + 1
+
+        if contact.notes is not None:
+            if len(entries) > 2:
+                entries.append(urwid.Divider())
+                pos = pos + 1
+            entries.append(urwid.Text(u"NOTIZEN"))
+            pos = pos + 1
+            for note in contact.notes:
+                if type(note) is Note:  # plain note
+                    entries.append(NoteEntry(contact, note, pos, self.core))
+                else:  # encrypted note
+                    # check if made visible
+                    if contact.has_visible_note(note):
+                        visible_note = contact.get_visible_note(note)
+                        entries.append(
+                            EncryptedNoteEntry(contact, visible_note, pos,
+                                               self.core, visible=True))
+                    else:
+                        entries.append(
+                            EncryptedNoteEntry(contact, note, pos, self.core))
+                pos = pos + 1
+
+        super(GeneralDetails, self).__init__(entries, core,
+                                             'contact_details_general')
+
+
+class GiftDetails(ContactDetails):
+    def __init__(self, contact, core):
+        self.core = core
+
+        entries = []
+        pos = 0
+
+        if contact.gifts is not None:
+            for gift in contact.gifts:
+                entries.append(GiftEntry(contact, Gift(gift), pos, self.core))
+                pos = pos + 1
+
+        super(GiftDetails, self).__init__(entries, core,
+                                          'contact_details_gifts')
+
+
+class NoteDetails(ContactDetails):
+    def __init__(self, contact, core):
+        self.core = core
+
+        entries = []
+        pos = 0
+
+        if contact.notes is not None:
+            for note in contact.notes:
+                if type(note) is Note:  # plain note
+                    entries.append(NoteEntry(contact, note, pos, self.core))
+                else:  # encrypted note
+                    # check if made visible
+                    if contact.has_visible_note(note):
+                        visible_note = contact.get_visible_note(note)
+                        entries.append(
+                            EncryptedNoteEntry(contact, visible_note, pos,
+                                               self.core, visible=True))
+                    else:
+                        entries.append(
+                            EncryptedNoteEntry(contact, note, pos, self.core))
+                pos = pos + 1
+
+        super(NoteDetails, self).__init__(entries, core,
+                                          'contact_details_notes')

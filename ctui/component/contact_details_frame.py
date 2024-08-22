@@ -1,12 +1,7 @@
 import urwid
 
-from ctui.component.contact_details import ContactDetails
-
-
-class ContactListBox(urwid.ListBox):
-    def __init__(self, items):
-        body = urwid.SimpleFocusListWalker([urwid.Text(item) for item in items])
-        super().__init__(body)
+from ctui.component.contact_details import GeneralDetails, GiftDetails, \
+    NoteDetails
 
 
 class CDetailTabNavigation(urwid.Columns):
@@ -32,21 +27,13 @@ class CDetailsFrame(urwid.Frame):
         self.body.original_widget = self.tab_content[tab_name]
 
     def set_contact(self, contact):
-        general_list = ContactDetails(self.core)
-        general_list.set(contact)
-
-        gifts_list = ContactListBox(
-            ["Gift item 1", "Gift item 2", "Gift item 3"])
-        notes_list = ContactListBox(
-            ["Note item 1", "Note item 2", "Note item 3"])
-
         self.tab_content = {
-            'General': general_list,
-            'Gifts': gifts_list,
-            'Notes': notes_list
+            'General': GeneralDetails(contact, self.core),
+            'Gifts': GiftDetails(contact, self.core),
+            'Notes': NoteDetails(contact, self.core)
         }
 
         self.header = CDetailTabNavigation(['General', 'Gifts', 'Notes'],
                                            self.on_tab_click)
 
-        self.body = CDetailTabBody(general_list)
+        self.body = CDetailTabBody(self.tab_content['General'])

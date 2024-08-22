@@ -31,8 +31,17 @@ class UI:
         self.set_contact_list(self.core.get_all_contacts())
         self.main_loop.run()
 
+    def is_focus_on_details(self):
+        return self.frame.body.focus_position == 1
+
     def set_contact_list(self, contact_list):
         self.list_view.set_data(contact_list)
 
     def set_contact_details(self, contact):
         self.detail_view.set_contact(contact)
+
+    def clear_footer(self):
+        # self.footer = urwid.BoxAdapter(Console(self.core), height=1)
+        # self.console = self.footer.original_widget
+        # TODO
+        self.frame.focus_position = 'body'
