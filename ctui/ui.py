@@ -50,6 +50,13 @@ class UI:
         contact.get_details()  # augment existing contact with details (not before for performance)
         self.detail_view.set_contact(contact)
 
+    def focus_detail_view(self):
+        self.frame.body.focus_position = 1
+
+    def focus_detail(self, detail):
+        self.focus_detail_view()
+        self.detail_view.focus_detail(detail)
+
     def refresh_contact_list(self, action=None, contact=None, detail=None,
                              filter_string=''):
         # TODO refactor

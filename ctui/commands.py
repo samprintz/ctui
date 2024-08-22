@@ -22,6 +22,7 @@ class AddGift(Command):
         contact = self.core.ui.list_view.get_focused_contact()
         name = " ".join(args)
         gift = Gift(name)
-        return contact.add_gift(gift)
-        # self.detail = gift  # TODO
-        # self.action = Action.DETAIL_ADDED_OR_EDITED  # TODO
+        msg = contact.add_gift(gift)
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(gift)
+        return msg

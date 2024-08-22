@@ -37,3 +37,10 @@ class CDetailsFrame(urwid.Frame):
                                            self.on_tab_click)
 
         self.body = CDetailTabBody(self.tab_content['General'])
+
+    def get_tab_body(self):
+        return self.body.original_widget
+
+    def focus_detail(self, detail):
+        detail_pos = self.get_tab_body().get_detail_position(detail)
+        self.get_tab_body().set_focus_position(detail_pos)

@@ -26,11 +26,9 @@ class CFrame(urwid.Frame):
             case 'quit':
                 raise urwid.ExitMainLoop()
             case 'reload':
-                # TODO
-                self.core.ui.frame.watch_focus()
-                self.core.ui.frame.refresh_contact_list(Action.REFRESH, None,
-                                                        None,
-                                                        self.core.filter_string)
+                self.core.ui.watch_focus()
+                self.core.ui.refresh_contact_list(Action.REFRESH, None, None,
+                                                  self.core.filter_string)
             case 'add_contact':
                 self.core.cli.add_contact()
             case 'add_attribute':
