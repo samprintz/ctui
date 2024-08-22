@@ -1,5 +1,7 @@
 import urwid
 
+from ctui.component.contact_details import ContactDetails
+
 
 class ContactListBox(urwid.ListBox):
     def __init__(self, items):
@@ -7,65 +9,44 @@ class ContactListBox(urwid.ListBox):
         super().__init__(body)
 
 
-class ContactTabs(urwid.Columns):
+class CDetailTabNavigation(urwid.Columns):
     def __init__(self, tab_names, callback):
         self.buttons = [urwid.Button(name, on_press=callback, user_data=name)
                         for name in tab_names]
         super().__init__(self.buttons)
 
 
-class ContactMainContainer(urwid.WidgetPlaceholder):
+class CDetailTabBody(urwid.WidgetPlaceholder):
     def __init__(self, initial_widget):
         super().__init__(initial_widget)
-
-
-class ContactTitle(urwid.Text):
-    def __init__(self, title):
-        super().__init__(title, align='center')
-
-
-class ContactHeader(urwid.Pile):
-    def __init__(self, title_widget, tabs_widget):
-        super().__init__([title_widget, tabs_widget])
 
 
 class CDetailsFrame(urwid.Frame):
     def __init__(self, core, config):
         self.core = core
         self.name = 'details_frame'
+        super(CDetailsFrame, self).__init__(None)
+        self.tab_content = {}
 
-        general_list = ContactListBox(
-            ["General item 1", "General item 2", "General item 3"])
+    def on_tab_click(self, button, tab_name):
+        self.body.original_widget = self.tab_content[tab_name]
+
+    def set_contact(self, contact):
+        general_list = ContactDetails(self.core)
+        general_list.set(contact)
+
         gifts_list = ContactListBox(
             ["Gift item 1", "Gift item 2", "Gift item 3"])
         notes_list = ContactListBox(
             ["Note item 1", "Note item 2", "Note item 3"])
 
-        # Dictionary to hold the ListBox widgets for easy access
-        tab_content = {
+        self.tab_content = {
             'General': general_list,
             'Gifts': gifts_list,
-            'Notes': notes_list,
+            'Notes': notes_list
         }
 
-        # Function to switch tabs
-        def on_tab_click(button, tab_name):
-            body.original_widget = tab_content[tab_name]
+        self.header = CDetailTabNavigation(['General', 'Gifts', 'Notes'],
+                                           self.on_tab_click)
 
-        # Create tab buttons
-        self.tabs = ContactTabs(['General', 'Gifts', 'Notes'], on_tab_click)
-
-        # Create a title widget
-        title = ContactTitle("Tab Example")
-
-        # Create a Pile for the title and the tabs
-        header = ContactHeader(title, self.tabs)
-
-        # Main container that will display the content of the selected tab
-        body = ContactMainContainer(general_list)
-
-        super(CDetailsFrame, self).__init__(header=header, body=body)
-
-    def set_contact(self, contact):
-        title = ContactTitle(contact.name)
-        self.header = ContactHeader(title, self.tabs)
+        self.body = CDetailTabBody(general_list)

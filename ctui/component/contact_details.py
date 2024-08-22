@@ -7,16 +7,14 @@ from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
 from ctui.component.list_box import CListBox
 
 from ctui.objects import Name, Attribute, Gift, Note, GoogleContact
-from ctui.tui import ContactDetails
 
 
 class ContactDetails(CListBox):
-    def __init__(self, contact, core):
+    def __init__(self, core):
         listwalker = urwid.SimpleFocusListWalker([])
         super(ContactDetails, self).__init__(listwalker, core,
                                              'contact_details')
         self.core = core
-        self.set(contact)
 
     def set(self, contact):
         name = DetailEntry(contact, Name(contact.name), contact.name, 0,
