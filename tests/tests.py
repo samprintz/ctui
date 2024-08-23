@@ -546,133 +546,96 @@ class TestListViewUI(unittest.TestCase):
     # test focusing of contacts after CRUD operations
 
     def test_focus_add_first(self):
-        self.core.cli.add_contact()
-        args = ['add-contact', self.name_first]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['add-contact', self.name_first])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
         pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(pos, 0)
 
     def test_focus_add_some(self):
-        self.core.cli.add_contact()
-        args = ['add-contact', self.name1]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['add-contact', self.name1])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name1)
 
     def test_focus_add_two(self):
         # contact 1
-        self.core.cli.add_contact()
-        args = ['add-contact', self.name1]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['add-contact', self.name1])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name1)
-        pos = self.core.ui.list_view.get_contact_position(focused_contact)
         # contact 2
-        self.core.cli.add_contact()
-        args = ['add-contact', self.name2]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['add-contact', self.name2])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_add_last(self):
-        self.core.cli.add_contact()
-        args = ['add-contact', self.name_last]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['add-contact', self.name_last])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_last)
 
     def test_focus_rename_first_to_some(self):
         self.core.add_contact(self.contact_first)
-        pos = self.core.ui.list_view.get_contact_position(self.contact1)
-        self.core.cli.rename_contact(self.contact_first)
-        args = ['rename-contact', self.name2]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact_first)
+        self.core.cli.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_some(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.ui.list_view.get_contact_position(self.contact1)
-        self.core.cli.rename_contact(self.contact1)
-        args = ['rename-contact', self.name2]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.cli.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_last_to_some(self):
         self.core.add_contact(self.contact_last)
-        pos = self.core.ui.list_view.get_contact_position(
-            self.contact_last)
-        self.core.cli.rename_contact(self.contact_last)
-        args = ['rename-contact', self.name2]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact_last)
+        self.core.cli.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_first(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.ui.list_view.get_contact_position(self.contact1)
-        self.core.cli.rename_contact(self.contact1)
-        args = ['rename-contact', self.name_first]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.cli.handle(['rename-contact', self.name_first])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
-        new_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
+        new_pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(new_pos, 0)
 
     def test_focus_rename_some_to_last(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.ui.list_view.get_contact_position(self.contact1)
-        self.core.cli.rename_contact(self.contact1)
-        args = ['rename-contact', self.name_last]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.cli.handle(['rename-contact', self.name_last])
         focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_first(self):
         self.core.add_contact(self.contact_first)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact_first)
-        pos = self.core.ui.list_view.get_contact_position(
-            self.contact_first)
-        self.core.cli.delete_contact(self.contact_first)
-        args = ['delete-contact', self.name_first]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['delete-contact', self.name_first])
         focused_contact = self.core.ui.list_view.get_focused_contact()
-        new_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
+        new_pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(new_pos, 0)
         self.assertNotEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_some(self):
+        self.core.add_contact(self.contact_last)
         self.core.add_contact(self.contact1)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact1)
+        self.core.add_contact(self.contact2)
+        self.core.ui.update_view(True, False, None, self.contact1)
         pos = self.core.ui.list_view.get_contact_position(self.contact1)
-        self.core.cli.delete_contact(self.contact1)
-        args = ['delete-contact', self.name1]
-        self.core.cli.handle(args)
+        self.core.cli.handle(['delete-contact', self.name1])
         focused_contact = self.core.ui.list_view.get_focused_contact()
-        new_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
+        new_pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(new_pos, pos)
-        self.assertNotEqual(focused_contact.name, self.name_last)
+        self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_delete_last(self):
         self.core.add_contact(self.contact_last)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact_last)
-        pos = self.core.ui.list_view.get_contact_position(
-            self.contact_last)
-        self.core.cli.delete_contact(self.contact_last)
-        args = ['delete-contact', self.name_last]
-        self.core.cli.handle(args)
+        self.core.ui.update_view(True, False, None, self.contact_last)
+        pos = self.core.ui.list_view.get_contact_position(self.contact_last)
+        self.core.cli.handle(['delete-contact', self.name_last])
         focused_contact = self.core.ui.list_view.get_focused_contact()
-        new_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
+        new_pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(new_pos, pos - 1)
         self.assertNotEqual(focused_contact.name, self.name_last)
 

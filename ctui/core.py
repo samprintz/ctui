@@ -91,6 +91,16 @@ class Core:
         contacts.sort(key=lambda x: x.name)
         return contacts
 
+    def get_filtered_contacts(self, filter_string):
+        if not filter_string:  # shortcut for empty filter (unfilter)
+            return self.contact_list
+        contacts = []
+        for contact in self.contact_list:
+            if filter_string.lower() in contact.name.lower():
+                contacts.append(contact)
+        contacts.sort(key=lambda x: x.name)
+        return contacts
+
     """
     Returns a list of the names of all contacts.
     """
@@ -123,16 +133,6 @@ class Core:
     def search_contact(self, name):
         self.ui.list_view.jump_to_contact(name)
         return ""
-
-    def filter_contacts(self, filter_string):
-        if not filter_string:  # shortcut for empty filter (unfilter)
-            return self.contact_list
-        contacts = []
-        for contact in self.contact_list:
-            if filter_string.lower() in contact.name.lower():
-                contacts.append(contact)
-        contacts.sort(key=lambda x: x.name)
-        return contacts
 
     def add_contact(self, contact):
         if self.contains_contact(contact):
@@ -184,6 +184,12 @@ class Core:
         # GoogleContact object is not the one required by the google API but for the TUI
         google_contact = GoogleContact(name, self)
         return google_contact, "{} added.".format(name)
+
+    def set_filter_string(self, filter_string):
+        self.filter_string = filter_string
+
+    def get_filter_string(self):
+        return self.filter_string
 
 
 class Editor:

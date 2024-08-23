@@ -7,6 +7,7 @@ from ctui.component.contact_frame_columns import CFrameColumns
 
 from ctui.component.contact_details_frame import CDetailsFrame
 from ctui.component.contact_list import ContactList
+from ctui.enum.view import View
 
 
 class UI:
@@ -50,8 +51,15 @@ class UI:
         contact.get_details()  # augment existing contact with details (not before for performance)
         self.detail_view.set_contact(contact)
 
+    def focus_list_view(self):
+        self.frame.body.focus_position = 0
+
     def focus_detail_view(self):
         self.frame.body.focus_position = 1
+
+    def focus_contact(self, contact):
+        self.focus_list_view()
+        self.list_view.set_focused_contact(contact)
 
     def focus_detail(self, detail):
         # TODO remove this or focus_detail_pos?
@@ -71,7 +79,7 @@ class UI:
             contact_list = self.core.get_all_contacts()
             self.core.contact_list = contact_list
 
-        contact_list = self.core.filter_contacts(filter_string)
+        contact_list = self.core.get_filtered_contacts(filter_string)
 
         if action is Action.CONTACT_ADDED_OR_EDITED or \
                 action is Action.CONTACT_DELETED or \
@@ -146,3 +154,54 @@ class UI:
         focus_str = "{} {}".format(str(self.current_contact_pos),
                                    str(self.current_detail_pos))
         self.console.show_meta(focus_str)
+
+    def update_view(self,
+                    update_contact_list=False,
+                    update_contact_details=False,
+                    focused_view=None,
+                    focused_contact=None,
+                    focused_detail=None):
+        curr_contact_pos = self.list_view.get_focus_position()
+        curr_detail_pos = self.detail_view.get_tab_body().get_focus_position()
+
+        if update_contact_list:
+            # TODO refactor
+            self.core.contact_list = self.core.get_all_contacts()
+            contact_list = self.core.get_filtered_contacts(
+                self.core.get_filter_string())  # keep filter applied
+            self.core.ui.set_contact_list(contact_list)
+
+        if focused_view is View.LIST:
+            self.focus_list_view()
+        elif focused_view is View.DETAIL:
+            self.focus_detail_view()
+
+        list_count = self.list_view.get_count()
+        if isinstance(focused_contact, int):
+            contact_pos = focused_contact
+        elif focused_contact is None:
+            contact_pos = curr_contact_pos
+        else:
+            contact_pos = self.list_view.get_contact_position(focused_contact)
+
+        if list_count > 0 and contact_pos is not None:  # contact_pos can be None if curr_detail_pos is None
+            contact_pos = min(contact_pos, list_count - 1)
+            self.list_view.set_focus_position(contact_pos)
+
+        detail_count = self.detail_view.get_tab_body().get_count()
+        if isinstance(focused_detail, int):
+            detail_pos = focused_detail
+        elif focused_detail is None:
+            detail_pos = curr_detail_pos
+        else:
+            detail_pos = self.detail_view.get_tab_body().get_detail_position(
+                focused_detail)
+
+        if detail_count > 0 and detail_pos is not None:  # detail_pos can be None if curr_detail_pos is None
+            detail_pos = min(detail_pos, detail_count - 1)
+            self.detail_view.get_tab_body().set_focus_position(detail_pos)
+
+        # do this after the contact focus is updated
+        if update_contact_details:
+            contact = self.list_view.get_focused_contact()
+            self.core.ui.set_contact_details(contact)

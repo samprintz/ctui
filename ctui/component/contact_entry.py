@@ -30,9 +30,11 @@ class ContactEntry(CListEntry):
 
         match command_id:
             case 'rename_contact':
-                self.core.cli.rename_contact(self.contact)
+                command = f'rename-contact {self.contact.name}'
+                self.core.ui.console.show_console(command)
             case 'delete_contact':
-                self.core.cli.delete_contact(self.contact)
+                command = f'delete-contact {self.contact.name}'
+                self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)

@@ -31,7 +31,8 @@ class CFrame(urwid.Frame):
                 self.core.ui.refresh_contact_list(Action.REFRESH, None, None,
                                                   self.core.filter_string)
             case 'add_contact':
-                self.core.cli.add_contact()
+                command = 'add-contact '
+                self.core.ui.console.show_console(command)
             case 'add_attribute':
                 command = f'{AddAttribute.name} '
                 self.core.ui.console.show_console(command)

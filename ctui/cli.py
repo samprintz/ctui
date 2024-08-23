@@ -1,8 +1,8 @@
 from datetime import date, datetime
 from enum import Enum
 
-from ctui.commands import Command, AddAttribute
-from ctui.objects import Attribute, Contact, Gift, Note, EncryptedNote
+from ctui.commands import Command
+from ctui.objects import Gift, Note, EncryptedNote
 
 
 class CLI:
@@ -58,25 +58,7 @@ class CLI:
                     found_in_new_commands = True
 
             if not found_in_new_commands:
-                if command in ('add-contact'):
-                    name = " ".join(args[1:])
-                    contact = Contact(name, self.core)
-                    msg = self.core.add_contact(contact)
-                    self.contact = contact  # to focus it when refreshing contact list
-                    self.action = Action.CONTACT_ADDED_OR_EDITED
-                elif command in ('rename-contact'):
-                    contact = self.contact
-                    new_name = " ".join(args[1:])
-                    msg = self.core.rename_contact(contact, new_name)
-                    contact.name = new_name  # TODO
-                    self.contact = contact  # to focus it when refreshing contact list
-                    self.action = Action.CONTACT_ADDED_OR_EDITED
-                elif command in ('delete-contact'):
-                    name = " ".join(args[1:])
-                    msg = self.core.delete_contact_by_name(name)
-                    self.contact = None  # to focus other when refreshing contact list
-                    self.action = Action.CONTACT_DELETED
-                elif command in ('edit-gift'):
+                if command in ('edit-gift'):
                     name = " ".join(args[1:])
                     new_gift = Gift(name)
                     old_gift = self.detail
@@ -145,27 +127,13 @@ class CLI:
                                                   self.detail,
                                                   self.filter_string)
 
-            self.core.ui.frame.focus_position = 'body'
-            self.core.ui.console.show_message(msg)
+        self.core.ui.frame.focus_position = 'body'
+        self.core.ui.console.show_message(msg)
 
     # contacts
 
-    def add_contact(self):
-        command = 'add-contact '
-        self.core.ui.console.show_console(command)
-
     def add_google_contact(self):
         command = 'add-google-contact '
-        self.core.ui.console.show_console(command)
-
-    def rename_contact(self, contact):
-        self.contact = contact
-        command = 'rename-contact {}'.format(contact.name)
-        self.core.ui.console.show_console(command)
-
-    def delete_contact(self, contact):
-        self.contact = contact
-        command = 'delete-contact {}'.format(contact.name)
         self.core.ui.console.show_console(command)
 
     def search_contact(self):

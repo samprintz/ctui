@@ -46,6 +46,9 @@ class ContactList(CListBox):
     def set_focus_position(self, pos):
         self.focus_position = pos
 
+    def get_count(self):
+        return len(self.body)
+
     def get_contact_position(self, contact):
         pos = 0
         for entry in self.body:
