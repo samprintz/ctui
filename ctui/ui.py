@@ -142,5 +142,7 @@ class UI:
         # TODO schlägt fehl bei Navigation über keybindings
         self.current_detail_pos = self.detail_view.body.original_widget.get_focus_position()
 
-        # focus_str = "{} {}".format(str(self.current_contact_pos), str(self.current_detail_pos))
-        # self.console.show_meta(focus_str)
+        # TODO make configurable as debug mode?
+        focus_str = "{} {}".format(str(self.current_contact_pos),
+                                   str(self.current_detail_pos))
+        self.console.show_meta(focus_str)

@@ -500,7 +500,7 @@ class TestKeybindings(unittest.TestCase):
         pass
 
 
-class TestTUI(unittest.TestCase):
+class TestListViewUI(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -509,6 +509,9 @@ class TestTUI(unittest.TestCase):
     @classmethod
     def setUp(self):
         self.core = Core(config, True)
+        UI(self.core, config)
+        self.core.ui.set_contact_list(self.core.get_all_contacts())
+
         self.name1 = "Test Contact A"
         self.name2 = "Test Contact B"
         self.name_first = "A"
@@ -631,8 +634,8 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_first(self):
         self.core.add_contact(self.contact_first)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact_first)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact_first)
         pos = self.core.ui.list_view.get_contact_position(
             self.contact_first)
         self.core.cli.delete_contact(self.contact_first)
@@ -646,8 +649,8 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_some(self):
         self.core.add_contact(self.contact1)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact1)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact1)
         pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.delete_contact(self.contact1)
         args = ['delete-contact', self.name1]
@@ -660,8 +663,8 @@ class TestTUI(unittest.TestCase):
 
     def test_focus_delete_last(self):
         self.core.add_contact(self.contact_last)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact_last)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact_last)
         pos = self.core.ui.list_view.get_contact_position(
             self.contact_last)
         self.core.cli.delete_contact(self.contact_last)
@@ -703,8 +706,8 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         self.name_first = "A"
         self.contact_first = Contact(self.name_first, self.core)
         self.core.add_contact(self.contact_first)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact_first)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact_first)
 
     @classmethod
     def tearDown(self):
@@ -760,8 +763,8 @@ class TestTUIDetailFocusSomeContact(unittest.TestCase):
         self.name1 = "Test Contact A"
         self.contact1 = Contact(self.name1, self.core)
         self.core.add_contact(self.contact1)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact1)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact1)
 
     @classmethod
     def tearDown(self):
@@ -819,8 +822,8 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
         self.name_last = "zzz"
         self.contact_last = Contact(self.name_last, self.core)
         self.core.add_contact(self.contact_last)
-        self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                             self.contact_last)
+        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
+                                          self.contact_last)
 
     @classmethod
     def tearDown(self):
