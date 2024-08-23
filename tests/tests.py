@@ -1,10 +1,12 @@
 import unittest
 
 import ctui.util as util
-from ctui.cli import Mode
+from ctui.cli import Mode, Action
+from ctui.component.contact_entry import ContactEntry
+from ctui.component.detail_entry import AttributeEntry, GiftEntry, NoteEntry
 from ctui.core import *
-from ctui.tui import *
 from ctui.objects import *
+from ctui.ui import UI
 
 CONFIG_FILE = 'files/config.ini'
 config = util.load_config(CONFIG_FILE)
@@ -391,6 +393,8 @@ class TestKeybindings(unittest.TestCase):
     @classmethod
     def setUp(self):
         self.core = Core(config, True)
+        UI(self.core, config)
+        self.core.ui.set_contact_list(self.core.get_all_contacts())
 
     def test_init(self):
         commands = self.core.keybindings.commands
@@ -403,79 +407,87 @@ class TestKeybindings(unittest.TestCase):
             "gift_entry",
             "note_entry"
         })
-        self.assertSetEqual(set(commands["global"].keys()), {"t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie"})
-        self.assertSetEqual(set(commands["contact_list"].keys()), {"ig", "/", "zz", "Z"})
+        self.assertSetEqual(set(commands["global"].keys()), {
+            "t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie", "q"
+        })
+        self.assertSetEqual(set(commands["contact_list"].keys()), {
+            "ig", "/", "zz", "Z"
+        })
         self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})
         self.assertEqual(commands["global"]["I"], "add_contact")
         self.assertEqual(commands["contact_list"]["ig"], "add_google_contact")
         self.assertEqual(commands["contact_details"]["ig"], "add_gift")
 
     def test_keypress(self):
-        command_id, command_key, command_repeat = self.core.keybindings.keypress("t", "global")
+        command_id, command_key, command_repeat = \
+            self.core.keybindings.keypress("t", "global")
         self.assertEqual(command_id, "move_down")
 
     def test_composed_keypress(self):
-        command_id, command_key, command_repeat = self.core.keybindings.keypress("ctrl r", "global")
+        command_id, command_key, command_repeat = \
+            self.core.keybindings.keypress("ctrl r", "global")
         self.assertEqual(command_id, "reload")
 
     def test_multi_keypress(self):
         self.core.keybindings.keypress("g", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.keypress("g", "global")
+        command_id, command_key, command_repeat = \
+            self.core.keybindings.keypress("g", "global")
         self.assertEqual(command_id, "jump_to_first")
 
     def test_command_repeat(self):
         self.core.keybindings.keypress("5", "global")
-        command_id, command_key, command_repeat = self.core.keybindings.keypress("t", "global")
+        command_id, command_key, command_repeat = \
+            self.core.keybindings.keypress("t", "global")
         self.assertEqual(command_id, "move_down")
         self.assertEqual(command_repeat, 5)
 
     def test_widget_keypress(self):
-        self.core.frame.keypress([50, 50], "t")
-        self.core.frame.keypress([50, 50], "t")
-        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.core.ui.frame.keypress([50, 50], "t")
+        self.core.ui.frame.keypress([50, 50], "t")
+        contact_pos = self.core.ui.list_view.get_focus_position()
         self.assertEqual(contact_pos, 2)
 
     def test_widget_multi_keypress(self):
-        self.core.frame.keypress([50, 50], "G")
-        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.core.ui.frame.keypress([50, 50], "G")
+        contact_pos = self.core.ui.list_view.get_focus_position()
         self.assertEqual(contact_pos, 3)
-        self.core.frame.keypress([50, 50], "g")
-        self.core.frame.keypress([50, 50], "g")
-        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.core.ui.frame.keypress([50, 50], "g")
+        self.core.ui.frame.keypress([50, 50], "g")
+        contact_pos = self.core.ui.list_view.get_focus_position()
         self.assertEqual(contact_pos, 0)
 
     def test_widget_command_repeat_detail(self):
-        self.core.frame.keypress([50, 50], "t")
-        self.core.frame.keypress([50, 50], "n")
-        self.core.frame.keypress([50, 50], "t")
-        self.core.frame.keypress([50, 50], "t")
-        self.core.frame.keypress([50, 50], "d")
-        self.core.frame.keypress([50, 50], "t")
-        self.core.frame.keypress([50, 50], "t")
-        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.core.ui.frame.keypress([50, 50], "t")
+        self.core.ui.frame.keypress([50, 50], "n")
+        self.core.ui.frame.keypress([50, 50], "t")
+        self.core.ui.frame.keypress([50, 50], "t")
+        self.core.ui.frame.keypress([50, 50], "d")
+        self.core.ui.frame.keypress([50, 50], "t")
+        self.core.ui.frame.keypress([50, 50], "t")
+        contact_pos = self.core.ui.list_view.get_focus_position()
         self.assertEqual(contact_pos, 3)
 
     def test_widget_command_repeat(self):
-        self.core.frame.keypress([50, 50], "2")
-        self.core.frame.keypress([50, 50], "t")
-        contact_pos = self.core.frame.contact_list.get_focus_position()
+        self.core.ui.frame.keypress([50, 50], "2")
+        self.core.ui.frame.keypress([50, 50], "t")
+        contact_pos = self.core.ui.list_view.get_focus_position()
         self.assertEqual(contact_pos, 2)
 
     def test_widget_command_filter_contact_list(self):
-        self.core.frame.keypress([50, 50], "z")
-        self.core.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "z")
         mode = self.core.cli.mode
         self.assertEqual(mode, Mode.FILTER)
 
     def test_widget_command_filter_contact_details_noop(self):
-        self.core.frame.keypress([50, 50], "n")
-        self.core.frame.keypress([50, 50], "z")
-        self.core.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "n")
+        self.core.ui.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "z")
         mode = self.core.cli.mode
         self.assertEqual(mode, None)
-        self.core.frame.keypress([50, 50], "d")
-        self.core.frame.keypress([50, 50], "z")
-        self.core.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "d")
+        self.core.ui.frame.keypress([50, 50], "z")
+        self.core.ui.frame.keypress([50, 50], "z")
         mode = self.core.cli.mode
         self.assertEqual(mode, Mode.FILTER)
 
@@ -486,7 +498,6 @@ class TestKeybindings(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         pass
-
 
 
 class TestTUI(unittest.TestCase):
@@ -535,16 +546,16 @@ class TestTUI(unittest.TestCase):
         self.core.cli.add_contact()
         args = ['add-contact', self.name_first]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
-        pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        pos = self.core.ui.list_view.get_contact_position(focused_contact)
         self.assertEqual(pos, 0)
 
     def test_focus_add_some(self):
         self.core.cli.add_contact()
         args = ['add-contact', self.name1]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name1)
 
     def test_focus_add_two(self):
@@ -552,83 +563,83 @@ class TestTUI(unittest.TestCase):
         self.core.cli.add_contact()
         args = ['add-contact', self.name1]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name1)
-        pos = self.core.frame.contact_list.get_contact_position(focused_contact)
+        pos = self.core.ui.list_view.get_contact_position(focused_contact)
         # contact 2
         self.core.cli.add_contact()
         args = ['add-contact', self.name2]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_add_last(self):
         self.core.cli.add_contact()
         args = ['add-contact', self.name_last]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_last)
 
     def test_focus_rename_first_to_some(self):
         self.core.add_contact(self.contact_first)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact1)
+        pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.rename_contact(self.contact_first)
         args = ['rename-contact', self.name2]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_some(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact1)
+        pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.rename_contact(self.contact1)
         args = ['rename-contact', self.name2]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_last_to_some(self):
         self.core.add_contact(self.contact_last)
-        pos = self.core.frame.contact_list.get_contact_position(
+        pos = self.core.ui.list_view.get_contact_position(
             self.contact_last)
         self.core.cli.rename_contact(self.contact_last)
         args = ['rename-contact', self.name2]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_first(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact1)
+        pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.rename_contact(self.contact1)
         args = ['rename-contact', self.name_first]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
-        new_pos = self.core.frame.contact_list.get_contact_position(
+        new_pos = self.core.ui.list_view.get_contact_position(
             focused_contact)
         self.assertEqual(new_pos, 0)
 
     def test_focus_rename_some_to_last(self):
         self.core.add_contact(self.contact1)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact1)
+        pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.rename_contact(self.contact1)
         args = ['rename-contact', self.name_last]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
+        focused_contact = self.core.ui.list_view.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_last)
 
     def test_focus_delete_first(self):
         self.core.add_contact(self.contact_first)
         self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
                                              self.contact_first)
-        pos = self.core.frame.contact_list.get_contact_position(
+        pos = self.core.ui.list_view.get_contact_position(
             self.contact_first)
         self.core.cli.delete_contact(self.contact_first)
         args = ['delete-contact', self.name_first]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        new_pos = self.core.ui.list_view.get_contact_position(
             focused_contact)
         self.assertEqual(new_pos, 0)
         self.assertNotEqual(focused_contact.name, self.name_last)
@@ -637,12 +648,12 @@ class TestTUI(unittest.TestCase):
         self.core.add_contact(self.contact1)
         self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
                                              self.contact1)
-        pos = self.core.frame.contact_list.get_contact_position(self.contact1)
+        pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.cli.delete_contact(self.contact1)
         args = ['delete-contact', self.name1]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        new_pos = self.core.ui.list_view.get_contact_position(
             focused_contact)
         self.assertEqual(new_pos, pos)
         self.assertNotEqual(focused_contact.name, self.name_last)
@@ -651,13 +662,13 @@ class TestTUI(unittest.TestCase):
         self.core.add_contact(self.contact_last)
         self.core.frame.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
                                              self.contact_last)
-        pos = self.core.frame.contact_list.get_contact_position(
+        pos = self.core.ui.list_view.get_contact_position(
             self.contact_last)
         self.core.cli.delete_contact(self.contact_last)
         args = ['delete-contact', self.name_last]
         self.core.cli.handle(args)
-        focused_contact = self.core.frame.contact_list.get_focused_contact()
-        new_pos = self.core.frame.contact_list.get_contact_position(
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        new_pos = self.core.ui.list_view.get_contact_position(
             focused_contact)
         self.assertEqual(new_pos, pos - 1)
         self.assertNotEqual(focused_contact.name, self.name_last)
@@ -700,7 +711,7 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         self.core.delete_contact(self.contact_first)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+        self.ct_pos = self.core.ui.list_view.get_contact_position(
             self.contact_first)
         self.assertEqual(self.ct_pos, 0)
 
@@ -757,10 +768,10 @@ class TestTUIDetailFocusSomeContact(unittest.TestCase):
         self.core.delete_contact(self.contact1)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+        self.ct_pos = self.core.ui.list_view.get_contact_position(
             self.contact1)
         self.assertNotEqual(self.ct_pos, 0)  # not first
-        contact_list_length = len(self.core.frame.contact_list.body)
+        contact_list_length = len(self.core.ui.list_view.body)
         self.assertNotEqual(self.ct_pos, contact_list_length)  # not last
 
     def test_focus_add_first_detail_to_some_contact(self):
@@ -816,9 +827,9 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
         self.core.delete_contact(self.contact_last)
 
     def test_setup(self):
-        self.ct_pos = self.core.frame.contact_list.get_contact_position(
+        self.ct_pos = self.core.ui.list_view.get_contact_position(
             self.contact_last)
-        contact_list_length = len(self.core.frame.contact_list.body)
+        contact_list_length = len(self.core.ui.list_view.body)
         self.assertEqual(self.ct_pos, contact_list_length - 1)
 
     def test_focus_add_first_detail_to_last_contact(self):
