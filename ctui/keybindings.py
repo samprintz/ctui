@@ -1,5 +1,4 @@
 class Keybindings:
-
     default_context = 'global'
 
     def __init__(self, config):
@@ -19,7 +18,8 @@ class Keybindings:
                         self.commands[context] = {}
 
                     if key_sequence in self.commands[context]:
-                        print(f'Warning: Key sequence "{key_sequence}" is assigned multiple times')
+                        print(
+                            f'Warning: Key sequence "{key_sequence}" is assigned multiple times')
 
                     self.commands[context][key_sequence] = command_id
 

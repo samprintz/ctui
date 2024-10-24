@@ -43,7 +43,7 @@ class CLI:
                                                   self.filter_string)
                 self.core.ui.frame.focus_position = 'body'
                 msg = 'f={}'.format(self.core.filter_string)
-                self.core.ui.frame.console.show_message(msg)
+                self.core.ui.console.show_message(msg)
                 self.mode = None
 
         else:
@@ -127,8 +127,8 @@ class CLI:
                                                   self.detail,
                                                   self.filter_string)
 
-        self.core.ui.frame.focus_position = 'body'
-        self.core.ui.console.show_message(msg)
+            self.core.ui.frame.focus_position = 'body'
+            self.core.ui.console.show_message(msg)
 
     # contacts
 
