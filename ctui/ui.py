@@ -48,7 +48,7 @@ class UI:
         self.list_view.set_data(contact_list)
 
     def set_contact_details(self, contact):
-        contact.get_details()  # augment existing contact with details (not before for performance)
+        contact.load_details()  # augment existing contact with details (not before for performance)
         self.detail_view.set_contact(contact)
 
     def focus_list_view(self):

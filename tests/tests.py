@@ -44,7 +44,7 @@ class TestCore(unittest.TestCase):
         self.assertTrue(self.core.contains_contact(self.contact1))
 
     def test_add_contact_already_existing_notes(self):
-        self.core.notesstore.add_contact(self.contact1)
+        self.core.textfilestore.add_contact(self.contact1)
         res = self.core.add_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
         self.assertTrue(self.core.contains_contact(self.contact1))
@@ -74,33 +74,39 @@ class TestCore(unittest.TestCase):
         self.assertFalse(self.core.contains_contact_name(self.name2))
 
     def test_rename_contact_with_only_notes(self):
-        self.core.notesstore.add_contact(self.contact1)
+        self.core.textfilestore.add_contact(self.contact1)
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
         res = self.core.rename_contact(self.contact1, self.name2)
         self.assertTrue(self.core.contains_contact_name(self.name2))
-        self.assertTrue(self.core.notesstore.contains_contact_name(self.name2))
+        self.assertTrue(
+            self.core.textfilestore.contains_contact_name(self.name2))
         self.assertFalse(self.core.rdfstore.contains_contact_name(self.name2))
         self.assertFalse(self.core.contains_contact_name(self.name1))
-        self.assertFalse(self.core.notesstore.contains_contact_name(self.name1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact_name(self.name1))
         self.assertFalse(self.core.rdfstore.contains_contact_name(self.name1))
 
     def test_rename_contact_with_only_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
-        self.assertFalse(self.core.notesstore.contains_contact(self.contact1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1))
         res = self.core.rename_contact(self.contact1, self.name2)
         self.assertTrue(self.core.contains_contact_name(self.name2))
         self.assertTrue(self.core.rdfstore.contains_contact_name(self.name2))
-        self.assertFalse(self.core.notesstore.contains_contact_name(self.name2))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact_name(self.name2))
         self.assertFalse(self.core.contains_contact_name(self.name1))
         self.assertFalse(self.core.rdfstore.contains_contact_name(self.name1))
-        self.assertFalse(self.core.notesstore.contains_contact_name(self.name1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact_name(self.name1))
 
     def test_delete_contact(self):
         self.core.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
         self.assertFalse(self.core.contains_contact(self.contact1))
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
-        self.assertFalse(self.core.notesstore.contains_contact(self.contact1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1))
 
     def test_delete_contact_not_existing(self):
         self.assertFalse(self.core.contains_contact(self.contact1))
@@ -108,18 +114,20 @@ class TestCore(unittest.TestCase):
         self.assertTrue(res.startswith("Error"))
 
     def test_delete_contact_with_only_notes(self):
-        self.core.notesstore.add_contact(self.contact1)
+        self.core.textfilestore.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
         self.assertFalse(self.core.contains_contact(self.contact1))
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
-        self.assertFalse(self.core.notesstore.contains_contact(self.contact1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1))
 
     def test_delete_contact_with_only_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
         self.assertFalse(self.core.contains_contact(self.contact1))
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
-        self.assertFalse(self.core.notesstore.contains_contact(self.contact1))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1))
 
     def test_delete_contact_with_attributes(self):
         self.core.rdfstore.add_contact(self.contact1)
@@ -207,7 +215,7 @@ class TestObjects(unittest.TestCase):
 
     def test_edit_attr_givenname_with_only_notes(self):
         self.core.delete_contact(self.contact)  # undo setUp
-        self.core.notesstore.add_contact(self.contact)
+        self.core.textfilestore.add_contact(self.contact)
         self.assertFalse(self.core.rdfstore.contains_contact(self.contact))
         new_name = "Test Person"
         old_attr = Attribute("givenName", self.name)
@@ -283,28 +291,29 @@ class TestObjects(unittest.TestCase):
     # notes
 
     def test_add_note_new_dir(self):
-        self.assertFalse(self.core.notesstore.contains_contact(self.contact))
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.assertFalse(self.core.textfilestore.contains_contact(self.contact))
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
 
     def test_add_note_existing_dir(self):
-        self.core.notesstore.add_contact(self.contact)
-        self.assertTrue(self.core.notesstore.contains_contact(self.contact))
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_contact(self.contact)
+        self.assertTrue(self.core.textfilestore.contains_contact(self.contact))
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
 
     def test_add_note_date_error(self):
         pass
 
     def test_add_note_already_existing(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.add_note(self.contact, self.note1)
+            self.core.textfilestore.add_note(self.contact, self.note1)
 
     def test_rename_note(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
-        self.core.notesstore.rename_note(self.contact, self.note1, self.date2)
+        self.core.textfilestore.add_note(self.contact, self.note1)
+        self.core.textfilestore.rename_note(self.contact, self.note1,
+                                            self.date2)
         self.assertTrue(self.contact.has_note(self.date2))
         self.assertFalse(self.contact.has_note(self.date1))
 
@@ -312,56 +321,56 @@ class TestObjects(unittest.TestCase):
         pass
 
     def test_rename_note_unchanged(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1,
-                                             self.date1)
+            self.core.textfilestore.rename_note(self.contact, self.note1,
+                                                self.date1)
         self.assertTrue(self.contact.has_note(self.date1))
 
     def test_rename_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1,
-                                             self.date2)
+            self.core.textfilestore.rename_note(self.contact, self.note1,
+                                                self.date2)
         self.assertFalse(self.contact.has_note(self.date1))
 
     def test_rename_note_already_existing(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         note2 = Note(self.date2, self.note_content2)
-        self.core.notesstore.add_note(self.contact, note2)
+        self.core.textfilestore.add_note(self.contact, note2)
         with self.assertRaises(AssertionError):
-            self.core.notesstore.rename_note(self.contact, self.note1,
-                                             self.date2)
+            self.core.textfilestore.rename_note(self.contact, self.note1,
+                                                self.date2)
         self.assertTrue(self.contact.has_note(self.date1))
         self.assertTrue(self.contact.has_note(self.date2))
 
     def test_delete_note(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
-        self.core.notesstore.delete_note(self.contact, self.date1)
+        self.core.textfilestore.delete_note(self.contact, self.date1)
         self.assertFalse(self.contact.has_note(self.date1))
 
     def test_delete_note_date_error(self):
         pass
 
     def test_delete_note_last_in_dir(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertEqual(len(self.contact.get_notes()), 1)
         self.assertTrue(self.contact.has_note(self.date1))
-        self.core.notesstore.delete_note(self.contact, self.date1)
+        self.core.textfilestore.delete_note(self.contact, self.date1)
         self.assertFalse(self.contact.has_note(self.date1))
         self.assertFalse(self.contact.has_notes())
 
     def test_delete_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.delete_note(self.contact, self.date1)
+            self.core.textfilestore.delete_note(self.contact, self.date1)
 
     def test_edit_note(self):
-        self.core.notesstore.add_note(self.contact, self.note1)
+        self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.date1))
-        self.core.notesstore.edit_note(self.contact, self.date1,
-                                       self.note_content2)
+        self.core.textfilestore.edit_note(self.contact, self.date1,
+                                          self.note_content2)
         self.assertTrue(self.contact.has_note(self.date1))
         res = self.contact.get_note(self.date1)
         self.assertEqual(res, self.note_content2)
@@ -372,8 +381,8 @@ class TestObjects(unittest.TestCase):
     def test_edit_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.notesstore.edit_note(self.contact, self.date1,
-                                           self.note_content2)
+            self.core.textfilestore.edit_note(self.contact, self.date1,
+                                              self.note_content2)
 
     @classmethod
     def tearDown(self):

@@ -160,53 +160,6 @@ class RDFStore:
         except Exception as e:
             raise e  # TODO
 
-    # gifts
-
-    def has_gifts(self, contact):
-        try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-        except StopIteration:
-            return False
-        return (s, GIFTIDEA_REF, None) in self.g
-
-    def get_gifts(self, contact):
-        try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-        except StopIteration:
-            return None
-
-        entries = []
-        for p, o in self.g.predicate_objects(s):
-            predicate = self.get_predicate_name(p)
-            if predicate == 'giftIdea':
-                entries.append(str(o))
-
-        if len(entries) == 0: return None
-        return sorted(entries)
-
-    def has_gift(self, contact, gift):
-        attr = Attribute("giftIdea", gift.name)
-        return self.has_attribute(contact, attr)
-
-    def add_gift(self, contact, gift):
-        attr = Attribute("giftIdea", gift.name)
-        return self.add_attribute(contact, attr)
-
-    def edit_gift(self, contact, old_gift, new_gift):
-        old_attr = Attribute("giftIdea", old_gift.name)
-        new_attr = Attribute("giftIdea", new_gift.name)
-        return self.edit_attribute(contact, old_attr, new_attr)
-
-    def delete_gift(self, contact, gift):
-        attr = Attribute("giftIdea", gift.name)
-        return self.delete_attribute(contact, attr)
-
-    def mark_gifted(self, contact, gift):
-        pass
-
-    def unmark_gifted(self, contact, gift):
-        pass
-
     # helper
 
     def get_predicate_name(self, p):

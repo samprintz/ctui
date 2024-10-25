@@ -8,7 +8,7 @@ from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
 from ctui.keybindings import Keybindings
 from ctui.memory import MemoryStore
-from ctui.notes import NotesStore
+from ctui.textfile import TextFileStore
 from ctui.objects import *
 from ctui.rdf import RDFStore
 
@@ -21,8 +21,8 @@ class Core:
 
         self.rdfstore = RDFStore(config['path']['rdf_file'],
                                  config['rdf']['namespace'])
-        self.notesstore = NotesStore(config['path']['notes_dir'],
-                                     config['encryption']['keyid'])
+        self.textfilestore = TextFileStore(config['path']['textfile_dir'],
+                                           config['encryption']['keyid'])
         self.memorystore = MemoryStore()
 
         if False and self.is_connected() and not test:  # TODO
@@ -71,7 +71,7 @@ class Core:
         contacts = []
         for c in self.rdfstore.get_all_contact_names():
             contacts.append(Contact(c, self))
-        for c in self.notesstore.get_all_contact_names():
+        for c in self.textfilestore.get_all_contact_names():
             # check if contact already in list
             try:
                 existing_contact = next(x for x in contacts if c == x.name)
@@ -107,7 +107,7 @@ class Core:
 
     def get_all_contact_names(self):
         contact_names = self.rdfstore.get_all_contact_names() \
-                        + self.notesstore.get_all_contact_names()
+                        + self.textfilestore.get_all_contact_names()
 
         if self.googlestore is not None:
             contact_names + self.googlestore.get_all_contact_names()
@@ -116,11 +116,11 @@ class Core:
 
     def contains_contact(self, contact):
         return self.rdfstore.contains_contact(contact) or \
-            self.notesstore.contains_contact(contact)
+            self.textfilestore.contains_contact(contact)
 
     def contains_contact_name(self, name):
         return self.rdfstore.contains_contact_name(name) or \
-            self.notesstore.contains_contact_name(name)
+            self.textfilestore.contains_contact_name(name)
 
     def get_contact(self, name):
         for contact in self.contact_list:
@@ -149,8 +149,8 @@ class Core:
             return "Error: {} already exists.".format(new_name)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.rename_contact(contact, new_name)
-        if self.notesstore.contains_contact(contact):
-            self.notesstore.rename_contact(contact, new_name)
+        if self.textfilestore.contains_contact(contact):
+            self.textfilestore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
     def delete_contact_by_name(self, name):
@@ -167,8 +167,8 @@ class Core:
             self.googlestore.delete_contact(contact)
         if self.rdfstore.contains_contact(contact):
             self.rdfstore.delete_contact(contact)
-        if self.notesstore.contains_contact(contact):
-            self.notesstore.delete_contact(contact)
+        if self.textfilestore.contains_contact(contact):
+            self.textfilestore.delete_contact(contact)
         return "{} deleted.".format(contact.name)
 
     def add_google_contact(self, name):

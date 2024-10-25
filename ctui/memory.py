@@ -21,7 +21,7 @@ class MemoryStore:
             return False
         return self.notes[contact.name]
 
-    def contains_note(self, contact, date):
+    def has_note(self, contact, date):
         date_str = datetime.strftime(date, "%Y%m%d")
         return contact.name in self.notes and \
             date_str in self.notes[contact.name]
@@ -34,14 +34,14 @@ class MemoryStore:
         return True
 
     def get_note(self, contact, date):
-        if not self.contains_note(contact, date):
+        if not self.has_note(contact, date):
             return None
         else:
             date_str = datetime.strftime(date, "%Y%m%d")
             return self.notes[contact.name][date_str]
 
     def delete_note(self, contact, date):
-        if self.contains_note(contact, date):
+        if self.has_note(contact, date):
             date_str = datetime.strftime(date, "%Y%m%d")
             del self.notes[contact.name][date_str]
 
