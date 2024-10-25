@@ -113,8 +113,8 @@ class GeneralDetails(ContactDetails):
                 pos = pos + 1
             entries.append(urwid.Text(u"GESCHENKE"))
             pos = pos + 1
-            for a in contact.gifts:
-                entries.append(GiftEntry(contact, Gift(a), pos, self.core))
+            for gift in contact.gifts:
+                entries.append(GiftEntry(contact, gift, pos, self.core))
                 pos = pos + 1
 
         if type(contact) is GoogleContact and len(contact.google_notes) > 0:
@@ -161,7 +161,7 @@ class GiftDetails(ContactDetails):
 
         if contact.gifts is not None:
             for gift in contact.gifts:
-                entries.append(GiftEntry(contact, Gift(gift), pos, self.core))
+                entries.append(GiftEntry(contact, gift, pos, self.core))
                 pos = pos + 1
 
         super(GiftDetails, self).__init__(entries, core,

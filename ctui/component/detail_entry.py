@@ -46,7 +46,20 @@ class AttributeEntry(DetailEntry):
 
 class GiftEntry(DetailEntry):
     def __init__(self, contact, gift, pos, core):
-        super(GiftEntry, self).__init__(contact, gift, gift.name, pos, core)
+        label = ''
+
+        if gift.gifted:
+            label += 'x '
+
+        if gift.permanent:
+            label += '+ '
+
+        label += gift.name
+
+        if gift.occasions:
+            label += f' ({', '.join(gift.occasions)})'
+
+        super(GiftEntry, self).__init__(contact, gift, label, pos, core)
         self.gift = gift
         self.name = 'gift_entry'
 

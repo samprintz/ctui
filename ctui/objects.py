@@ -1,4 +1,8 @@
 from datetime import datetime
+import os
+import re
+
+import yaml
 
 
 class Contact:
@@ -68,28 +72,71 @@ class Contact:
     def get_gifts(self):
         return self.core.textfilestore.get_gifts(self)
 
-    def has_gift(self, gift):
-        return self.core.textfilestore.has_gift(self.get_id(), gift)
+    def get_gifts_path(self):
+        return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
+                                                                 self.core.textfilestore.GIFTS_DIR)
+
+    def has_gift(self, gift_id):
+        return self.core.textfilestore.has_gift(self.get_id(), gift_id)
+
+    def get_gift(self, gift_id):
+        if not self.has_gift(gift_id):
+            return "Error: Gift doesn't exist."
+
+        return self.core.textfilestore.get_gift(self, gift_id)
 
     def add_gift(self, gift):
         return self.core.textfilestore.add_gift(self, gift)
 
     def edit_gift(self, old_gift, new_gift):
-        if not self.has_gift(old_gift):
+        if not self.has_gift(old_gift.get_id()):
             return "Error: {} doesn't own gift {}.".format(
                 self.name, old_gift.name)
 
-        if old_gift.name == new_gift.name:
+        if old_gift == new_gift:
             return "Warning: Gift unchanged."
+
+        # TODO adapt and align the behavior for notes:
+
+        # edit vs. update?
+
+        # how would an interface for notes and gifts look like?
+        # how would an interface for note store and gift *store* look like?
+
+        # do in need to add the contact id as attribute to notes and gifts
+        #   to remove some of these methods here from Contact?
+
+        filepath = os.path.join(self.get_gifts_path(), date_str)
+
+        try:
+            new_content = self.core.editor.edit(filepath)
+        except OSError:
+            return "Error: Gift couldn't be edited."
+
+        return self.core.textfilestore.edit_gift(self, date, new_content)
+
+        # TODO end
 
         return self.core.textfilestore.edit_gift(self, old_gift, new_gift)
 
     def delete_gift(self, gift):
-        if not self.has_gift(gift):
+        if not self.has_gift(gift.get_id()):
             return "Error: {} doesn't own gift {}.".format(
                 self.name, gift.name)
 
         return self.core.textfilestore.delete_gift(self, gift)
+
+    def mark_gifted(self, gift):
+        return self.core.textfilestore.mark_gifted(self, gift)
+
+    def unmark_gifted(self, gift):
+        return self.core.textfilestore.unmark_gifted(self, gift)
+
+    def mark_permanent(self, gift):
+        return self.core.textfilestore.mark_permanent(self, gift)
+
+    def unmark_permanent(self, gift):
+        return self.core.textfilestore.unmark_permanent(self, gift)
 
     # notes
 
@@ -103,7 +150,8 @@ class Contact:
         return self.core.textfilestore.get_notes(self)
 
     def get_notes_path(self):
-        return self.core.textfilestore.get_textfile_path(self.get_id())
+        return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
+                                                                 self.core.textfilestore.NOTES_DIR)
 
     def has_note(self, date):
         return self.core.textfilestore.has_note(self, date)
@@ -187,8 +235,11 @@ class Contact:
         if not self.has_note(date):
             return self.add_note(self, date_str)
 
+        filename = f'{date_str}.txt'
+        path = os.path.join(self.get_notes_path(), filename)
+
         try:
-            new_content = self.core.editor.edit(self.get_notes_path(), date_str)
+            new_content = self.core.editor.edit(path)
         except OSError:
             return "Error: Note couldn't be edited."
 
@@ -304,16 +355,71 @@ class Attribute:
 
 class Gift:
 
-    def __init__(self, id, desc, permanent, gifted, occasions):
-        self.id = id
-        self.name = id.replace('_', ' ')
+    def __init__(self, name, desc='', permanent=False, gifted=False,
+                 occasions=None):
+        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
+            raise ValueError(
+                "Failed to create Gift: name contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+
+        self.name = name
         self.desc = desc
         self.permanent = permanent
         self.gifted = gifted
         self.occasions = occasions
 
     def __eq__(self, other):
-        return self.id == other.id
+        return self.name == other.name \
+            and self.desc == other.desc \
+            and self.gifted == other.gifted \
+            and self.permanent == other.permanent \
+            and self.occasions == other.occasions
+
+    def get_id(self):
+        return self.name.replace(' ', '_')
+
+    def to_dict(self):
+        data = {}
+
+        if self.permanent:
+            data['permanent'] = self.permanent
+
+        if self.gifted:
+            data['gifted'] = self.gifted
+
+        if self.occasions is not None:
+            data['occasions'] = self.occasions
+
+        return data
+
+    def to_dump(self):
+        dump = ''
+
+        gift_dict = self.to_dict()
+        if gift_dict:
+            dump = yaml.dump(gift_dict, default_flow_style=False)
+
+        return dump
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            name=data.get("name"),
+            desc=data.get("desc"),
+            permanent=data.get("permanent"),
+            gifted=data.get("gifted"),
+            occasions=data.get("occasions", [])
+        )
+
+    @classmethod
+    def from_dump(self, gift_id, dump):
+        data = {}
+
+        if dump:
+            data = yaml.safe_load(dump)
+
+        data['name'] = gift_id.replace('_', ' ')
+
+        return Gift.from_dict(data)
 
 
 class Note:

@@ -214,30 +214,22 @@ class Editor:
 
         return content
 
-    def edit(self, dirname, filename):
-        path = dirname + '/' + filename + '.txt'
-        temp_path = path + '.tmp'
+    def edit(self, filepath):
+        temp_filepath = filepath + '.tmp'
 
         try:
-            with open(path) as f:
+            with open(filepath) as f:
                 old_content = f.read()
 
-            with open(temp_path, 'w') as tf:
+            with open(temp_filepath, 'w') as tf:
                 tf.write(old_content)
                 tf.flush()
                 call([self.editor, tf.name])
 
-            with open(temp_path, 'r') as tf:
+            with open(temp_filepath, 'r') as tf:
                 content = tf.read()
 
-            os.remove(temp_path)
-        #            with tempfile.NamedTemporaryFile(
-        #                    suffix=".tmp", prefix=filename + '_', dir=dirname) as tf:
-        #                tf.write(old_content)
-        #                tf.flush()
-        #                call([self.editor, tf.name])
-        #                tf.seek(0)
-        #                content = tf.read().decode("utf-8")
+            os.remove(temp_filepath)
 
         except OSError:
             raise OSError  # TODO

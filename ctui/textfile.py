@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 from datetime import datetime
@@ -21,10 +22,10 @@ class TextFileStore:
         self.gpg_keyid = gpg_keyid
 
     def get_textfile_path(self, contact_id):
-        return self.path + contact_id
+        return os.path.join(self.path, contact_id)
 
-    def get_textfile_path_by_type(self, contact, type):
-        return os.path.join(self.get_textfile_path(contact), type)
+    def get_textfile_path_by_type(self, contact_id, type):
+        return os.path.join(self.get_textfile_path(contact_id), type)
 
     def get_all_contact_names(self):
         contact_names = []
@@ -71,7 +72,7 @@ class TextFileStore:
             return "Couldn't delete directory \"{}\".".format(dirname)
 
     def has_entries(self, contact, type):
-        dir_path = self.get_textfile_path_by_type(contact, type)
+        dir_path = self.get_textfile_path_by_type(contact.get_id(), type)
         return os.path.isdir(dir_path) and len(os.listdir(dir_path)) > 0
 
     def has_notes(self, contact):
@@ -90,7 +91,8 @@ class TextFileStore:
         Read plain text and encrypted notes of a given contact and return a
         list of both of them.
         """
-        dirname = self.get_textfile_path(contact.get_id())
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         notes = []
         try:
             for filename in sorted(os.listdir(dirname)):
@@ -98,7 +100,9 @@ class TextFileStore:
                 # plain notes
                 if not filename.endswith(".gpg"):
                     date = filename.replace('.txt', '')
-                    with open(dirname + '/' + filename, "r") as f:
+                    file_path = os.path.join(dirname, filename)
+
+                    with open(file_path, "r") as f:
                         content = f.read().strip()
                         note = Note(date, content)
                         notes.append(note)
@@ -117,7 +121,8 @@ class TextFileStore:
         """
         Read encrypted notes of a given contact and return a list of them.
         """
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         notes = []
         try:
             for filename in sorted(os.listdir(dirname)):
@@ -130,14 +135,16 @@ class TextFileStore:
             return None
 
     def has_note(self, contact, date):
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
         return os.path.isfile(path) or os.path.isfile(
             path + ".gpg")  # plain or encrypted notes
 
     def note_is_encrypted(self, contact, date):
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
         path = dirname + '/' + filename
         return os.path.isfile(path)
@@ -145,7 +152,8 @@ class TextFileStore:
     def get_note(self, contact, date):
         assert self.has_note(contact, date)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
 
@@ -162,7 +170,12 @@ class TextFileStore:
         if not self.contains_contact(contact):
             self.add_contact(contact)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
         filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
 
@@ -179,7 +192,8 @@ class TextFileStore:
         if not self.contains_contact(contact):
             self.add_contact(contact)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
         path = dirname + '/' + filename
 
@@ -209,7 +223,8 @@ class TextFileStore:
             old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
             new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt"
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         old_path = dirname + '/' + old_filename
         new_path = dirname + '/' + new_filename
 
@@ -227,7 +242,8 @@ class TextFileStore:
         else:
             filename = datetime.strftime(date, "%Y%m%d") + ".txt"
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         path = dirname + '/' + filename
 
         try:
@@ -243,9 +259,11 @@ class TextFileStore:
         assert self.contains_contact(contact)
         assert self.has_note(contact, date)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
+
+        filename = f'{datetime.strftime(date, "%Y%m%d")}.txt'
+        path = os.path.join(dirname, filename)
 
         try:
             with open(path, 'w') as f:
@@ -257,7 +275,8 @@ class TextFileStore:
     def encrypt_note(self, contact, date):
         assert self.has_note(contact, date)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path_plain = dirname + '/' + filename
         path_encrypt = dirname + '/' + filename + ".gpg"
@@ -282,7 +301,8 @@ class TextFileStore:
     def decrypt_note(self, contact, date, passphrase=None):
         assert self.has_note(contact, date)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path_plain = dirname + '/' + filename
         path_encrypt = dirname + '/' + filename + ".gpg"
@@ -309,7 +329,8 @@ class TextFileStore:
     def get_encrypted_note_text(self, contact, date, passphrase=None):
         assert self.has_note(contact, date)
 
-        dirname = self.get_textfile_path_by_type(contact, self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.NOTES_DIR)
         filename = datetime.strftime(date, "%Y%m%d") + ".txt"
         path_plain = dirname + '/' + filename
         path_encrypt = dirname + '/' + filename + ".gpg"
@@ -354,55 +375,17 @@ class TextFileStore:
         return self.has_entries(contact, self.GIFTS_DIR)
 
     def get_gifts(self, contact):
-        dirname = self.get_textfile_path_by_type(contact, self.GIFTS_DIR)
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.GIFTS_DIR)
         gifts = []
         try:
             for filename in sorted(os.listdir(dirname)):
-                id = filename.replace('.txt', '')
-                with open(dirname + '/' + filename, "r") as f:
-                    lines = f.readlines()
+                gift_id = filename.replace('.yaml', '')
+                file_path = os.path.join(dirname, filename)
 
-                    permanent = False
-                    gifted = False
-                    desc = ""
-                    occasions = []
-
-                    in_header = True
-                    header_lines = []
-
-                    for line in lines:
-                        line = line.strip()
-
-                        if in_header:
-                            if line.startswith("---") and header_lines:
-                                # End of header section
-                                in_header = False
-
-                                # Process the header
-                                for header in header_lines:
-                                    if header.startswith("permanent:"):
-                                        permanent = header.split(":")[
-                                                        1].strip() == "true"
-                                    elif header.startswith("gifted:"):
-                                        gifted = header.split(":")[
-                                                     1].strip() == "true"
-
-                            elif line.startswith("---"):
-                                # Start of header section
-                                header_lines = []
-                            else:
-                                header_lines.append(line)
-                        else:
-                            if desc == "":
-                                # First line after header is description
-                                desc = line
-                            else:
-                                # Any further lines are occasions
-                                if line:  # Avoid adding empty lines to occasions
-                                    occasions.append(line)
-
-                    gift = Gift(id, desc, permanent, gifted, occasions)
-
+                with open(file_path, "r") as f:
+                    lines = f.read()
+                    gift = Gift.from_dump(gift_id, lines)
                     gifts.append(gift)
 
             return gifts
@@ -411,33 +394,91 @@ class TextFileStore:
 
     def has_gift(self, contact_id, gift_id):
         dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
-        filename = f"{gift_id}.txt"
-        path = os.path.join(dirname,
-                            filename)  # TODO why warning? then continue with add_gift to rewrite it for the textfile store
+        filename = f"{gift_id}.yaml"
+        path = os.path.join(dirname, filename)
         return os.path.isfile(path)
 
+    def get_gift(self, contact, gift_id):
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.GIFTS_DIR)
+        filename = f"{gift_id}.yaml"
+        path = os.path.join(dirname, filename)
+
+        try:
+            with open(path, "r") as f:
+                lines = f.read()
+                return Gift.from_dump(gift_id, lines)
+        except OSError:
+            return "Couldn't read gift"
+
     def add_gift(self, contact, gift):
-        # TODO allow only \w and " ", no special chars, as this becomes the file name and ID
-        attr = Attribute("giftIdea", gift.name)
-        return self.add_attribute(contact, attr)
+        if not self.contains_contact(contact):
+            self.add_contact(contact)
+
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.GIFTS_DIR)
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        filename = f'{gift.get_id()}.yaml'
+        path = os.path.join(dirname, filename)
+
+        textfile_content = gift.to_dump()
+
+        try:
+            with open(path, 'w') as f:
+                f.write(textfile_content)
+            return "Gift added."
+        except OSError:
+            return "Error: Gift not created."
 
     def edit_gift(self, contact, old_gift, new_gift):
-        old_attr = Attribute("giftIdea", old_gift.name)
-        new_attr = Attribute("giftIdea", new_gift.name)
-        return self.edit_attribute(contact, old_attr, new_attr)
+        self.delete_gift(contact, old_gift)
+
+        try:
+            # TODO this never throws, but should throw OSError
+            self.add_gift(contact, new_gift)
+
+            return "Gift edited."
+        except OSError:
+            return "Error: Gift not edited."
 
     def delete_gift(self, contact, gift):
-        attr = Attribute("giftIdea", gift.name)
-        return self.delete_attribute(contact, attr)
+        filename = f'{gift.get_id()}.yaml'
+        dirname = self.get_textfile_path_by_type(contact.get_id(),
+                                                 self.GIFTS_DIR)
+        path = os.path.join(dirname, filename)
+
+        try:
+            os.remove(path)
+            # if this was the last gift, delete the directory
+            if len(os.listdir(dirname)) == 0:
+                os.rmdir(dirname)
+            return "Gift deleted."
+        except OSError:
+            return "Error: Gift not deleted."
 
     def mark_gifted(self, contact, gift):
-        pass
+        new_gift = copy.deepcopy(gift)
+        new_gift.gifted = True
+        return self.edit_gift(contact, gift, new_gift)
 
     def unmark_gifted(self, contact, gift):
-        pass
+        new_gift = copy.deepcopy(gift)
+        new_gift.gifted = False
+        return self.edit_gift(contact, gift, new_gift)
+
+    def mark_permanent(self, contact, gift):
+        new_gift = copy.deepcopy(gift)
+        new_gift.permanent = True
+        return self.edit_gift(contact, gift, new_gift)
+
+    def unmark_permanent(self, contact, gift):
+        new_gift = copy.deepcopy(gift)
+        new_gift.permanent = False
+        return self.edit_gift(contact, gift, new_gift)
 
     # TODO move to new gifts module, filesystem-based analog to notes module
-
-    # TODO add mark_permanent, unmark_permanent
 
     # TODO add add_occasion(occasion), remove_occasion

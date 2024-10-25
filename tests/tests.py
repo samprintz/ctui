@@ -245,45 +245,77 @@ class TestObjects(unittest.TestCase):
     def test_add_gift(self):
         res = self.contact.add_gift(self.gift1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
 
     def test_add_gift_already_existing(self):
         self.contact.add_gift(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.add_gift(self.gift1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
 
     def test_edit_gift(self):
         self.contact.add_gift(self.gift1)
         res = self.contact.edit_gift(self.gift1, self.gift2)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1))
-        self.assertTrue(self.contact.has_gift(self.gift2))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(self.contact.has_gift(self.gift2.get_id()))
 
     def test_edit_gift_unchanged(self):
         self.contact.add_gift(self.gift1)
         res = self.contact.edit_gift(self.gift1, self.gift1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
-        self.assertTrue(self.contact.has_gift(self.gift1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+
+    def test_mark_gifted(self):
+        self.gift1.gifted = False
+        self.contact.add_gift(self.gift1)
+        self.contact.mark_gifted(self.gift1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
+        self.assertTrue(res.gifted)
+
+    def test_unmark_gifted(self):
+        self.gift1.gifted = True
+        self.contact.add_gift(self.gift1)
+        self.contact.unmark_gifted(self.gift1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
+        self.assertFalse(res.gifted)
+
+    def test_mark_permanent(self):
+        self.gift1.permanent = False
+        self.contact.add_gift(self.gift1)
+        self.contact.mark_permanent(self.gift1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
+        self.assertTrue(res.permanent)
+
+    def test_unmark_permanent(self):
+        self.gift1.permanent = True
+        self.contact.add_gift(self.gift1)
+        self.contact.unmark_permanent(self.gift1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
+        self.assertFalse(res.permanent)
 
     def test_edit_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.edit_gift(self.gift1, self.gift2)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
-        self.assertFalse(self.contact.has_gift(self.gift2))
+        self.assertFalse(self.contact.has_gift(self.gift2.get_id()))
 
     def test_delete_gift(self):
         self.contact.add_gift(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.delete_gift(self.gift1)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
 
     def test_delete_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.delete_gift(self.gift1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
@@ -459,7 +491,7 @@ class TestKeybindings(unittest.TestCase):
     def test_widget_multi_keypress(self):
         self.core.ui.frame.keypress([50, 50], "G")
         contact_pos = self.core.ui.list_view.get_focus_position()
-        self.assertEqual(contact_pos, 3)
+        self.assertEqual(contact_pos, 5)
         self.core.ui.frame.keypress([50, 50], "g")
         self.core.ui.frame.keypress([50, 50], "g")
         contact_pos = self.core.ui.list_view.get_focus_position()
