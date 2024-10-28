@@ -1,7 +1,6 @@
 import copy
 import os
 import shutil
-from datetime import datetime
 
 import gnupg
 
@@ -27,6 +26,18 @@ class TextFileStore:
     def get_textfile_path_by_type(self, contact_id, type):
         return os.path.join(self.get_textfile_path(contact_id), type)
 
+    def get_note_filepath(self, contact_id, note_id):
+        filename = f'{note_id}.txt'
+        return os.path.join(
+            self.get_textfile_path_by_type(contact_id, self.NOTES_DIR),
+            filename)
+
+    def get_gift_filepath(self, contact_id, gift_id):
+        filename = f'{gift_id}.yaml'
+        return os.path.join(
+            self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR),
+            filename)
+
     def get_all_contact_names(self):
         contact_names = []
         for dirname in os.listdir(self.path):
@@ -34,10 +45,21 @@ class TextFileStore:
             contact_names.append(dirname.replace('_', ' '))
         return sorted(contact_names)
 
+    def contains_contact_id(self, contact_id):
+        # TODO refactor to has_contact(contact_id)
+        dirname = self.path + contact_id
+        return os.path.isdir(dirname)
+
     def contains_contact(self, contact):
+        '''
+        @deprecated use contains_contact_id
+        '''
         return self.contains_contact_name(contact.name)
 
     def contains_contact_name(self, name):
+        '''
+        @deprecated use contains_contact_id
+        '''
         dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
 
@@ -99,18 +121,18 @@ class TextFileStore:
 
                 # plain notes
                 if not filename.endswith(".gpg"):
-                    date = filename.replace('.txt', '')
+                    note_id = filename.replace('.txt', '')
                     file_path = os.path.join(dirname, filename)
 
                     with open(file_path, "r") as f:
                         content = f.read().strip()
-                        note = Note(date, content)
+                        note = Note(note_id, content)
                         notes.append(note)
 
                 # encrypted notes
                 else:
-                    date = filename.replace('.txt', '').replace('.gpg', '')
-                    note = EncryptedNote(date)
+                    note_id = filename.replace('.txt', '').replace('.gpg', '')
+                    note = EncryptedNote(note_id)
                     notes.append(note)
 
             return notes
@@ -127,159 +149,133 @@ class TextFileStore:
         try:
             for filename in sorted(os.listdir(dirname)):
                 if filename.endswith(".gpg"):
-                    date = filename.replace('.txt', '').replace('.gpg', '')
-                    note = EncryptedNote(date)
+                    note_id = filename.replace('.txt', '').replace('.gpg', '')
+                    note = EncryptedNote(note_id)
                     notes.append(note)
             return notes
         except FileNotFoundError:
             return None
 
-    def has_note(self, contact, date):
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
-        return os.path.isfile(path) or os.path.isfile(
-            path + ".gpg")  # plain or encrypted notes
+    def has_note(self, contact_id, note_id):
+        filepath = self.get_note_filepath(contact_id, note_id)
+        return os.path.isfile(filepath) or os.path.isfile(
+            filepath + ".gpg")  # plain or encrypted notes
 
-    def note_is_encrypted(self, contact, date):
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
-        path = dirname + '/' + filename
-        return os.path.isfile(path)
+    def note_is_encrypted(self, contact_id, note_id):
+        filepath = self.get_note_filepath(contact_id, note_id) + ".gpg"
+        return os.path.isfile(filepath)
 
-    def get_note(self, contact, date):
-        assert self.has_note(contact, date)
+    def get_note(self, contact, note_id):
+        assert self.has_note(contact.get_id(), note_id)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
+        filepath = self.get_note_filepath(contact.get_id(), note_id)
 
         try:
-            with open(path, "r") as f:
+            with open(filepath, "r") as f:
                 content = f.read()
                 return content.strip()
         except OSError:
             return "Couldn't read note"
 
     def add_note(self, contact, note):
-        assert not self.has_note(contact, note.date)
+        assert not self.has_note(contact.get_id(), note.note_id)
 
         if not self.contains_contact(contact):
             self.add_contact(contact)
 
         dirname = self.get_textfile_path_by_type(contact.get_id(),
                                                  self.NOTES_DIR)
-
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 
-        filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
+        filepath = self.get_note_filepath(contact.get_id(), note.note_id)
 
         try:
-            with open(path, 'w') as f:
+            with open(filepath, 'w') as f:
                 f.write(note.content)
             return "Note added."
         except OSError:
             return "Error: Note not created."
 
     def add_encrypted_note(self, contact, note):
-        assert not self.has_note(contact, note.date)
+        assert not self.has_note(contact.get_id(), note.note_id)
 
         if not self.contains_contact(contact):
             self.add_contact(contact)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
-        path = dirname + '/' + filename
+        filepath = self.get_note_filepath(contact.get_id(), note.note_id)
 
         try:
             # write to (normal) file
-            with open(path, 'w') as f:
+            with open(filepath, 'w') as f:
                 f.write(note.content)
             # encrypt that file
-            with open(path, 'rb') as f:
+            with open(filepath, 'rb') as f:
                 status = self.gpg.encrypt_file(
-                    f, recipients=[self.gpg_keyid], output=f'{path}.gpg')
+                    f, recipients=[self.gpg_keyid], output=f'{filepath}.gpg')
             # delete plain text file
-            os.remove(path)
+            os.remove(filepath)
             return f"Note added (ok: {status.ok})."
         except OSError:
             return "Error: Note not created."
 
-    def rename_note(self, contact, note, new_date):
-        assert note.date != new_date
-        assert self.has_note(contact, note.date)
-        assert not self.has_note(contact, new_date)
+    def rename_note(self, contact_id, note, new_date):
+        assert note.note_id != new_date
+        assert self.has_note(contact_id, note.note_id)
+        assert not self.has_note(contact_id, new_date)
 
-        if self.note_is_encrypted(contact, note.date):
-            old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt.gpg"
-            new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt.gpg"
-        else:
-            old_filename = datetime.strftime(note.date, "%Y%m%d") + ".txt"
-            new_filename = datetime.strftime(new_date, "%Y%m%d") + ".txt"
+        old_filepath = self.get_note_filepath(contact_id, note.note_id)
+        new_filepath = self.get_note_filepath(contact_id, new_date)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        old_path = dirname + '/' + old_filename
-        new_path = dirname + '/' + new_filename
+        if self.note_is_encrypted(contact_id, note.note_id):
+            old_filepath = f'{old_filepath}.gpg'
+            new_filepath = f'{new_filepath}.gpg'
 
         try:
-            os.rename(old_path, new_path)
+            os.rename(old_filepath, new_filepath)
             return "Note renamed."
         except OSError:
             return "Error: Note not renamed."
 
-    def delete_note(self, contact, date):
-        assert self.has_note(contact, date)
+    def edit_note(self, contact_id, note_id, new_content):
+        assert self.contains_contact_id(contact_id)
+        assert self.has_note(contact_id, note_id)
 
-        if self.note_is_encrypted(contact, date):
-            filename = datetime.strftime(date, "%Y%m%d") + ".txt.gpg"
-        else:
-            filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        path = dirname + '/' + filename
+        filepath = self.get_note_filepath(contact_id, note_id)
 
         try:
-            os.remove(path)
-            # if this was the last note, delete the directory
-            if len(os.listdir(dirname)) == 0:
-                os.rmdir(dirname)
-            return "Note deleted."
-        except OSError:
-            return "Error: Note not deleted."
-
-    def edit_note(self, contact, date, new_content):
-        assert self.contains_contact(contact)
-        assert self.has_note(contact, date)
-
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-
-        filename = f'{datetime.strftime(date, "%Y%m%d")}.txt'
-        path = os.path.join(dirname, filename)
-
-        try:
-            with open(path, 'w') as f:
+            with open(filepath, 'w') as f:
                 f.write(new_content)
+
             return "Note edited."
         except OSError:
             return "Error: Note not edited."
 
-    def encrypt_note(self, contact, date):
-        assert self.has_note(contact, date)
+    def delete_note(self, contact, note_id):
+        assert self.has_note(contact.get_id(), note_id)
+
+        filepath = self.get_note_filepath(contact.get_id(), note_id)
+        if self.note_is_encrypted(contact.get_id(), note_id):
+            filepath = f'{filepath}.gpg'
 
         dirname = self.get_textfile_path_by_type(contact.get_id(),
                                                  self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path_plain = dirname + '/' + filename
-        path_encrypt = dirname + '/' + filename + ".gpg"
+        try:
+            os.remove(filepath)
+
+            # if this was the last note, delete the directory
+            if len(os.listdir(dirname)) == 0:
+                os.rmdir(dirname)
+
+            return "Note deleted."
+        except OSError:
+            return "Error: Note not deleted."
+
+    def encrypt_note(self, contact, note_id):
+        assert self.has_note(contact.get_id(), note_id)
+
+        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        filepath_encrypt = f'{filepath_plain}.gpg'
 
         # check if key available
         if not self.is_key_in_keyring():
@@ -287,25 +283,22 @@ class TextFileStore:
 
         try:
             # encrypt file
-            with open(path_plain,
+            with open(filepath_plain,
                       'rb') as f:  # "rb" is important, "r" doesn't work
                 status = self.gpg.encrypt_file(
-                    f, recipients=[self.gpg_keyid], output=path_encrypt)
+                    f, recipients=[self.gpg_keyid], output=filepath_encrypt)
             # delete plain file
             if status.ok:
-                os.remove(path_plain)
+                os.remove(filepath_plain)
             return f"Note encrypted (ok: {status.ok})."
         except OSError:
             return "Error: Note not encrypted."
 
-    def decrypt_note(self, contact, date, passphrase=None):
-        assert self.has_note(contact, date)
+    def decrypt_note(self, contact, note_id, passphrase=None):
+        assert self.has_note(contact.get_id(), note_id)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path_plain = dirname + '/' + filename
-        path_encrypt = dirname + '/' + filename + ".gpg"
+        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        filepath_encrypt = f'{filepath_plain}.gpg'
 
         # check if key available
         if not self.is_key_in_keyring():
@@ -313,41 +306,38 @@ class TextFileStore:
 
         try:
             # decrypt file
-            with open(path_encrypt, 'rb') as f:
+            with open(filepath_encrypt, 'rb') as f:
                 # passphrase is always None, the gpg-agent is taking care of it
                 status = self.gpg.decrypt_file(
-                    f, passphrase=passphrase, output=path_plain)
+                    f, passphrase=passphrase, output=filepath_plain)
             if status.ok:
                 # delete encrypted file
-                os.remove(path_encrypt)
+                os.remove(filepath_encrypt)
                 return "Note decrypted"
             else:
                 return "Wrong passphrase"
         except OSError:
             return "Error: Note not decrypted."
 
-    def get_encrypted_note_text(self, contact, date, passphrase=None):
-        assert self.has_note(contact, date)
+    def get_encrypted_note_text(self, contact, note_id, passphrase=None):
+        assert self.has_note(contact.get_id(), note_id)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        filename = datetime.strftime(date, "%Y%m%d") + ".txt"
-        path_plain = dirname + '/' + filename
-        path_encrypt = dirname + '/' + filename + ".gpg"
+        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        filepath_encrypt = f'{filepath_plain}.gpg'
 
         try:
             # decrypt file
-            with open(path_encrypt, 'rb') as f:
+            with open(filepath_encrypt, 'rb') as f:
                 # passphrase is always None, the gpg-agent is taking care of it
                 status = self.gpg.decrypt_file(
-                    f, passphrase=passphrase, output=path_plain)
+                    f, passphrase=passphrase, output=filepath_plain)
             if status.ok:
                 # read decrypted file
-                with open(path_plain) as f:
+                with open(filepath_plain) as f:
                     content = f.read()
                 # delete decrypted file again
                 # TODO Is there a way to not even create the decrypted file?
-                os.remove(path_plain)
+                os.remove(filepath_plain)
                 return content.strip()
             else:
                 return "Wrong passphrase"
@@ -433,12 +423,35 @@ class TextFileStore:
         except OSError:
             return "Error: Gift not created."
 
-    def edit_gift(self, contact, old_gift, new_gift):
-        self.delete_gift(contact, old_gift)
+    def rename_gift(self, contact_id, gift, new_name):
+        assert gift.name != new_name
+        assert self.has_gift(contact_id, gift.name)
+        assert not self.has_gift(contact_id, new_name)
+
+        old_filename = self.get_gift_filepath(contact_id, gift.get_id())
+        new_filename = self.get_gift_filepath(contact_id, new_name)
+
+        dirname = self.get_textfile_path_by_type(contact_id,
+                                                 self.NOTES_DIR)
+
+        old_path = os.path.join(dirname, old_filename)
+        new_path = os.path.join(dirname, new_filename)
 
         try:
-            # TODO this never throws, but should throw OSError
-            self.add_gift(contact, new_gift)
+            os.rename(old_path, new_path)
+            return "Gift renamed."
+        except OSError:
+            return "Error: Gift not renamed."
+
+    def edit_gift(self, contact_id, gift_id, new_content):
+        assert self.contains_contact_id(contact_id)
+        assert self.has_gift(contact_id, gift_id)
+
+        filepath = self.get_gift_filepath(contact_id, gift_id)
+
+        try:
+            with open(filepath, 'w') as f:
+                f.write(new_content)
 
             return "Gift edited."
         except OSError:

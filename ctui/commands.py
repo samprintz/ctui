@@ -132,3 +132,54 @@ class DeleteAttribute(Command):
         self.core.ui.focus_detail_pos(new_detail_pos)
 
         return msg
+
+
+class RenameNote(Command):
+    name = 'rename-note'
+    names = ['rename-note']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        note = self.core.ui.detail_view.get_focused_detail()
+        new_name = " ".join(args)
+        msg = contact.rename_note(note, new_name)
+
+        # TODO doesn't work; does date must be Date class?
+        note.note_id = new_name  # to find the position by the name
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(note)
+
+        return msg
+
+
+class RenameGift(Command):
+    name = 'rename-gift'
+    names = ['rename-gift']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        gift = self.core.ui.detail_view.get_focused_detail()
+        new_name = " ".join(args)
+        msg = contact.rename_gift(gift, new_name)
+        gift.name = new_name
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(gift)
+
+        return msg
+
+
+class EditGift(Command):
+    name = 'edit-gift'
+    names = ['edit-gift']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        gift = self.core.ui.detail_view.get_focused_detail()  # TODO or select by args?
+        msg = contact.edit_gift(gift.get_id())
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(gift)
+
+        return msg

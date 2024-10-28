@@ -13,6 +13,10 @@ class Contact:
         # TODO Contact shouldn't have core
         self.core = core
 
+        # TODO interface for notes and gifts
+        # TODO interface for note and gift *stores*
+        # TODO add contact id as attribute to notes and gifts to remove some of these methods here from Contact?
+
         self.attributes = attributes
         self.gifts = gifts
         self.notes = notes
@@ -85,39 +89,44 @@ class Contact:
 
         return self.core.textfilestore.get_gift(self, gift_id)
 
-    def add_gift(self, gift):
+    def add_gift(self, gift_id):
+        Gift.validate_name(gift_id)
+
+        if not self.core.textfilestore.contains_contact(self):
+            self.core.textfilestore.add_contact(self)
+
+        if self.has_gift(gift_id):
+            return self.edit_gift(gift_id)
+
+        dirname = self.get_gifts_path()
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        try:
+            content = self.core.editor.add(dirname, gift_id)
+            gift = Gift.from_dump(gift_id, content)
+        except OSError:
+            return "Error: Gift couldn't be added."
+
         return self.core.textfilestore.add_gift(self, gift)
 
-    def edit_gift(self, old_gift, new_gift):
-        if not self.has_gift(old_gift.get_id()):
-            return "Error: {} doesn't own gift {}.".format(
-                self.name, old_gift.name)
+    def edit_gift(self, gift_id):
+        Gift.validate_name(gift_id)
 
-        if old_gift == new_gift:
-            return "Warning: Gift unchanged."
+        if not self.has_gift(gift_id):
+            return self.add_gift(gift_id)
 
-        # TODO adapt and align the behavior for notes:
-
-        # edit vs. update?
-
-        # how would an interface for notes and gifts look like?
-        # how would an interface for note store and gift *store* look like?
-
-        # do in need to add the contact id as attribute to notes and gifts
-        #   to remove some of these methods here from Contact?
-
-        filepath = os.path.join(self.get_gifts_path(), date_str)
+        filepath = self.core.textfilestore.get_gift_filepath(self.get_id(),
+                                                             gift_id)
 
         try:
             new_content = self.core.editor.edit(filepath)
         except OSError:
             return "Error: Gift couldn't be edited."
 
-        return self.core.textfilestore.edit_gift(self, date, new_content)
-
-        # TODO end
-
-        return self.core.textfilestore.edit_gift(self, old_gift, new_gift)
+        return self.core.textfilestore.edit_gift(self.get_id(), gift_id,
+                                                 new_content)
 
     def delete_gift(self, gift):
         if not self.has_gift(gift.get_id()):
@@ -153,146 +162,137 @@ class Contact:
         return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
                                                                  self.core.textfilestore.NOTES_DIR)
 
-    def has_note(self, date):
-        return self.core.textfilestore.has_note(self, date)
+    def get_gifts_path(self):
+        return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
+                                                                 self.core.textfilestore.GIFTS_DIR)
 
-    def get_note(self, date):
-        if not self.has_note(date):
+    def has_note(self, note_id):
+        return self.core.textfilestore.has_note(self.get_id(), note_id)
+
+    def get_note(self, note_id):
+        if not self.has_note(note_id):
             return "Error: Note doesn't exist."
-        return self.core.textfilestore.get_note(self, date)
+        return self.core.textfilestore.get_note(self, note_id)
 
-    def add_note(self, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+    def add_note(self, note_id):
+        Note.validate_name(note_id)
 
         if not self.core.textfilestore.contains_contact(self):
             self.core.textfilestore.add_contact(self)
 
-        if self.has_note(date):
-            return self.edit_note(date_str)
+        if self.has_note(note_id):
+            return self.edit_note(note_id)
+
+        dirname = self.get_notes_path()
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
 
         try:
-            content = self.core.editor.add(self.get_notes_path(), date_str)
-            note = Note(date, content)
+            content = self.core.editor.add(dirname, note_id)
+            note = Note(note_id, content)
         except OSError:
             return "Error: Note couldn't be added."
 
         return self.core.textfilestore.add_note(self, note)
 
-    def add_encrypted_note(self, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
+    def add_encrypted_note(self, note_id):
+        Note.validate_name(note_id)
 
         if not self.core.textfilestore.contains_contact(self):
             self.core.textfilestore.add_contact(self)
 
-        if self.has_note(date):
-            return self.edit_note(date_str)
+        if self.has_note(note_id):
+            return self.edit_note(note_id)
 
         try:
-            content = self.core.editor.add(self.get_notes_path(), date_str)
-            note = EncryptedNote(date, content)
+            content = self.core.editor.add(self.get_notes_path(), note_id)
+            note = EncryptedNote(note_id, content)
         except OSError:
             return "Error: Note couldn't be added."
 
         return self.core.textfilestore.add_encrypted_note(self, note)
 
-    def rename_note(self, note, date_str):
-        try:
-            new_date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "Error: \"{}\" not in format YYYYMMDD.".format(date_str)
+    def rename_note(self, note, new_name):
+        Note.validate_name(new_name)
 
-        if note.date == new_date:
+        if note.note_id == new_name:
             return "Warning: Name unchanged."
 
-        if self.has_note(new_date):
-            return "Error: Note {} already exists.".format(date_str)
+        if self.has_note(new_name):
+            return "Error: Note {} already exists.".format(new_name)
 
-        return self.core.textfilestore.rename_note(self, note, new_date)
+        return self.core.textfilestore.rename_note(self.get_id(), note,
+                                                   new_name)
 
-    def delete_note(self, date_str):
+    def rename_gift(self, gift, new_name):
+        Gift.validate_name(new_name)
+
+        if gift.name == new_name:
+            return "Warning: Name unchanged."
+
+        if self.has_gift(new_name):
+            return "Error: Gift {} already exists.".format(new_name)
+
+        return self.core.textfilestore.rename_gift(self.get_id(), gift,
+                                                   new_name)
+
+    def delete_note(self, note_id):
+        if not self.has_note(note_id):
+            return "Error: No note for \"{}\".".format(note_id)
+
+        return self.core.textfilestore.delete_note(self, note_id)
+
+    def edit_note(self, note_id):
+        Note.validate_name(note_id)
+
+        if not self.has_note(note_id):
+            return self.add_note(note_id)
+
+        filepath = self.core.textfilestore.get_note_filepath(self.get_id(),
+                                                             note_id)
+
         try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
-        if not self.has_note(date):
-            return "Error: No note for \"{}\".".format(date_str)
-
-        return self.core.textfilestore.delete_note(self, date)
-
-    def edit_note(self, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
-        if not self.has_note(date):
-            return self.add_note(self, date_str)
-
-        filename = f'{date_str}.txt'
-        path = os.path.join(self.get_notes_path(), filename)
-
-        try:
-            new_content = self.core.editor.edit(path)
+            new_content = self.core.editor.edit(filepath)
         except OSError:
             return "Error: Note couldn't be edited."
 
-        return self.core.textfilestore.edit_note(self, date, new_content)
+        return self.core.textfilestore.edit_note(self.get_id(), note_id,
+                                                 new_content)
 
-    def encrypt_note(self, date_str):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
+    def encrypt_note(self, note_id):
         if not self.core.textfilestore.contains_contact(self):
             return "Contact \"{}\" not found.".format(self.name)
 
-        if not self.has_note(date):
-            return "Note \"{}\" not found.".format(date_str)
+        if not self.has_note(note_id):
+            return "Note \"{}\" not found.".format(note_id)
 
-        return self.core.textfilestore.encrypt_note(self, date)
+        return self.core.textfilestore.encrypt_note(self, note_id)
 
-    def decrypt_note(self, date_str, passphrase=None):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
+    def decrypt_note(self, note_id, passphrase=None):
         if not self.core.textfilestore.contains_contact(self):
             return "Contact \"{}\" not found.".format(self.name)
 
-        if not self.has_note(date):
-            return "Note \"{}\" not found.".format(date_str)
+        if not self.has_note(note_id):
+            return "Note \"{}\" not found.".format(note_id)
 
-        return self.core.textfilestore.decrypt_note(self, date, passphrase)
+        return self.core.textfilestore.decrypt_note(self, note_id, passphrase)
 
-    def toggle_note_encryption(self, date_str, passphrase=None):
-        try:
-            date = datetime.strptime(date_str, '%Y%m%d')
-        except ValueError:
-            return "\"{}\" not in format YYYYMMDD.".format(date_str)
-
+    def toggle_note_encryption(self, note_id, passphrase=None):
         if not self.core.textfilestore.contains_contact(self):
             return "Contact \"{}\" not found.".format(self.name)
 
-        if not self.has_note(date):
-            return "Note \"{}\" not found.".format(date_str)
+        if not self.has_note(note_id):
+            return "Note \"{}\" not found.".format(note_id)
 
-        if self.core.memorystore.has_note(self, date):  # hide
-            content = self.core.memorystore.delete_note(self, date)
+        if self.core.memorystore.has_note(self, note_id):  # hide
+            content = self.core.memorystore.delete_note(self, note_id)
             return "Hide encrypted note content."
         else:  # show
             content = self.core.textfilestore.get_encrypted_note_text(self,
-                                                                      date,
+                                                                      note_id,
                                                                       passphrase)
-            note = EncryptedNote(date, content)
+            note = EncryptedNote(note_id, content)
             if self.core.memorystore.add_note(self, note):
                 return "Show encrypted note content."
             else:
@@ -305,9 +305,9 @@ class Contact:
         result = True
         for note in self.core.textfilestore.get_encrypted_notes(self):
             content = self.core.textfilestore.get_encrypted_note_text(self,
-                                                                      note.date,
+                                                                      note.note_id,
                                                                       passphrase)
-            note = EncryptedNote(note.date, content)
+            note = EncryptedNote(note.note_id, content)
             if not self.core.memorystore.add_note(self, note):
                 result = False
 
@@ -328,10 +328,10 @@ class Contact:
     # memory
 
     def has_visible_note(self, note):
-        return self.core.memorystore.has_note(self, note.date)
+        return self.core.memorystore.has_note(self, note.note_id)
 
     def get_visible_note(self, note):
-        return self.core.memorystore.get_note(self, note.date)
+        return self.core.memorystore.get_note(self, note.note_id)
 
 
 class Name:
@@ -357,9 +357,7 @@ class Gift:
 
     def __init__(self, name, desc='', permanent=False, gifted=False,
                  occasions=None):
-        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
-            raise ValueError(
-                "Failed to create Gift: name contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+        Gift.validate_name(name)
 
         self.name = name
         self.desc = desc
@@ -421,37 +419,47 @@ class Gift:
 
         return Gift.from_dict(data)
 
+    @classmethod
+    def validate_name(cls, name):
+        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
+            raise ValueError(
+                "Failed to create Gift: name contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+
 
 class Note:
 
-    def __init__(self, date, content):
-        if isinstance(date, str):
-            try:
-                date = datetime.strptime(date, '%Y%m%d')
-            except ValueError:
-                raise ValueError(
-                    f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
-        self.date = date
+    def __init__(self, note_id, content):
+        Note.validate_name(note_id)
+
+        self.note_id = note_id
         self.content = content
 
     def __eq__(self, other):
-        return self.date == other.date
+        return self.note_id == other.note_id
+
+    @classmethod
+    def validate_name(cls, name):
+        try:
+            datetime.strptime(name, '%Y%m%d')
+        except ValueError:
+            raise ValueError(
+                f'Error: Invalid note name: "{name}". Note names match the pattern YYYYMMDD')
 
 
 class EncryptedNote(Note):
 
-    def __init__(self, date, content=None, encrypted=True):
-        if isinstance(date, str):
+    def __init__(self, note_id, content=None, encrypted=True):
+        if isinstance(note_id, str):
             try:
-                date = datetime.strptime(date, '%Y%m%d')
+                note_id = datetime.strptime(note_id, '%Y%m%d')
             except ValueError:
                 raise ValueError(
-                    f'Invalid note name: "{date}". Note names match the pattern YYYYMMMDD')
-        self.date = date
+                    f'Invalid note name: "{note_id}". Note names match the pattern YYYYMMMDD')
+        self.note_id = note_id
         self.content = content
 
     def __eq__(self, other):
-        return self.date == other.date
+        return self.note_id == other.note_id
 
 
 class GoogleContact(Contact):

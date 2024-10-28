@@ -1,6 +1,6 @@
 import pyperclip
 
-from ctui.commands import EditAttribute, DeleteAttribute
+from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift
 from ctui.component.list_entry import CListEntry
 
 
@@ -64,6 +64,10 @@ class GiftEntry(DetailEntry):
         self.name = 'gift_entry'
 
     def keypress(self, size, key):
+        if key == 'enter':  # TODO special treatment of enter (must be calling super())
+            EditGift(self.core).execute(self.gift.name)
+            return
+
         key = super(GiftEntry, self).keypress(size, key)
         if key is None:
             return
@@ -72,10 +76,12 @@ class GiftEntry(DetailEntry):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'edit_gift':
-                self.core.cli.edit_gift(self.contact, self.gift)
+            case 'rename_gift':
+                command = f'{RenameGift.name} {self.gift.name}'
+                self.core.ui.console.show_console(command)
             case 'delete_gift':
-                self.core.cli.delete_gift(self.contact, self.gift)
+                command = f'{DeleteGift.name} {self.gift.name}'  # TODO implement DeleteGift in commands.py
+                self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
@@ -89,7 +95,7 @@ class NoteEntry(DetailEntry):
         self.name = 'note_entry'
 
     def keypress(self, size, key):
-        if key == 'enter':
+        if key == 'enter':  # TODO special treatment of enter (must be calling super())
             self.core.cli.edit_note(self.contact, self.note)
             return
 

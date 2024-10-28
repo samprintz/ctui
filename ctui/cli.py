@@ -71,43 +71,43 @@ class CLI:
                     msg = self.contact.delete_gift(gift)
                     self.action = Action.DETAIL_DELETED
                 elif command in ('add-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.add_note(date_str)
-                    self.detail = Note(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.add_note(note_id)
+                    self.detail = Note(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('add-encrypted-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.add_encrypted_note(date_str)
-                    self.detail = EncryptedNote(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.add_encrypted_note(note_id)
+                    self.detail = EncryptedNote(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('rename-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.rename_note(self.detail, date_str)
-                    self.detail = Note(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.rename_note(self.detail, note_id)
+                    self.detail = Note(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('delete-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.delete_note(date_str)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.delete_note(note_id)
                     self.action = Action.DETAIL_DELETED
                 elif command in ('edit-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.edit_note(date_str)
-                    self.detail = Note(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.edit_note(note_id)
+                    self.detail = Note(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('encrypt-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.encrypt_note(date_str)
-                    self.detail = EncryptedNote(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.encrypt_note(note_id)
+                    self.detail = EncryptedNote(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('decrypt-note'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.decrypt_note(date_str)
-                    self.detail = Note(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.decrypt_note(note_id)
+                    self.detail = Note(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('toggle-note-encryption'):
-                    date_str = " ".join(args[1:])
-                    msg = self.contact.toggle_note_encryption(date_str)
-                    self.detail = EncryptedNote(date_str, None)
+                    note_id = " ".join(args[1:])
+                    msg = self.contact.toggle_note_encryption(note_id)
+                    self.detail = EncryptedNote(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('show-all-encrypted-notes'):
                     msg = self.contact.show_all_encrypted_notes()
@@ -159,88 +159,54 @@ class CLI:
         self.core.ui.console.clear()
         self.core.ui.frame.focus_position = 'body'
 
-    # gifts
-
-    def edit_gift(self, contact, gift):
-        self.contact = contact
-        self.detail = gift
-        command = 'edit-gift {}'.format(gift.name)
-        self.core.ui.console.show_console(command)
-
-    def delete_gift(self, contact, gift):
-        self.contact = contact
-        self.detail = gift
-        command = 'delete-gift {}'.format(gift.name)
-        self.core.ui.console.show_console(command)
-
-    def mark_gifted(self, contact, gift):
-        self.contact = contact
-        self.detail = gift
-        new_name = "x " + gift.name[2:]
-        command = 'edit-gift {}'.format(new_name)
-        self.core.ui.console.show_console(command)
-
-    def unmark_gifted(self, contact, gift):
-        self.contact = contact
-        self.detail = gift
-        new_name = gift.name[2:]
-        command = 'edit-gift {}'.format(new_name)
-        self.core.ui.console.show_console(command)
-
     # notes
 
     def add_note(self, contact):
         self.contact = contact
-        date_str = datetime.strftime(date.today(), "%Y%m%d")
-        command = 'add-note {}'.format(date_str)
+        note_id = datetime.strftime(date.today(), "%Y%m%d")
+        command = 'add-note {}'.format(note_id)
         self.core.ui.console.show_console(command)
 
     def add_encrypted_note(self, contact):
         self.contact = contact
-        date_str = datetime.strftime(date.today(), "%Y%m%d")
-        command = 'add-encrypted-note {}'.format(date_str)
+        note_id = datetime.strftime(date.today(), "%Y%m%d")
+        command = 'add-encrypted-note {}'.format(note_id)
         self.core.ui.console.show_console(command)
 
     def rename_note(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        command = 'rename-note {}'.format(date_str)
+        command = 'rename-note {}'.format(note.note_id)
         self.core.ui.console.show_console(command)
 
     def delete_note(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        command = 'delete-note {}'.format(date_str)
+        command = 'delete-note {}'.format(note.note_id)
         self.core.ui.console.show_console(command)
 
     def edit_note(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        args = 'edit-note {}'.format(date_str).split()
+        args = 'edit-note {}'.format(note.note_id).split()
         self.core.cli.handle(args)
 
     def encrypt_note(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        args = 'encrypt-note {}'.format(date_str).split()
+        args = 'encrypt-note {}'.format(note.note_id).split()
         self.core.cli.handle(args)
 
     def decrypt_note(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        args = 'decrypt-note {}'.format(date_str).split()
+        args = 'decrypt-note {}'.format(note.note_id).split()
         self.core.cli.handle(args)
 
     def toggle_note_encryption(self, contact, note):
         self.contact = contact
         self.detail = note
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        args = 'toggle-note-encryption {}'.format(date_str).split()
+        args = 'toggle-note-encryption {}'.format(note.note_id).split()
         self.core.cli.handle(args)
 
     def show_all_encrypted_notes(self, contact):

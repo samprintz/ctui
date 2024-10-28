@@ -22,8 +22,9 @@ class ContactDetails(CListBox):
     def show_meta(self):
         if type(self.focus) is NoteEntry or type(
                 self.focus) is EncryptedNoteEntry:
-            date = datetime.strftime(self.focus.note.date, '%d-%m-%Y')
-            self.core.ui.console.show_meta(date)
+            date = datetime.strptime(self.focus.note.note_id, '%Y%m%d')
+            date_str = datetime.strftime(date, '%d-%m-%Y')
+            self.core.ui.console.show_meta(date_str)
         elif isinstance(self.focus, DetailEntry):
             self.core.ui.console.show_meta("")
             # self.core.ui.console.show_meta(str(self.focus.pos))

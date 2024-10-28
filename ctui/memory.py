@@ -1,6 +1,3 @@
-from datetime import datetime
-
-
 class MemoryStore:
     """
     Store for in-memory information. Used when displaying encrypted notes. This
@@ -21,29 +18,25 @@ class MemoryStore:
             return False
         return self.notes[contact.name]
 
-    def has_note(self, contact, date):
-        date_str = datetime.strftime(date, "%Y%m%d")
+    def has_note(self, contact, note_id):
         return contact.name in self.notes and \
-            date_str in self.notes[contact.name]
+            note_id in self.notes[contact.name]
 
     def add_note(self, contact, note):
         if contact.name not in self.notes:
             self.notes[contact.name] = {}
-        date_str = datetime.strftime(note.date, "%Y%m%d")
-        self.notes[contact.name][date_str] = note
+        self.notes[contact.name][note.note_id] = note
         return True
 
-    def get_note(self, contact, date):
-        if not self.has_note(contact, date):
+    def get_note(self, contact, note_id):
+        if not self.has_note(contact, note_id):
             return None
         else:
-            date_str = datetime.strftime(date, "%Y%m%d")
-            return self.notes[contact.name][date_str]
+            return self.notes[contact.name][note_id]
 
-    def delete_note(self, contact, date):
-        if self.has_note(contact, date):
-            date_str = datetime.strftime(date, "%Y%m%d")
-            del self.notes[contact.name][date_str]
+    def delete_note(self, contact, note_id):
+        if self.has_note(contact, note_id):
+            del self.notes[contact.name][note_id]
 
     def delete_all_notes(self, contact):
         if self.has_notes(contact):

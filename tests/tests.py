@@ -344,7 +344,7 @@ class TestObjects(unittest.TestCase):
 
     def test_rename_note(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.core.textfilestore.rename_note(self.contact, self.note1,
+        self.core.textfilestore.rename_note(self.contact.get_id(), self.note1,
                                             self.date2)
         self.assertTrue(self.contact.has_note(self.date2))
         self.assertFalse(self.contact.has_note(self.date1))
@@ -355,14 +355,16 @@ class TestObjects(unittest.TestCase):
     def test_rename_note_unchanged(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.rename_note(self.contact, self.note1,
+            self.core.textfilestore.rename_note(self.contact.get_id(),
+                                                self.note1,
                                                 self.date1)
         self.assertTrue(self.contact.has_note(self.date1))
 
     def test_rename_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.date1))
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.rename_note(self.contact, self.note1,
+            self.core.textfilestore.rename_note(self.contact.get_id(),
+                                                self.note1,
                                                 self.date2)
         self.assertFalse(self.contact.has_note(self.date1))
 
@@ -371,7 +373,8 @@ class TestObjects(unittest.TestCase):
         note2 = Note(self.date2, self.note_content2)
         self.core.textfilestore.add_note(self.contact, note2)
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.rename_note(self.contact, self.note1,
+            self.core.textfilestore.rename_note(self.contact.get_id(),
+                                                self.note1,
                                                 self.date2)
         self.assertTrue(self.contact.has_note(self.date1))
         self.assertTrue(self.contact.has_note(self.date2))
