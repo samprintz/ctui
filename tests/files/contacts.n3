@@ -1,16 +1,10 @@
 @prefix c: <http://hiea.de/contact#> .
 
-[] c:givenName "Martin Mustermann" .
-
-[] c:givenName "A" .
-
 [] c:givenName "Maria Mustermann" .
-
-[] c:givenName "zzz" .
 
 [] c:givenName "Max Mustermann" .
 
 [] c:givenName "Mia Mustermann" .
 
-[] c:givenName "Test Contact A" .
+[] c:givenName "Martin Mustermann" .
 
