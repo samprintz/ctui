@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 import ctui.util as util
@@ -5,7 +6,9 @@ from ctui.cli import Mode, Action
 from ctui.component.contact_entry import ContactEntry
 from ctui.component.detail_entry import AttributeEntry, GiftEntry, NoteEntry
 from ctui.core import *
-from ctui.objects import *
+from ctui.model.attribute import Attribute
+from ctui.model.gift import Gift
+from ctui.model.note import Note
 from ctui.ui import UI
 
 CONFIG_FILE = 'files/config.ini'

@@ -4,7 +4,9 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from ctui.objects import GoogleContact, GoogleAttribute, GoogleNote
+from ctui.model.google_attribute import GoogleAttribute
+from ctui.model.google_contact import GoogleContact
+from ctui.model.google_note import GoogleNote
 
 
 class GoogleStore:

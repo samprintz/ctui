@@ -1,5 +1,7 @@
 from ctui.enum.view import View
-from ctui.objects import Gift, Attribute, Contact
+from ctui.model.attribute import Attribute
+from ctui.model.contact import Contact
+from ctui.model.gift import Gift
 
 
 class Command:

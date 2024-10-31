@@ -1,8 +1,6 @@
 from rdflib import *
 from rdflib.resource import *
 
-from ctui.objects import Attribute
-
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
 

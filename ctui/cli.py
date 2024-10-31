@@ -2,7 +2,9 @@ from datetime import date, datetime
 from enum import Enum
 
 from ctui.commands import Command
-from ctui.objects import Gift, Note, EncryptedNote
+from ctui.model.encrypted_note import EncryptedNote
+from ctui.model.gift import Gift
+from ctui.model.note import Note
 
 
 class CLI:

@@ -8,8 +8,9 @@ from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
 from ctui.keybindings import Keybindings
 from ctui.memory import MemoryStore
+from ctui.model.contact import Contact
+from ctui.model.google_contact import GoogleContact
 from ctui.textfile import TextFileStore
-from ctui.objects import *
 from ctui.rdf import RDFStore
 
 

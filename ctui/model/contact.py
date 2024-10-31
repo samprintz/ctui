@@ -1,8 +1,8 @@
-from datetime import datetime
 import os
-import re
 
-import yaml
+from ctui.model.encrypted_note import EncryptedNote
+from ctui.model.gift import Gift
+from ctui.model.note import Note
 
 
 class Contact:
@@ -75,10 +75,6 @@ class Contact:
 
     def get_gifts(self):
         return self.core.textfilestore.get_gifts(self)
-
-    def get_gifts_path(self):
-        return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
-                                                                 self.core.textfilestore.GIFTS_DIR)
 
     def has_gift(self, gift_id):
         return self.core.textfilestore.has_gift(self.get_id(), gift_id)
@@ -332,167 +328,3 @@ class Contact:
 
     def get_visible_note(self, note):
         return self.core.memorystore.get_note(self, note.note_id)
-
-
-class Name:
-
-    def __init__(self, name):
-        self.name = name
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-
-class Attribute:
-
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-
-    def __eq__(self, other):
-        return self.key == other.key and self.value == other.value
-
-
-class Gift:
-
-    def __init__(self, name, desc='', permanent=False, gifted=False,
-                 occasions=None):
-        Gift.validate_name(name)
-
-        self.name = name
-        self.desc = desc
-        self.permanent = permanent
-        self.gifted = gifted
-        self.occasions = occasions
-
-    def __eq__(self, other):
-        return self.name == other.name \
-            and self.desc == other.desc \
-            and self.gifted == other.gifted \
-            and self.permanent == other.permanent \
-            and self.occasions == other.occasions
-
-    def get_id(self):
-        return self.name.replace(' ', '_')
-
-    def to_dict(self):
-        data = {}
-
-        if self.permanent:
-            data['permanent'] = self.permanent
-
-        if self.gifted:
-            data['gifted'] = self.gifted
-
-        if self.occasions is not None:
-            data['occasions'] = self.occasions
-
-        return data
-
-    def to_dump(self):
-        dump = ''
-
-        gift_dict = self.to_dict()
-        if gift_dict:
-            dump = yaml.dump(gift_dict, default_flow_style=False)
-
-        return dump
-
-    @classmethod
-    def from_dict(cls, data):
-        return cls(
-            name=data.get("name"),
-            desc=data.get("desc"),
-            permanent=data.get("permanent"),
-            gifted=data.get("gifted"),
-            occasions=data.get("occasions", [])
-        )
-
-    @classmethod
-    def from_dump(self, gift_id, dump):
-        data = {}
-
-        if dump:
-            data = yaml.safe_load(dump)
-
-        data['name'] = gift_id.replace('_', ' ')
-
-        return Gift.from_dict(data)
-
-    @classmethod
-    def validate_name(cls, name):
-        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
-            raise ValueError(
-                "Failed to create Gift: name contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
-
-
-class Note:
-
-    def __init__(self, note_id, content):
-        Note.validate_name(note_id)
-
-        self.note_id = note_id
-        self.content = content
-
-    def __eq__(self, other):
-        return self.note_id == other.note_id
-
-    @classmethod
-    def validate_name(cls, name):
-        try:
-            datetime.strptime(name, '%Y%m%d')
-        except ValueError:
-            raise ValueError(
-                f'Error: Invalid note name: "{name}". Note names match the pattern YYYYMMDD')
-
-
-class EncryptedNote(Note):
-
-    def __init__(self, note_id, content=None, encrypted=True):
-        if isinstance(note_id, str):
-            try:
-                note_id = datetime.strptime(note_id, '%Y%m%d')
-            except ValueError:
-                raise ValueError(
-                    f'Invalid note name: "{note_id}". Note names match the pattern YYYYMMMDD')
-        self.note_id = note_id
-        self.content = content
-
-    def __eq__(self, other):
-        return self.note_id == other.note_id
-
-
-class GoogleContact(Contact):
-
-    def __init__(self, name, core, google_id, google_attributes=None,
-                 google_notes=None):
-        super(GoogleContact, self).__init__(name, core)
-        self.google_id = google_id
-        self.google_attributes = google_attributes
-        self.google_notes = google_notes
-
-    def merge(self, contact):
-        self.attributes = contact.attributes
-        self.gifts = contact.gifts
-        self.notes = contact.notes
-        return self
-
-
-class GoogleAttribute:
-
-    def __init__(self, key, value, google_key):
-        self.key = key
-        self.value = value
-        self.google_key = google_key
-
-    def __eq__(self, other):
-        return self.key == other.key and self.value == other.value
-
-
-class GoogleNote:
-
-    def __init__(self, content):
-        self.content = content
-
-    def __eq__(self, other):
-        return self.content == other.content

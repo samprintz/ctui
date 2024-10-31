@@ -4,7 +4,9 @@ import shutil
 
 import gnupg
 
-from ctui.objects import Note, EncryptedNote, Attribute, Gift
+from ctui.model.encrypted_note import EncryptedNote
+from ctui.model.gift import Gift
+from ctui.model.note import Note
 
 
 class TextFileStore:

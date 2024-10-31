@@ -6,8 +6,10 @@ from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
     GoogleAttributeEntry, GiftEntry, GoogleNoteEntry, NoteEntry, \
     EncryptedNoteEntry
 from ctui.component.list_box import CListBox
-
-from ctui.objects import Name, Attribute, Gift, Note, GoogleContact
+from ctui.model.attribute import Attribute
+from ctui.model.gift import Gift
+from ctui.model.google_contact import GoogleContact
+from ctui.model.note import Note
 
 
 class ContactDetails(CListBox):
