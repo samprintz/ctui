@@ -166,16 +166,12 @@ class TestObjects(unittest.TestCase):
         self.attr2 = Attribute(self.attr_key2, self.attr_value2)
         self.gift_name1 = "Gift 1"
         self.gift_name2 = "Gift 2"
-        self.gift1 = Gift(self.gift_name1)
-        self.gift2 = Gift(self.gift_name2)
-        self.note_name1 = "19990101"
-        self.note_name2 = "19991215"
-        self.date1 = datetime.strptime(self.note_name1, '%Y%m%d')
-        self.date2 = datetime.strptime(self.note_name2, '%Y%m%d')
-        self.note_name_invalid = "1248"
+        self.note_id1 = "19990101"
+        self.note_id2 = "19991215"
+        self.note_id_invalid = "1248"
         self.note_content1 = "Text 1"
         self.note_content2 = "Text 2"
-        self.note1 = Note(self.date1, self.note_content1)
+        self.note1 = Note(self.note_id1, self.note_content1)
 
     @classmethod
     def setUp(self):
@@ -246,80 +242,75 @@ class TestObjects(unittest.TestCase):
     # gifts
 
     def test_add_gift(self):
-        res = self.contact.add_gift(self.gift1)
+        res = self.contact.add_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
 
     def test_add_gift_already_existing(self):
-        self.contact.add_gift(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.add_gift(self.gift1)
+        self.contact.add_gift(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        res = self.contact.add_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
 
     def test_edit_gift(self):
-        self.contact.add_gift(self.gift1)
-        res = self.contact.edit_gift(self.gift1, self.gift2)
+        self.contact.add_gift(self.gift_name1)
+        res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        self.assertTrue(self.contact.has_gift(self.gift2.get_id()))
+        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        self.assertTrue(self.contact.has_gift(self.gift_name2))
 
     def test_edit_gift_unchanged(self):
-        self.contact.add_gift(self.gift1)
-        res = self.contact.edit_gift(self.gift1, self.gift1)
+        self.contact.add_gift(self.gift_name1)
+        res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
 
     def test_mark_gifted(self):
-        self.gift1.gifted = False
-        self.contact.add_gift(self.gift1)
-        self.contact.mark_gifted(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.contact.add_gift(self.gift_name1)
+        self.contact.mark_gifted(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        res = self.contact.get_gift(self.gift_name1)
         self.assertTrue(res.gifted)
 
     def test_unmark_gifted(self):
-        self.gift1.gifted = True
-        self.contact.add_gift(self.gift1)
-        self.contact.unmark_gifted(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.contact.add_gift(self.gift_name1)
+        self.contact.unmark_gifted(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        res = self.contact.get_gift(self.gift_name1)
         self.assertFalse(res.gifted)
 
     def test_mark_permanent(self):
-        self.gift1.permanent = False
-        self.contact.add_gift(self.gift1)
-        self.contact.mark_permanent(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.contact.add_gift(self.gift_name1)
+        self.contact.mark_permanent(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        res = self.contact.get_gift(self.gift_name1)
         self.assertTrue(res.permanent)
 
     def test_unmark_permanent(self):
-        self.gift1.permanent = True
-        self.contact.add_gift(self.gift1)
-        self.contact.unmark_permanent(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.contact.add_gift(self.gift_name1)
+        self.contact.unmark_permanent(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        res = self.contact.get_gift(self.gift_name1)
         self.assertFalse(res.permanent)
 
     def test_edit_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.edit_gift(self.gift1, self.gift2)
+        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
-        self.assertFalse(self.contact.has_gift(self.gift2.get_id()))
 
     def test_delete_gift(self):
-        self.contact.add_gift(self.gift1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.delete_gift(self.gift1)
+        self.contact.add_gift(self.gift_name1)
+        self.assertTrue(contact.has_gift(self.gift_name1))
+        res = contact.delete_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
+        self.assertFalse(self.contact.has_gift(self.gift_name1))
 
     def test_delete_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.delete_gift(self.gift1)
+        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        res = self.contact.delete_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
 
@@ -328,29 +319,29 @@ class TestObjects(unittest.TestCase):
     def test_add_note_new_dir(self):
         self.assertFalse(self.core.textfilestore.contains_contact(self.contact))
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertTrue(self.contact.has_note(self.date1))
+        self.assertTrue(self.contact.has_note(self.note_id1))
 
     def test_add_note_existing_dir(self):
         self.core.textfilestore.add_contact(self.contact)
         self.assertTrue(self.core.textfilestore.contains_contact(self.contact))
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertTrue(self.contact.has_note(self.date1))
+        self.assertTrue(self.contact.has_note(self.note_id1))
 
     def test_add_note_date_error(self):
         pass
 
     def test_add_note_already_existing(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertTrue(self.contact.has_note(self.date1))
+        self.assertTrue(self.contact.has_note(self.note_id1))
         with self.assertRaises(AssertionError):
             self.core.textfilestore.add_note(self.contact, self.note1)
 
     def test_rename_note(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
         self.core.textfilestore.rename_note(self.contact.get_id(), self.note1,
-                                            self.date2)
-        self.assertTrue(self.contact.has_note(self.date2))
-        self.assertFalse(self.contact.has_note(self.date1))
+                                            self.note_id2)
+        self.assertTrue(self.contact.has_note(self.note_id2))
+        self.assertFalse(self.contact.has_note(self.note_id1))
 
     def test_rename_note_date_error(self):
         pass
@@ -360,33 +351,33 @@ class TestObjects(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.core.textfilestore.rename_note(self.contact.get_id(),
                                                 self.note1,
-                                                self.date1)
-        self.assertTrue(self.contact.has_note(self.date1))
+                                                self.note_id1)
+        self.assertTrue(self.contact.has_note(self.note_id1))
 
     def test_rename_note_not_existing(self):
-        self.assertFalse(self.contact.has_note(self.date1))
+        self.assertFalse(self.contact.has_note(self.note_id1))
         with self.assertRaises(AssertionError):
             self.core.textfilestore.rename_note(self.contact.get_id(),
                                                 self.note1,
-                                                self.date2)
-        self.assertFalse(self.contact.has_note(self.date1))
+                                                self.note_id2)
+        self.assertFalse(self.contact.has_note(self.note_id1))
 
     def test_rename_note_already_existing(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        note2 = Note(self.date2, self.note_content2)
+        note2 = Note(self.note_id2, self.note_content2)
         self.core.textfilestore.add_note(self.contact, note2)
         with self.assertRaises(AssertionError):
             self.core.textfilestore.rename_note(self.contact.get_id(),
                                                 self.note1,
-                                                self.date2)
-        self.assertTrue(self.contact.has_note(self.date1))
-        self.assertTrue(self.contact.has_note(self.date2))
+                                                self.note_id2)
+        self.assertTrue(self.contact.has_note(self.note_id1))
+        self.assertTrue(self.contact.has_note(self.note_id2))
 
     def test_delete_note(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertTrue(self.contact.has_note(self.date1))
-        self.core.textfilestore.delete_note(self.contact, self.date1)
-        self.assertFalse(self.contact.has_note(self.date1))
+        self.assertTrue(self.contact.has_note(self.note_id1))
+        self.core.textfilestore.delete_note(self.contact, self.note_id1)
+        self.assertFalse(self.contact.has_note(self.note_id1))
 
     def test_delete_note_date_error(self):
         pass
@@ -394,32 +385,32 @@ class TestObjects(unittest.TestCase):
     def test_delete_note_last_in_dir(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertEqual(len(self.contact.get_notes()), 1)
-        self.assertTrue(self.contact.has_note(self.date1))
-        self.core.textfilestore.delete_note(self.contact, self.date1)
-        self.assertFalse(self.contact.has_note(self.date1))
+        self.assertTrue(self.contact.has_note(self.note_id1))
+        self.core.textfilestore.delete_note(self.contact, self.note_id1)
+        self.assertFalse(self.contact.has_note(self.note_id1))
         self.assertFalse(self.contact.has_notes())
 
     def test_delete_note_not_existing(self):
-        self.assertFalse(self.contact.has_note(self.date1))
+        self.assertFalse(self.contact.has_note(self.note_id1))
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.delete_note(self.contact, self.date1)
+            self.core.textfilestore.delete_note(self.contact, self.note_id1)
 
     def test_edit_note(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertTrue(self.contact.has_note(self.date1))
-        self.core.textfilestore.edit_note(self.contact, self.date1,
+        self.assertTrue(self.contact.has_note(self.note_id1))
+        self.core.textfilestore.edit_note(self.contact, self.note_id1,
                                           self.note_content2)
-        self.assertTrue(self.contact.has_note(self.date1))
-        res = self.contact.get_note(self.date1)
+        self.assertTrue(self.contact.has_note(self.note_id1))
+        res = self.contact.get_note(self.note_id1)
         self.assertEqual(res, self.note_content2)
 
     def test_edit_note_date_error(self):
         pass
 
     def test_edit_note_not_existing(self):
-        self.assertFalse(self.contact.has_note(self.date1))
+        self.assertFalse(self.contact.has_note(self.note_id1))
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.edit_note(self.contact, self.date1,
+            self.core.textfilestore.edit_note(self.contact, self.note_id1,
                                               self.note_content2)
 
     @classmethod
@@ -497,7 +488,7 @@ class TestKeybindings(unittest.TestCase):
     def test_widget_multi_keypress(self):
         self.core.ui.frame.keypress([50, 50], "G")
         contact_pos = self.core.ui.list_view.get_focus_position()
-        self.assertEqual(contact_pos, 5)
+        self.assertEqual(contact_pos, 3)
         self.core.ui.frame.keypress([50, 50], "g")
         self.core.ui.frame.keypress([50, 50], "g")
         contact_pos = self.core.ui.list_view.get_focus_position()
@@ -711,13 +702,26 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
     """
 
     @classmethod
+    def setUpClass(self):
+        pass
+
+    @classmethod
     def setUp(self):
         self.core = Core(config, True)
+        UI(self.core, config)
+        self.core.ui.set_contact_list(self.core.get_all_contacts())
+
         self.name_first = "A"
+        self.attr_key_first = "aaa-key"
+        self.attr_key1 = "key1"
+        self.attr_key2 = "key2"
+        self.attr_key_last = "zzz-key"
+        self.attr_value1 = "Attribute 1"
+        self.attr_value2 = "Attribute 2"
+
         self.contact_first = Contact(self.name_first, self.core)
         self.core.add_contact(self.contact_first)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact_first)
+        self.core.ui.update_view(True, False, None, self.contact_first)
 
     @classmethod
     def tearDown(self):
@@ -729,16 +733,80 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         self.assertEqual(self.ct_pos, 0)
 
     def test_focus_add_first_detail_to_first_contact(self):
-        pass
+        self.core.cli.handle(
+            ['add-attribute', self.attr_key1, self.attr_value1])
+
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        focused_contact_pos = self.core.ui.list_view.get_contact_position(
+            focused_contact)
+        focused_detail = self.core.ui.detail_view.get_focused_detail()
+        focused_detail_pos = self.core.ui.detail_view.get_focus_position()
+
+        self.assertEqual(focused_contact.name, self.name_first)
+        self.assertEqual(focused_contact_pos, 0)
+        self.assertEqual(focused_detail.key, self.attr_key1)
+        self.assertEqual(focused_detail_pos, 0)
 
     def test_focus_add_some_detail_to_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_last = Attribute(self.attr_key_last, self.attr_value1)
+
+        self.contact_first.add_attribute(attr_first)
+        self.contact_first.add_attribute(attr_1)
+        self.contact_first.add_attribute(attr_last)
+
+        self.core.cli.handle(
+            ['add-attribute', self.attr_key2, self.attr_value1])
+
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        focused_contact_pos = self.core.ui.list_view.get_contact_position(
+            focused_contact)
+        focused_detail = self.core.ui.detail_view.get_focused_detail()
+        focused_detail_pos = self.core.ui.detail_view.get_focus_position()
+
+        self.assertEqual(focused_contact.name, self.name_first)
+        self.assertEqual(focused_contact_pos, 0)
+        self.assertEqual(focused_detail.key, self.attr_key2)
+        self.assertEqual(focused_detail_pos, 2)
 
     def test_focus_add_two_detail_to_first_contact(self):
-        pass
+        self.core.cli.handle(
+            ['add-attribute', self.attr_key1, self.attr_value1])
+        self.core.cli.handle(
+            ['add-attribute', self.attr_key2, self.attr_value2])
+
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        focused_contact_pos = self.core.ui.list_view.get_contact_position(
+            focused_contact)
+        focused_detail = self.core.ui.detail_view.get_focused_detail()
+        focused_detail_pos = self.core.ui.detail_view.get_focus_position()
+
+        self.assertEqual(focused_contact.name, self.name_first)
+        self.assertEqual(focused_contact_pos, 0)
+        self.assertEqual(focused_detail.key, self.attr_key2)
+        self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_add_last_detail_to_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+
+        self.contact_first.add_attribute(attr_first)
+        self.contact_first.add_attribute(attr_1)
+
+        self.core.cli.handle(
+            ['add-attribute', self.attr_key_last, self.attr_value1])
+
+        focused_contact = self.core.ui.list_view.get_focused_contact()
+        focused_contact_pos = self.core.ui.list_view.get_contact_position(
+            focused_contact)
+        focused_detail = self.core.ui.detail_view.get_focused_detail()
+        focused_detail_pos = self.core.ui.detail_view.get_focus_position()
+
+        self.assertEqual(focused_contact.name, self.name_first)
+        self.assertEqual(focused_contact_pos, 0)
+        self.assertEqual(focused_detail.key, self.attr_key_last)
+        self.assertEqual(focused_detail_pos, 2)
 
     def test_focus_edit_first_to_some_detail_of_first_contact(self):
         pass
