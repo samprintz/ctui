@@ -85,8 +85,10 @@ class Contact:
 
         return self.core.textfilestore.get_gift(self, gift_id)
 
-    def add_gift(self, gift_id):
-        Gift.validate_name(gift_id)
+    def add_gift(self, gift_name):
+        Gift.validate_name(gift_name)
+
+        gift_id = gift_name.replace(" ", "_")
 
         if not self.core.textfilestore.contains_contact(self):
             self.core.textfilestore.add_contact(self)
@@ -111,7 +113,8 @@ class Contact:
         Gift.validate_name(gift_id)
 
         if not self.has_gift(gift_id):
-            return self.add_gift(gift_id)
+            gift_name = gift_id.replace("_", " ")
+            return self.add_gift(gift_name)
 
         filepath = self.core.textfilestore.get_gift_filepath(self.get_id(),
                                                              gift_id)

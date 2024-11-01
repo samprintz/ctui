@@ -166,6 +166,8 @@ class TestObjects(unittest.TestCase):
         self.attr2 = Attribute(self.attr_key2, self.attr_value2)
         self.gift_name1 = "Gift 1"
         self.gift_name2 = "Gift 2"
+        self.gift1 = Gift(self.gift_name1)
+        self.gift2 = Gift(self.gift_name2)
         self.note_id1 = "19990101"
         self.note_id2 = "19991215"
         self.note_id_invalid = "1248"
@@ -244,37 +246,39 @@ class TestObjects(unittest.TestCase):
     def test_add_gift(self):
         res = self.contact.add_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
 
     def test_add_gift_already_existing(self):
         self.contact.add_gift(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.add_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
 
     def test_edit_gift(self):
         self.contact.add_gift(self.gift_name1)
         res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift_name1))
-        self.assertTrue(self.contact.has_gift(self.gift_name2))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(self.contact.has_gift(self.gift2.get_id()))
 
     def test_edit_gift_unchanged(self):
         self.contact.add_gift(self.gift_name1)
         res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
 
     def test_mark_gifted(self):
+        self.gift1.gifted = False
         self.contact.add_gift(self.gift_name1)
         self.contact.mark_gifted(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
-        res = self.contact.get_gift(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
         self.assertTrue(res.gifted)
 
     def test_unmark_gifted(self):
+        self.gift1.gifted = True
         self.contact.add_gift(self.gift_name1)
         self.contact.unmark_gifted(self.gift_name1)
         self.assertTrue(self.contact.has_gift(self.gift_name1))
@@ -284,32 +288,32 @@ class TestObjects(unittest.TestCase):
     def test_mark_permanent(self):
         self.contact.add_gift(self.gift_name1)
         self.contact.mark_permanent(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
-        res = self.contact.get_gift(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
         self.assertTrue(res.permanent)
 
     def test_unmark_permanent(self):
         self.contact.add_gift(self.gift_name1)
         self.contact.unmark_permanent(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
-        res = self.contact.get_gift(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.get_gift(self.gift1.get_id())
         self.assertFalse(res.permanent)
 
     def test_edit_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.edit_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
 
     def test_delete_gift(self):
         self.contact.add_gift(self.gift_name1)
-        self.assertTrue(contact.has_gift(self.gift_name1))
-        res = contact.delete_gift(self.gift_name1)
+        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        res = self.contact.delete_gift(self.gift_name1)
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
 
     def test_delete_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift_name1))
+        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
         res = self.contact.delete_gift(self.gift_name1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Error"))
