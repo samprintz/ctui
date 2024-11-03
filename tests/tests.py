@@ -1,4 +1,3 @@
-import datetime
 import unittest
 
 import ctui.util as util
@@ -166,8 +165,8 @@ class TestObjects(unittest.TestCase):
         self.attr2 = Attribute(self.attr_key2, self.attr_value2)
         self.gift_name1 = "Gift 1"
         self.gift_name2 = "Gift 2"
-        self.gift1 = Gift(self.gift_name1)
-        self.gift2 = Gift(self.gift_name2)
+        self.gift1 = Gift(self.gift_name1, "")
+        self.gift2 = Gift(self.gift_name2, "")
         self.note_id1 = "19990101"
         self.note_id2 = "19991215"
         self.note_id_invalid = "1248"
@@ -244,79 +243,143 @@ class TestObjects(unittest.TestCase):
     # gifts
 
     def test_add_gift(self):
-        res = self.contact.add_gift(self.gift_name1)
+        res = self.core.textfilestore.add_gift(self.contact.get_id(),
+                                               self.gift1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
 
     def test_add_gift_already_existing(self):
-        self.contact.add_gift(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.add_gift(self.gift_name1)
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.add_gift(self.contact.get_id(),
+                                               self.gift1)
         self.assertIsNotNone(res)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+
+    def test_rename_gift(self):
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        res = self.core.textfilestore.rename_gift(self.contact.get_id(),
+                                                  self.gift1.get_id(),
+                                                  self.gift_name2)
+        self.assertIsNotNone(res)
+        self.assertFalse(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift2.get_id()))
+
+    def test_edit_gift_invalid_content(self):
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+
+        invalid_content = "invalid content"
+
+        self.assertRaises(ValueError,
+                          Gift.from_dump,
+                          self.gift1.get_id(),
+                          invalid_content)
 
     def test_edit_gift(self):
-        self.contact.add_gift(self.gift_name1)
-        res = self.contact.edit_gift(self.gift_name1)
-        self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        self.assertTrue(self.contact.has_gift(self.gift2.get_id()))
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
 
-    def test_edit_gift_unchanged(self):
-        self.contact.add_gift(self.gift_name1)
-        res = self.contact.edit_gift(self.gift_name1)
-        self.assertIsNotNone(res)
-        self.assertTrue(res.startswith("Warning"))
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
+        new_content = "desc: new description"
+        new_gift = Gift.from_dump(self.gift1.get_id(), new_content)
+
+        self.core.textfilestore.edit_gift(self.contact.get_id(),
+                                          self.gift1.get_id(), new_gift)
+
+        res = self.core.textfilestore.get_gift(self.contact.get_id(),
+                                               self.gift1.get_id())
+
+        self.assertEqual(res.to_dump(), new_content)
 
     def test_mark_gifted(self):
         self.gift1.gifted = False
-        self.contact.add_gift(self.gift_name1)
-        self.contact.mark_gifted(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.core.textfilestore.mark_gifted(self.contact.get_id(),
+                                            self.gift1.get_id())
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.get_gift(self.contact.get_id(),
+                                               self.gift1.get_id())
         self.assertTrue(res.gifted)
 
     def test_unmark_gifted(self):
         self.gift1.gifted = True
-        self.contact.add_gift(self.gift_name1)
-        self.contact.unmark_gifted(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift_name1))
-        res = self.contact.get_gift(self.gift_name1)
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.core.textfilestore.unmark_gifted(self.contact.get_id(),
+                                              self.gift1.get_id())
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.get_gift(self.contact.get_id(),
+                                               self.gift1.get_id())
         self.assertFalse(res.gifted)
 
     def test_mark_permanent(self):
-        self.contact.add_gift(self.gift_name1)
-        self.contact.mark_permanent(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.core.textfilestore.mark_permanent(self.contact.get_id(),
+                                               self.gift1.get_id())
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.get_gift(self.contact.get_id(),
+                                               self.gift1.get_id())
         self.assertTrue(res.permanent)
 
     def test_unmark_permanent(self):
-        self.contact.add_gift(self.gift_name1)
-        self.contact.unmark_permanent(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.get_gift(self.gift1.get_id())
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.core.textfilestore.unmark_permanent(self.contact.get_id(),
+                                                 self.gift1.get_id())
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.get_gift(self.contact.get_id(),
+                                               self.gift1.get_id())
         self.assertFalse(res.permanent)
 
     def test_edit_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.edit_gift(self.gift_name1)
-        self.assertIsNotNone(res)
-        self.assertTrue(res.startswith("Error"))
+        self.assertFalse(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+
+        self.assertRaises(
+            ValueError,
+            self.core.textfilestore.edit_gift,
+            self.contact.get_id(),
+            self.gift1.get_id(),
+            self.gift2
+        )
 
     def test_delete_gift(self):
-        self.contact.add_gift(self.gift_name1)
-        self.assertTrue(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.delete_gift(self.gift_name1)
+        self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
+        self.assertTrue(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+        res = self.core.textfilestore.delete_gift(self.contact.get_id(),
+                                                  self.gift1.get_id())
         self.assertIsNotNone(res)
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
 
     def test_delete_gift_not_existing(self):
-        self.assertFalse(self.contact.has_gift(self.gift1.get_id()))
-        res = self.contact.delete_gift(self.gift_name1)
-        self.assertIsNotNone(res)
-        self.assertTrue(res.startswith("Error"))
+        self.assertFalse(
+            self.core.textfilestore.has_gift(self.contact.get_id(),
+                                             self.gift1.get_id()))
+
+        self.assertRaises(FileNotFoundError,
+                          self.core.textfilestore.delete_gift,
+                          self.contact.get_id(),
+                          self.gift1.get_id()
+                          )
 
     # notes
 
@@ -388,11 +451,13 @@ class TestObjects(unittest.TestCase):
 
     def test_delete_note_last_in_dir(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
-        self.assertEqual(len(self.contact.get_notes()), 1)
+        res = self.core.textfilestore.get_notes(self.contact.get_id())
+        self.assertEqual(len(res), 1)
         self.assertTrue(self.contact.has_note(self.note_id1))
         self.core.textfilestore.delete_note(self.contact, self.note_id1)
         self.assertFalse(self.contact.has_note(self.note_id1))
-        self.assertFalse(self.contact.has_notes())
+        self.assertFalse(
+            self.core.textfilestore.has_notes(self.contact.get_id()))
 
     def test_delete_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.note_id1))
@@ -402,7 +467,7 @@ class TestObjects(unittest.TestCase):
     def test_edit_note(self):
         self.core.textfilestore.add_note(self.contact, self.note1)
         self.assertTrue(self.contact.has_note(self.note_id1))
-        self.core.textfilestore.edit_note(self.contact, self.note_id1,
+        self.core.textfilestore.edit_note(self.contact.get_id(), self.note_id1,
                                           self.note_content2)
         self.assertTrue(self.contact.has_note(self.note_id1))
         res = self.contact.get_note(self.note_id1)
@@ -414,7 +479,8 @@ class TestObjects(unittest.TestCase):
     def test_edit_note_not_existing(self):
         self.assertFalse(self.contact.has_note(self.note_id1))
         with self.assertRaises(AssertionError):
-            self.core.textfilestore.edit_note(self.contact, self.note_id1,
+            self.core.textfilestore.edit_note(self.contact.get_id(),
+                                              self.note_id1,
                                               self.note_content2)
 
     @classmethod

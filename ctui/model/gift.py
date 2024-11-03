@@ -23,10 +23,13 @@ class Gift:
             and self.occasions == other.occasions
 
     def get_id(self):
-        return self.name.replace(' ', '_')
+        return Gift.name_to_id(self.name)
 
     def to_dict(self):
         data = {}
+
+        if self.desc:
+            data['desc'] = self.desc
 
         if self.permanent:
             data['permanent'] = self.permanent
@@ -34,7 +37,7 @@ class Gift:
         if self.gifted:
             data['gifted'] = self.gifted
 
-        if self.occasions is not None:
+        if self.occasions is not None and len(self.occasions) > 0:
             data['occasions'] = self.occasions
 
         return data
@@ -46,7 +49,7 @@ class Gift:
         if gift_dict:
             dump = yaml.dump(gift_dict, default_flow_style=False)
 
-        return dump
+        return dump.strip()
 
     @classmethod
     def from_dict(cls, data):
@@ -65,7 +68,10 @@ class Gift:
         if dump:
             data = yaml.safe_load(dump)
 
-        data['name'] = gift_id.replace('_', ' ')
+        if not isinstance(data, dict):
+            raise ValueError(f'Invalid gift file "{gift_id}"')
+
+        data['name'] = Gift.id_to_name(gift_id)
 
         return Gift.from_dict(data)
 
@@ -73,4 +79,12 @@ class Gift:
     def validate_name(cls, name):
         if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
             raise ValueError(
-                "Failed to create Gift: name contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+                "Invalid gift name: contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+
+    @classmethod
+    def name_to_id(cls, name):
+        return name.replace(' ', '_')
+
+    @classmethod
+    def id_to_name(cls, gift_id):
+        return gift_id.replace('_', ' ')

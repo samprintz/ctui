@@ -6,6 +6,7 @@ from ctui.model.note import Note
 class EncryptedNote(Note):
 
     def __init__(self, note_id, content=None, encrypted=True):
+        # TODO refactor like Note
         if isinstance(note_id, str):
             try:
                 note_id = datetime.strptime(note_id, '%Y%m%d')

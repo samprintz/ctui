@@ -4,6 +4,7 @@ import shutil
 
 import gnupg
 
+from ctui.model.contact import Contact
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
 from ctui.model.note import Note
@@ -40,6 +41,17 @@ class TextFileStore:
             self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR),
             filename)
 
+    def prepare_gift_file(self, contact_id):
+        if not self.contains_contact_id(contact_id):
+            self.add_contact(Contact(contact_id, None))  # TODO
+
+        path = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        return path
+
     def get_all_contact_names(self):
         contact_names = []
         for dirname in os.listdir(self.path):
@@ -65,7 +77,18 @@ class TextFileStore:
         dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
 
+    def add_contact_id(self, contact_id):
+        # rename to add_contact(_dir?)
+        dirname = self.get_textfile_path(contact_id)
+        try:
+            os.makedirs(dirname)
+        except OSError:
+            return "Couldn't create directory \"{}\".".format(dirname)
+
     def add_contact(self, contact):
+        '''
+        @deprecated use add_contact_id
+        '''
         dirname = self.get_textfile_path(contact.get_id())
         try:
             os.makedirs(dirname)
@@ -95,30 +118,31 @@ class TextFileStore:
         except Exception:
             return "Couldn't delete directory \"{}\".".format(dirname)
 
-    def has_entries(self, contact, type):
-        dir_path = self.get_textfile_path_by_type(contact.get_id(), type)
+    def has_entries(self, contact_id, type):
+        dir_path = self.get_textfile_path_by_type(contact_id, type)
         return os.path.isdir(dir_path) and len(os.listdir(dir_path)) > 0
 
-    def has_notes(self, contact):
-        return self.has_entries(contact, self.NOTES_DIR)
+    def has_notes(self, contact_id):
+        return self.has_entries(contact_id, self.NOTES_DIR)
 
-    def has_encrypted_notes(self, contact):
-        dirname = self.get_textfile_path(contact.get_id())
-        if not self.has_notes(contact):
+    def has_encrypted_notes(self, contact_id):
+        dirname = self.get_textfile_path(contact_id)
+        if not self.has_notes(contact_id):
             return False
         for file in os.listdir(dirname):
             if file.endswith(".gpg"):
                 return True
 
-    def get_notes(self, contact):
+    def get_notes(self, contact_id):
         """
         Read plain text and encrypted notes of a given contact and return a
         list of both of them.
         """
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
         notes = []
-        try:
+
+        if self.has_notes(contact_id):
+            dirname = self.get_textfile_path_by_type(contact_id, self.NOTES_DIR)
+
             for filename in sorted(os.listdir(dirname)):
 
                 # plain notes
@@ -137,9 +161,7 @@ class TextFileStore:
                     note = EncryptedNote(note_id)
                     notes.append(note)
 
-            return notes
-        except FileNotFoundError:
-            return None
+        return notes
 
     def get_encrypted_notes(self, contact):
         """
@@ -363,14 +385,15 @@ class TextFileStore:
         return found_public_key and found_private_key
         # TODO Log whether both or only one of them is missing
 
-    def has_gifts(self, contact):
-        return self.has_entries(contact, self.GIFTS_DIR)
+    def has_gifts(self, contact_id):
+        return self.has_entries(contact_id, self.GIFTS_DIR)
 
-    def get_gifts(self, contact):
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.GIFTS_DIR)
+    def get_gifts(self, contact_id):
         gifts = []
-        try:
+
+        if self.has_gifts(contact_id):
+            dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
+
             for filename in sorted(os.listdir(dirname)):
                 gift_id = filename.replace('.yaml', '')
                 file_path = os.path.join(dirname, filename)
@@ -380,9 +403,7 @@ class TextFileStore:
                     gift = Gift.from_dump(gift_id, lines)
                     gifts.append(gift)
 
-            return gifts
-        except FileNotFoundError:
-            return None
+        return gifts
 
     def has_gift(self, contact_id, gift_id):
         dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
@@ -390,25 +411,23 @@ class TextFileStore:
         path = os.path.join(dirname, filename)
         return os.path.isfile(path)
 
-    def get_gift(self, contact, gift_id):
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.GIFTS_DIR)
+    def get_gift(self, contact_id, gift_id):
+        if not self.has_gift(contact_id, gift_id):
+            raise ValueError(f'Gift {gift_id} does not exist')
+
+        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
         filename = f"{gift_id}.yaml"
         path = os.path.join(dirname, filename)
 
-        try:
-            with open(path, "r") as f:
-                lines = f.read()
-                return Gift.from_dump(gift_id, lines)
-        except OSError:
-            return "Couldn't read gift"
+        with open(path, "r") as f:
+            lines = f.read()
+            return Gift.from_dump(gift_id, lines)
 
-    def add_gift(self, contact, gift):
-        if not self.contains_contact(contact):
-            self.add_contact(contact)
+    def add_gift(self, contact_id, gift):
+        if not self.contains_contact_id(contact_id):
+            self.add_contact_id(contact_id)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.GIFTS_DIR)
+        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
 
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -418,81 +437,66 @@ class TextFileStore:
 
         textfile_content = gift.to_dump()
 
-        try:
-            with open(path, 'w') as f:
-                f.write(textfile_content)
-            return "Gift added."
-        except OSError:
-            return "Error: Gift not created."
+        with open(path, 'w') as f:
+            f.write(textfile_content)
+        return "Gift added"
 
-    def rename_gift(self, contact_id, gift, new_name):
-        assert gift.name != new_name
-        assert self.has_gift(contact_id, gift.name)
-        assert not self.has_gift(contact_id, new_name)
+    def rename_gift(self, contact_id, gift_id, new_name):
+        new_gift_id = Gift.name_to_id(new_name)
 
-        old_filename = self.get_gift_filepath(contact_id, gift.get_id())
-        new_filename = self.get_gift_filepath(contact_id, new_name)
+        if not self.has_gift(contact_id, gift_id):
+            ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
-        dirname = self.get_textfile_path_by_type(contact_id,
-                                                 self.NOTES_DIR)
+        old_path = self.get_gift_filepath(contact_id, gift_id)
+        new_path = self.get_gift_filepath(contact_id, new_gift_id)
 
-        old_path = os.path.join(dirname, old_filename)
-        new_path = os.path.join(dirname, new_filename)
+        os.rename(old_path, new_path)
+        return "Gift renamed"
 
-        try:
-            os.rename(old_path, new_path)
-            return "Gift renamed."
-        except OSError:
-            return "Error: Gift not renamed."
-
-    def edit_gift(self, contact_id, gift_id, new_content):
-        assert self.contains_contact_id(contact_id)
-        assert self.has_gift(contact_id, gift_id)
+    def edit_gift(self, contact_id, gift_id, gift):
+        if not self.has_gift(contact_id, gift_id):
+            raise ValueError(f'Gift {gift_id} doesn\'t exist')
 
         filepath = self.get_gift_filepath(contact_id, gift_id)
 
-        try:
-            with open(filepath, 'w') as f:
-                f.write(new_content)
+        dump = Gift.to_dump(gift)
 
-            return "Gift edited."
-        except OSError:
-            return "Error: Gift not edited."
+        with open(filepath, 'w') as f:
+            f.write(dump)
 
-    def delete_gift(self, contact, gift):
-        filename = f'{gift.get_id()}.yaml'
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.GIFTS_DIR)
+        return "Gift edited"
+
+    def delete_gift(self, contact_id, gift_id):
+        filename = f'{gift_id}.yaml'
+        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
         path = os.path.join(dirname, filename)
 
-        try:
-            os.remove(path)
-            # if this was the last gift, delete the directory
-            if len(os.listdir(dirname)) == 0:
-                os.rmdir(dirname)
-            return "Gift deleted."
-        except OSError:
-            return "Error: Gift not deleted."
+        os.remove(path)
+        # if this was the last gift, delete the directory
+        if len(os.listdir(dirname)) == 0:
+            os.rmdir(dirname)
 
-    def mark_gifted(self, contact, gift):
-        new_gift = copy.deepcopy(gift)
-        new_gift.gifted = True
-        return self.edit_gift(contact, gift, new_gift)
+        return "Gift deleted."
 
-    def unmark_gifted(self, contact, gift):
-        new_gift = copy.deepcopy(gift)
-        new_gift.gifted = False
-        return self.edit_gift(contact, gift, new_gift)
+    def mark_gifted(self, contact_id, gift_id):
+        gift = self.get_gift(contact_id, gift_id)
+        gift.gifted = True
+        return self.edit_gift(contact_id, gift_id, gift)
 
-    def mark_permanent(self, contact, gift):
-        new_gift = copy.deepcopy(gift)
-        new_gift.permanent = True
-        return self.edit_gift(contact, gift, new_gift)
+    def unmark_gifted(self, contact_id, gift_id):
+        gift = self.get_gift(contact_id, gift_id)
+        gift.gifted = False
+        return self.edit_gift(contact_id, gift_id, gift)
 
-    def unmark_permanent(self, contact, gift):
-        new_gift = copy.deepcopy(gift)
-        new_gift.permanent = False
-        return self.edit_gift(contact, gift, new_gift)
+    def mark_permanent(self, contact_id, gift_id):
+        gift = self.get_gift(contact_id, gift_id)
+        gift.permanent = True
+        return self.edit_gift(contact_id, gift_id, gift)
+
+    def unmark_permanent(self, contact_id, gift_id):
+        gift = self.get_gift(contact_id, gift_id)
+        gift.permanent = False
+        return self.edit_gift(contact_id, gift_id, gift)
 
     # TODO move to new gifts module, filesystem-based analog to notes module
 

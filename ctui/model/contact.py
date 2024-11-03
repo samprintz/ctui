@@ -13,6 +13,11 @@ class Contact:
         # TODO Contact shouldn't have core
         self.core = core
 
+        # TODO rebuild as model class, not as business layer
+        # but where to put the business logic?
+        # self.core.has_contact_attribute(contact, attribute)
+        # self.core.add_detail_to_contact(contact, detail)
+
         # TODO interface for notes and gifts
         # TODO interface for note and gift *stores*
         # TODO add contact id as attribute to notes and gifts to remove some of these methods here from Contact?
@@ -26,13 +31,13 @@ class Contact:
 
     def has_details(self):
         return self.core.rdfstore.has_attributes(self) or \
-            self.core.textfilestore.has_gifts(self) or \
-            self.core.textfilestore.has_notes(self)
+            self.core.textfilestore.has_gifts(self.get_id()) or \
+            self.core.textfilestore.has_notes(self.get_id())
 
     def load_details(self):
         self.attributes = self.get_attributes()
-        self.gifts = self.get_gifts()
-        self.notes = self.get_notes()
+        self.gifts = self.core.textfilestore.get_gifts(self.get_id())
+        self.notes = self.core.textfilestore.get_notes(self.get_id())
 
     # attributes
 
@@ -68,94 +73,7 @@ class Contact:
 
         return self.core.rdfstore.delete_attribute(self, attribute)
 
-    # gifts
-
-    def has_gifts(self):
-        return self.core.textfilestore.has_gifts(self)
-
-    def get_gifts(self):
-        return self.core.textfilestore.get_gifts(self)
-
-    def has_gift(self, gift_id):
-        return self.core.textfilestore.has_gift(self.get_id(), gift_id)
-
-    def get_gift(self, gift_id):
-        if not self.has_gift(gift_id):
-            return "Error: Gift doesn't exist."
-
-        return self.core.textfilestore.get_gift(self, gift_id)
-
-    def add_gift(self, gift_name):
-        Gift.validate_name(gift_name)
-
-        gift_id = gift_name.replace(" ", "_")
-
-        if not self.core.textfilestore.contains_contact(self):
-            self.core.textfilestore.add_contact(self)
-
-        if self.has_gift(gift_id):
-            return self.edit_gift(gift_id)
-
-        dirname = self.get_gifts_path()
-
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-
-        try:
-            content = self.core.editor.add(dirname, gift_id)
-            gift = Gift.from_dump(gift_id, content)
-        except OSError:
-            return "Error: Gift couldn't be added."
-
-        return self.core.textfilestore.add_gift(self, gift)
-
-    def edit_gift(self, gift_id):
-        Gift.validate_name(gift_id)
-
-        if not self.has_gift(gift_id):
-            gift_name = gift_id.replace("_", " ")
-            return self.add_gift(gift_name)
-
-        filepath = self.core.textfilestore.get_gift_filepath(self.get_id(),
-                                                             gift_id)
-
-        try:
-            new_content = self.core.editor.edit(filepath)
-        except OSError:
-            return "Error: Gift couldn't be edited."
-
-        return self.core.textfilestore.edit_gift(self.get_id(), gift_id,
-                                                 new_content)
-
-    def delete_gift(self, gift):
-        if not self.has_gift(gift.get_id()):
-            return "Error: {} doesn't own gift {}.".format(
-                self.name, gift.name)
-
-        return self.core.textfilestore.delete_gift(self, gift)
-
-    def mark_gifted(self, gift):
-        return self.core.textfilestore.mark_gifted(self, gift)
-
-    def unmark_gifted(self, gift):
-        return self.core.textfilestore.unmark_gifted(self, gift)
-
-    def mark_permanent(self, gift):
-        return self.core.textfilestore.mark_permanent(self, gift)
-
-    def unmark_permanent(self, gift):
-        return self.core.textfilestore.unmark_permanent(self, gift)
-
     # notes
-
-    def has_notes(self):
-        return self.core.textfilestore.has_notes(self)
-
-    def has_encrypted_notes(self):
-        return self.core.textfilestore.has_encrypted_notes(self)
-
-    def get_notes(self):
-        return self.core.textfilestore.get_notes(self)
 
     def get_notes_path(self):
         return self.core.textfilestore.get_textfile_path_by_type(self.get_id(),
@@ -224,18 +142,6 @@ class Contact:
         return self.core.textfilestore.rename_note(self.get_id(), note,
                                                    new_name)
 
-    def rename_gift(self, gift, new_name):
-        Gift.validate_name(new_name)
-
-        if gift.name == new_name:
-            return "Warning: Name unchanged."
-
-        if self.has_gift(new_name):
-            return "Error: Gift {} already exists.".format(new_name)
-
-        return self.core.textfilestore.rename_gift(self.get_id(), gift,
-                                                   new_name)
-
     def delete_note(self, note_id):
         if not self.has_note(note_id):
             return "Error: No note for \"{}\".".format(note_id)
@@ -298,7 +204,7 @@ class Contact:
                 return "Failed to show encrypted note content."
 
     def show_all_encrypted_notes(self, passphrase=None):
-        if not self.has_encrypted_notes():
+        if not self.core.textfilestore.has_encrypted_notes(self.get_id()):
             return "No encrypted notes found."
 
         result = True

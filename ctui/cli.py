@@ -60,19 +60,7 @@ class CLI:
                     found_in_new_commands = True
 
             if not found_in_new_commands:
-                if command in ('edit-gift'):
-                    name = " ".join(args[1:])
-                    new_gift = Gift(name)
-                    old_gift = self.detail
-                    msg = self.contact.edit_gift(old_gift, new_gift)
-                    self.detail = new_gift
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('delete-gift'):
-                    name = " ".join(args[1:])
-                    gift = Gift(name)
-                    msg = self.contact.delete_gift(gift)
-                    self.action = Action.DETAIL_DELETED
-                elif command in ('add-note'):
+                if command in ('add-note'):
                     note_id = " ".join(args[1:])
                     msg = self.contact.add_note(note_id)
                     self.detail = Note(note_id, None)
