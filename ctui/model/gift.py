@@ -88,3 +88,7 @@ class Gift:
     @classmethod
     def id_to_name(cls, gift_id):
         return gift_id.replace('_', ' ')
+
+    @classmethod
+    def id_to_filename(cls, gift_id):
+        return f'{gift_id}.yaml'

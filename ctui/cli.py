@@ -56,33 +56,21 @@ class CLI:
             for command_class in Command.__subclasses__():
                 if command in command_class.names:
                     command_instance = command_class(self.core)
+
+                    # TODO pass a status snapshop object with
+                    # focused_contact, focused_detail, focused_contact_pos, focused_detail_pos?
+                    # TODO pass the args already joined (as id or name)? if not everywhere, then dependent on a class attribute?
+                    # also validate it here?
                     msg = command_instance.execute(args[1:])
+                    # TODO execute view update commands (focus_detail() etc.) here depending on class attributes?
+
                     found_in_new_commands = True
 
             if not found_in_new_commands:
-                if command in ('add-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.add_note(note_id)
-                    self.detail = Note(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('add-encrypted-note'):
+                if command in ('add-encrypted-note'):
                     note_id = " ".join(args[1:])
                     msg = self.contact.add_encrypted_note(note_id)
                     self.detail = EncryptedNote(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('rename-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.rename_note(self.detail, note_id)
-                    self.detail = Note(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('delete-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.delete_note(note_id)
-                    self.action = Action.DETAIL_DELETED
-                elif command in ('edit-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.edit_note(note_id)
-                    self.detail = Note(note_id, None)
                     self.action = Action.DETAIL_ADDED_OR_EDITED
                 elif command in ('encrypt-note'):
                     note_id = " ".join(args[1:])
@@ -151,35 +139,11 @@ class CLI:
 
     # notes
 
-    def add_note(self, contact):
-        self.contact = contact
-        note_id = datetime.strftime(date.today(), "%Y%m%d")
-        command = 'add-note {}'.format(note_id)
-        self.core.ui.console.show_console(command)
-
     def add_encrypted_note(self, contact):
         self.contact = contact
         note_id = datetime.strftime(date.today(), "%Y%m%d")
         command = 'add-encrypted-note {}'.format(note_id)
         self.core.ui.console.show_console(command)
-
-    def rename_note(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        command = 'rename-note {}'.format(note.note_id)
-        self.core.ui.console.show_console(command)
-
-    def delete_note(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        command = 'delete-note {}'.format(note.note_id)
-        self.core.ui.console.show_console(command)
-
-    def edit_note(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        args = 'edit-note {}'.format(note.note_id).split()
-        self.core.cli.handle(args)
 
     def encrypt_note(self, contact, note):
         self.contact = contact

@@ -1,6 +1,7 @@
 import pyperclip
 
-from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift
+from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift, \
+    EditNote, RenameNote, DeleteNote, DeleteGift
 from ctui.component.list_entry import CListEntry
 
 
@@ -65,7 +66,7 @@ class GiftEntry(DetailEntry):
 
     def keypress(self, size, key):
         if key == 'enter':  # TODO special treatment of enter (must be calling super())
-            EditGift(self.core).execute(self.gift.name)
+            EditGift(self.core).execute([self.gift.name])
             return
 
         key = super(GiftEntry, self).keypress(size, key)
@@ -96,7 +97,7 @@ class NoteEntry(DetailEntry):
 
     def keypress(self, size, key):
         if key == 'enter':  # TODO special treatment of enter (must be calling super())
-            self.core.cli.edit_note(self.contact, self.note)
+            EditNote(self.core).execute([self.note.note_id])
             return
 
         key = super(NoteEntry, self).keypress(size, key)
@@ -108,11 +109,14 @@ class NoteEntry(DetailEntry):
 
         match command_id:
             case 'edit_note':
-                self.core.cli.edit_note(self.contact, self.note)
+                command = f'{EditNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'rename_note':
-                self.core.cli.rename_note(self.contact, self.note)
+                command = f'{RenameNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'delete_note':
-                self.core.cli.delete_note(self.contact, self.note)
+                command = f'{DeleteNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'encrypt_note':
                 self.core.cli.encrypt_note(self.contact, self.note)
             case 'toggle_note_encryption':
@@ -149,11 +153,14 @@ class EncryptedNoteEntry(DetailEntry):
 
         match command_id:
             case 'edit_note':
-                self.core.cli.edit_note(self.contact, self.note)
+                command = f'{EditNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'rename_note':
-                self.core.cli.rename_note(self.contact, self.note)
+                command = f'{RenameNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'delete_note':
-                self.core.cli.delete_note(self.contact, self.note)
+                command = f'{DeleteNote.name} {self.note.note_id}'
+                self.core.ui.console.show_console(command)
             case 'encrypt_note':
                 self.core.cli.encrypt_note(self.contact, self.note)
             case 'decrypt_note':

@@ -36,16 +36,21 @@ class TextFileStore:
             filename)
 
     def get_gift_filepath(self, contact_id, gift_id):
-        filename = f'{gift_id}.yaml'
-        return os.path.join(
-            self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR),
-            filename)
+        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
+        filename = Gift.id_to_filename(gift_id)
+        return os.path.join(dirname, filename)
 
-    def prepare_gift_file(self, contact_id):
+    def create_note_dir(self, contact_id):
+        return self.create_textfile_dir(contact_id, self.NOTES_DIR)
+
+    def create_gift_dir(self, contact_id):
+        return self.create_textfile_dir(contact_id, self.GIFTS_DIR)
+
+    def create_textfile_dir(self, contact_id, textfile_type):
         if not self.contains_contact_id(contact_id):
             self.add_contact(Contact(contact_id, None))  # TODO
 
-        path = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
+        path = self.get_textfile_path_by_type(contact_id, textfile_type)
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -182,44 +187,36 @@ class TextFileStore:
 
     def has_note(self, contact_id, note_id):
         filepath = self.get_note_filepath(contact_id, note_id)
-        return os.path.isfile(filepath) or os.path.isfile(
-            filepath + ".gpg")  # plain or encrypted notes
+        # plain or encrypted notes
+        return os.path.isfile(filepath) or os.path.isfile(filepath + ".gpg")
 
     def note_is_encrypted(self, contact_id, note_id):
         filepath = self.get_note_filepath(contact_id, note_id) + ".gpg"
         return os.path.isfile(filepath)
 
-    def get_note(self, contact, note_id):
-        assert self.has_note(contact.get_id(), note_id)
+    def get_note(self, contact_id, note_id):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note {note_id} doesn\'t exist')
 
-        filepath = self.get_note_filepath(contact.get_id(), note_id)
+        filepath = self.get_note_filepath(contact_id, note_id)
 
-        try:
-            with open(filepath, "r") as f:
-                content = f.read()
-                return content.strip()
-        except OSError:
-            return "Couldn't read note"
+        with open(filepath, "r") as f:
+            content = f.read()
+            return Note.from_dump(note_id, content)
 
-    def add_note(self, contact, note):
-        assert not self.has_note(contact.get_id(), note.note_id)
+    def add_note(self, contact_id, note):
+        if self.has_note(contact_id, note.note_id):
+            raise ValueError(f'Note "{note.note_id}" already exists')
 
-        if not self.contains_contact(contact):
-            self.add_contact(contact)
+        self.create_note_dir(contact_id)
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+        filepath = self.get_note_filepath(contact_id, note.note_id)
+        content = note.to_dump()
 
-        filepath = self.get_note_filepath(contact.get_id(), note.note_id)
+        with open(filepath, 'w') as f:
+            f.write(content)
 
-        try:
-            with open(filepath, 'w') as f:
-                f.write(note.content)
-            return "Note added."
-        except OSError:
-            return "Error: Note not created."
+        return "Note added"
 
     def add_encrypted_note(self, contact, note):
         assert not self.has_note(contact.get_id(), note.note_id)
@@ -243,57 +240,56 @@ class TextFileStore:
         except OSError:
             return "Error: Note not created."
 
-    def rename_note(self, contact_id, note, new_date):
-        assert note.note_id != new_date
-        assert self.has_note(contact_id, note.note_id)
-        assert not self.has_note(contact_id, new_date)
+    def rename_note(self, contact_id, note_id, new_name):
+        new_note_id = Note.name_to_id(new_name)
 
-        old_filepath = self.get_note_filepath(contact_id, note.note_id)
-        new_filepath = self.get_note_filepath(contact_id, new_date)
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        if self.note_is_encrypted(contact_id, note.note_id):
+        if self.has_note(contact_id, new_note_id):
+            raise ValueError(
+                f'Can\'t rename note as "{new_note_id}" already exists')
+
+        old_filepath = self.get_note_filepath(contact_id, note_id)
+        new_filepath = self.get_note_filepath(contact_id, new_note_id)
+
+        if self.note_is_encrypted(contact_id, note_id):
             old_filepath = f'{old_filepath}.gpg'
             new_filepath = f'{new_filepath}.gpg'
 
-        try:
-            os.rename(old_filepath, new_filepath)
-            return "Note renamed."
-        except OSError:
-            return "Error: Note not renamed."
+        os.rename(old_filepath, new_filepath)
+        return "Note renamed"
 
-    def edit_note(self, contact_id, note_id, new_content):
-        assert self.contains_contact_id(contact_id)
-        assert self.has_note(contact_id, note_id)
+    def edit_note(self, contact_id, note_id, note):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
         filepath = self.get_note_filepath(contact_id, note_id)
 
-        try:
-            with open(filepath, 'w') as f:
-                f.write(new_content)
+        dump = note.to_dump()
 
-            return "Note edited."
-        except OSError:
-            return "Error: Note not edited."
+        with open(filepath, 'w') as f:
+            f.write(dump)
 
-    def delete_note(self, contact, note_id):
-        assert self.has_note(contact.get_id(), note_id)
+        return "Note edited"
 
-        filepath = self.get_note_filepath(contact.get_id(), note_id)
-        if self.note_is_encrypted(contact.get_id(), note_id):
+    def delete_note(self, contact_id, note_id):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note {note_id} doesn\'t exist')
+
+        filepath = self.get_note_filepath(contact_id, note_id)
+
+        if self.note_is_encrypted(contact_id, note_id):
             filepath = f'{filepath}.gpg'
 
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
-        try:
-            os.remove(filepath)
+        os.remove(filepath)
 
-            # if this was the last note, delete the directory
-            if len(os.listdir(dirname)) == 0:
-                os.rmdir(dirname)
+        # if this was the last note, delete the directory
+        dirname = self.get_textfile_path_by_type(contact_id, self.NOTES_DIR)
+        if len(os.listdir(dirname)) == 0:
+            os.rmdir(dirname)
 
-            return "Note deleted."
-        except OSError:
-            return "Error: Note not deleted."
+        return "Note deleted"
 
     def encrypt_note(self, contact, note_id):
         assert self.has_note(contact.get_id(), note_id)
@@ -406,39 +402,31 @@ class TextFileStore:
         return gifts
 
     def has_gift(self, contact_id, gift_id):
-        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
-        filename = f"{gift_id}.yaml"
-        path = os.path.join(dirname, filename)
-        return os.path.isfile(path)
+        filepath = self.get_gift_filepath(contact_id, gift_id)
+        return os.path.isfile(filepath)
 
     def get_gift(self, contact_id, gift_id):
         if not self.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift {gift_id} does not exist')
 
-        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
-        filename = f"{gift_id}.yaml"
-        path = os.path.join(dirname, filename)
+        filepath = self.get_gift_filepath(contact_id, gift_id)
 
-        with open(path, "r") as f:
-            lines = f.read()
-            return Gift.from_dump(gift_id, lines)
+        with open(filepath, "r") as f:
+            content = f.read()
+            return Gift.from_dump(gift_id, content)
 
     def add_gift(self, contact_id, gift):
-        if not self.contains_contact_id(contact_id):
-            self.add_contact_id(contact_id)
+        if self.has_gift(contact_id, gift.get_id()):
+            raise ValueError(f'Gift "{gift.get_id()}" already exists')
 
-        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
+        self.create_gift_dir(contact_id)
 
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+        filepath = self.get_gift_filepath(contact_id, gift.get_id())
+        content = gift.to_dump()
 
-        filename = f'{gift.get_id()}.yaml'
-        path = os.path.join(dirname, filename)
+        with open(filepath, 'w') as f:
+            f.write(content)
 
-        textfile_content = gift.to_dump()
-
-        with open(path, 'w') as f:
-            f.write(textfile_content)
         return "Gift added"
 
     def rename_gift(self, contact_id, gift_id, new_name):
@@ -447,10 +435,13 @@ class TextFileStore:
         if not self.has_gift(contact_id, gift_id):
             ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
-        old_path = self.get_gift_filepath(contact_id, gift_id)
-        new_path = self.get_gift_filepath(contact_id, new_gift_id)
+        if self.has_gift(contact_id, new_gift_id):
+            ValueError(f'Can\'t rename note as "{new_gift_id}" already exist')
 
-        os.rename(old_path, new_path)
+        old_filepath = self.get_gift_filepath(contact_id, gift_id)
+        new_filepath = self.get_gift_filepath(contact_id, new_gift_id)
+
+        os.rename(old_filepath, new_filepath)
         return "Gift renamed"
 
     def edit_gift(self, contact_id, gift_id, gift):
@@ -459,7 +450,7 @@ class TextFileStore:
 
         filepath = self.get_gift_filepath(contact_id, gift_id)
 
-        dump = Gift.to_dump(gift)
+        dump = gift.to_dump()
 
         with open(filepath, 'w') as f:
             f.write(dump)
@@ -467,16 +458,19 @@ class TextFileStore:
         return "Gift edited"
 
     def delete_gift(self, contact_id, gift_id):
-        filename = f'{gift_id}.yaml'
-        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
-        path = os.path.join(dirname, filename)
+        if not self.has_gift(contact_id, gift_id):
+            raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
-        os.remove(path)
+        filepath = self.get_gift_filepath(contact_id, gift_id)
+
+        os.remove(filepath)
+
         # if this was the last gift, delete the directory
+        dirname = self.get_textfile_path_by_type(contact_id, self.GIFTS_DIR)
         if len(os.listdir(dirname)) == 0:
             os.rmdir(dirname)
 
-        return "Gift deleted."
+        return "Gift deleted"
 
     def mark_gifted(self, contact_id, gift_id):
         gift = self.get_gift(contact_id, gift_id)

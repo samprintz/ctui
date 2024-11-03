@@ -197,18 +197,17 @@ class Editor:
     def __init__(self, editor_name):
         self.editor = os.environ.get('EDITOR', editor_name)
 
-    def add(self, dirname, filename):
-        path = dirname + '/' + filename + '.txt'
-        temp_path = path + '.tmp'
+    def add(self, filepath):
+        temp_filepath = filepath + '.tmp'
 
         try:
-            with open(temp_path, 'w') as tf:
+            with open(temp_filepath, 'w') as tf:
                 call([self.editor, tf.name])
 
-            with open(temp_path, 'r') as tf:
+            with open(temp_filepath, 'r') as tf:
                 content = tf.read()
 
-            os.remove(temp_path)
+            os.remove(temp_filepath)
 
         except OSError:
             raise OSError  # TODO

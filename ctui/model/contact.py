@@ -86,33 +86,6 @@ class Contact:
     def has_note(self, note_id):
         return self.core.textfilestore.has_note(self.get_id(), note_id)
 
-    def get_note(self, note_id):
-        if not self.has_note(note_id):
-            return "Error: Note doesn't exist."
-        return self.core.textfilestore.get_note(self, note_id)
-
-    def add_note(self, note_id):
-        Note.validate_name(note_id)
-
-        if not self.core.textfilestore.contains_contact(self):
-            self.core.textfilestore.add_contact(self)
-
-        if self.has_note(note_id):
-            return self.edit_note(note_id)
-
-        dirname = self.get_notes_path()
-
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-
-        try:
-            content = self.core.editor.add(dirname, note_id)
-            note = Note(note_id, content)
-        except OSError:
-            return "Error: Note couldn't be added."
-
-        return self.core.textfilestore.add_note(self, note)
-
     def add_encrypted_note(self, note_id):
         Note.validate_name(note_id)
 
@@ -120,50 +93,16 @@ class Contact:
             self.core.textfilestore.add_contact(self)
 
         if self.has_note(note_id):
-            return self.edit_note(note_id)
+            return self.core.textfilestore.edit_note(self.get_id(), note_id)
 
         try:
-            content = self.core.editor.add(self.get_notes_path(), note_id)
+            filepath = os.path.join(self.get_notes_path(), note_id)
+            content = self.core.editor.add(filepath)
             note = EncryptedNote(note_id, content)
         except OSError:
             return "Error: Note couldn't be added."
 
         return self.core.textfilestore.add_encrypted_note(self, note)
-
-    def rename_note(self, note, new_name):
-        Note.validate_name(new_name)
-
-        if note.note_id == new_name:
-            return "Warning: Name unchanged."
-
-        if self.has_note(new_name):
-            return "Error: Note {} already exists.".format(new_name)
-
-        return self.core.textfilestore.rename_note(self.get_id(), note,
-                                                   new_name)
-
-    def delete_note(self, note_id):
-        if not self.has_note(note_id):
-            return "Error: No note for \"{}\".".format(note_id)
-
-        return self.core.textfilestore.delete_note(self, note_id)
-
-    def edit_note(self, note_id):
-        Note.validate_name(note_id)
-
-        if not self.has_note(note_id):
-            return self.add_note(note_id)
-
-        filepath = self.core.textfilestore.get_note_filepath(self.get_id(),
-                                                             note_id)
-
-        try:
-            new_content = self.core.editor.edit(filepath)
-        except OSError:
-            return "Error: Note couldn't be edited."
-
-        return self.core.textfilestore.edit_note(self.get_id(), note_id,
-                                                 new_content)
 
     def encrypt_note(self, note_id):
         if not self.core.textfilestore.contains_contact(self):

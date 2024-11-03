@@ -2,6 +2,7 @@ from ctui.enum.view import View
 from ctui.model.attribute import Attribute
 from ctui.model.contact import Contact
 from ctui.model.gift import Gift
+from ctui.model.note import Note
 
 
 class Command:
@@ -120,6 +121,37 @@ class DeleteAttribute(Command):
         return msg
 
 
+class AddNote(Command):
+    name = 'add-note'
+    names = ['add-note']
+
+    def execute(self, args):
+        # TODO refactor, is very similar to add-gift (create interface for both?)
+
+        contact = self.core.ui.list_view.get_focused_contact()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if self.core.textfilestore.has_gift(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" does already exist')
+
+        # TODO use random temp path instead?
+        self.core.textfilestore.create_note_dir(contact.get_id())
+        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
+                                                             note_id)
+
+        content = self.core.editor.add(filepath)
+        note = Note.from_dump(note_id, content)
+        msg = self.core.textfilestore.add_note(contact.get_id(), note)
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(note)
+
+        return msg
+
+
 class RenameNote(Command):
     name = 'rename-note'
     names = ['rename-note']
@@ -140,6 +172,66 @@ class RenameNote(Command):
         return msg
 
 
+class EditNote(Command):
+    name = 'edit-note'
+    names = ['edit-note']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
+                                                             note_id)
+
+        # TODO use random temp path instead?
+        self.core.textfilestore.create_note_dir(contact.get_id())
+
+        new_content = self.core.editor.edit(filepath)
+        note = Note.from_dump(note_id, new_content)
+        msg = self.core.textfilestore.edit_note(contact.get_id(), note_id, note)
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(note)
+
+        return msg
+
+
+class DeleteNote(Command):
+    name = 'delete-note'
+    names = ['delete-note']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        msg = self.core.textfilestore.delete_note(self, contact.get_id(),
+                                                  note_id)
+
+        self.core.ui.set_contact_details(contact)
+
+        new_detail_pos = 0
+        if contact.has_details():  # don't focus details column if contact has no details
+            detail_count = self.core.ui.detail_view.get_tab_body().get_count()
+            new_detail_pos = min(old_detail_pos, detail_count - 1)
+            self.core.ui.focus_detail_view()
+        self.core.ui.focus_detail_pos(new_detail_pos)
+
+        return msg
+
+
 class AddGift(Command):
     name = 'add-gift'
     names = ['add-gift']
@@ -149,15 +241,17 @@ class AddGift(Command):
 
         gift_name = " ".join(args)
         Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        gift_id = Gift.name_to_id(gift_name)
 
         if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_name}" does already exist')
 
         # TODO use random temp path instead?
-        path = self.core.textfilestore.prepare_gift_file(contact.get_id())
+        self.core.textfilestore.create_gift_dir(contact.get_id())
+        filepath = self.core.textfilestore.get_gift_filepath(contact.get_id(),
+                                                             gift_id)
 
-        content = self.core.editor.edit(path)
+        content = self.core.editor.add(filepath)
         gift = Gift.from_dump(gift_id, content)
         msg = self.core.textfilestore.add_gift(contact.get_id(), gift)
 
@@ -207,21 +301,18 @@ class EditGift(Command):
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
-
-        # TODO use random temp path instead?
-        path = self.core.textfilestore.prepare_gift_file(contact.get_id())
+        if not self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+            raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
         filepath = self.core.textfilestore.get_gift_filepath(contact.get_id(),
                                                              gift_id)
-        with open(filepath) as f:
-            content = f.read()
 
-        new_content = self.core.editor.edit(path, content)
+        # TODO use random temp path instead?
+        self.core.textfilestore.create_gift_dir(contact.get_id())
+
+        new_content = self.core.editor.edit(filepath)
         gift = Gift.from_dump(gift_id, new_content)
-        msg = self.core.textfilestore.edit_gift(self, contact.get_id(), gift_id,
-                                                gift)
+        msg = self.core.textfilestore.edit_gift(contact.get_id(), gift_id, gift)
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
@@ -239,10 +330,10 @@ class DeleteGift(Command):
 
         gift_name = " ".join(args)
         Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        gift_id = Gift.name_to_id(gift_name)
 
         if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
         msg = self.core.textfilestore.delete_gift(self, contact.get_id(),
                                                   gift_id)
