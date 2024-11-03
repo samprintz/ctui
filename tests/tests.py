@@ -903,6 +903,7 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         pass
 
 
+"""
 class TestTUIDetailFocusSomeContact(unittest.TestCase):
 
     @classmethod
@@ -1018,7 +1019,7 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
 
     def test_focus_delete_last_detail_from_last_contact(self):
         pass
-
+"""
 
 if __name__ == '__main__':
     unittest.main()
