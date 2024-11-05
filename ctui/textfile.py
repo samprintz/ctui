@@ -131,7 +131,7 @@ class TextFileStore:
         return self.has_entries(contact_id, self.NOTES_DIR)
 
     def has_encrypted_notes(self, contact_id):
-        dirname = self.get_textfile_path(contact_id)
+        dirname = self.get_textfile_path_by_type(contact_id, self.NOTES_DIR)
         if not self.has_notes(contact_id):
             return False
         for file in os.listdir(dirname):
@@ -152,11 +152,11 @@ class TextFileStore:
 
                 # plain notes
                 if not filename.endswith(".gpg"):
-                    note_id = filename.replace('.txt', '')
                     file_path = os.path.join(dirname, filename)
 
                     with open(file_path, "r") as f:
                         content = f.read().strip()
+                        note_id = filename.replace('.txt', '')
                         note = Note(note_id, content)
                         notes.append(note)
 
@@ -168,22 +168,19 @@ class TextFileStore:
 
         return notes
 
-    def get_encrypted_notes(self, contact):
+    def get_encrypted_notes(self, contact_id):
         """
         Read encrypted notes of a given contact and return a list of them.
         """
-        dirname = self.get_textfile_path_by_type(contact.get_id(),
-                                                 self.NOTES_DIR)
+        dirname = self.get_textfile_path_by_type(contact_id, self.NOTES_DIR)
         notes = []
-        try:
-            for filename in sorted(os.listdir(dirname)):
-                if filename.endswith(".gpg"):
-                    note_id = filename.replace('.txt', '').replace('.gpg', '')
-                    note = EncryptedNote(note_id)
-                    notes.append(note)
-            return notes
-        except FileNotFoundError:
-            return None
+
+        for filename in sorted(os.listdir(dirname)):
+            if filename.endswith(".gpg"):
+                note_id = filename.replace('.txt', '').replace('.gpg', '')
+                note = EncryptedNote(note_id)
+                notes.append(note)
+        return notes
 
     def has_note(self, contact_id, note_id):
         filepath = self.get_note_filepath(contact_id, note_id)
@@ -218,27 +215,26 @@ class TextFileStore:
 
         return "Note added"
 
-    def add_encrypted_note(self, contact, note):
-        assert not self.has_note(contact.get_id(), note.note_id)
+    def add_encrypted_note(self, contact_id, note):
+        if self.has_note(contact_id, note.note_id):
+            raise ValueError(f'Note "{note.note_id}" already exists')
 
-        if not self.contains_contact(contact):
-            self.add_contact(contact)
+        self.create_note_dir(contact_id)
 
-        filepath = self.get_note_filepath(contact.get_id(), note.note_id)
+        filepath = self.get_note_filepath(contact_id, note.note_id)
 
-        try:
-            # write to (normal) file
-            with open(filepath, 'w') as f:
-                f.write(note.content)
-            # encrypt that file
-            with open(filepath, 'rb') as f:
-                status = self.gpg.encrypt_file(
-                    f, recipients=[self.gpg_keyid], output=f'{filepath}.gpg')
-            # delete plain text file
-            os.remove(filepath)
-            return f"Note added (ok: {status.ok})."
-        except OSError:
-            return "Error: Note not created."
+        # write to (normal) file
+        with open(filepath, 'w') as f:
+            f.write(note.content)
+
+        # encrypt that file
+        with open(filepath, 'rb') as f:
+            status = self.gpg.encrypt_file(
+                f, recipients=[self.gpg_keyid], output=f'{filepath}.gpg')
+
+        # delete plain text file
+        os.remove(filepath)
+        return f'Note added (ok: {status.ok}).'
 
     def rename_note(self, contact_id, note_id, new_name):
         new_note_id = Note.name_to_id(new_name)
@@ -291,78 +287,69 @@ class TextFileStore:
 
         return "Note deleted"
 
-    def encrypt_note(self, contact, note_id):
-        assert self.has_note(contact.get_id(), note_id)
+    def encrypt_note(self, contact_id, note_id):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        filepath_plain = self.get_note_filepath(contact_id, note_id)
         filepath_encrypt = f'{filepath_plain}.gpg'
 
-        # check if key available
         if not self.is_key_in_keyring():
-            return "GPG key not found in keyring"
+            raise ValueError('GPG key not found in keyring')
 
-        try:
-            # encrypt file
-            with open(filepath_plain,
-                      'rb') as f:  # "rb" is important, "r" doesn't work
-                status = self.gpg.encrypt_file(
-                    f, recipients=[self.gpg_keyid], output=filepath_encrypt)
-            # delete plain file
-            if status.ok:
-                os.remove(filepath_plain)
-            return f"Note encrypted (ok: {status.ok})."
-        except OSError:
-            return "Error: Note not encrypted."
+        # "rb" is important, "r" doesn't work
+        with open(filepath_plain, 'rb') as f:
+            status = self.gpg.encrypt_file(f, recipients=[self.gpg_keyid],
+                                           output=filepath_encrypt)
 
-    def decrypt_note(self, contact, note_id, passphrase=None):
-        assert self.has_note(contact.get_id(), note_id)
+        # delete plain file
+        if status.ok:
+            os.remove(filepath_plain)
 
-        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        return f'Note encrypted (ok: {status.ok})'
+
+    def decrypt_note(self, contact_id, note_id, passphrase=None):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        filepath_plain = self.get_note_filepath(contact_id, note_id)
         filepath_encrypt = f'{filepath_plain}.gpg'
 
-        # check if key available
         if not self.is_key_in_keyring():
-            return "GPG key not found in keyring"
+            raise ValueError('GPG key not found in keyring')
 
-        try:
-            # decrypt file
-            with open(filepath_encrypt, 'rb') as f:
-                # passphrase is always None, the gpg-agent is taking care of it
-                status = self.gpg.decrypt_file(
-                    f, passphrase=passphrase, output=filepath_plain)
-            if status.ok:
-                # delete encrypted file
-                os.remove(filepath_encrypt)
-                return "Note decrypted"
-            else:
-                return "Wrong passphrase"
-        except OSError:
-            return "Error: Note not decrypted."
+        with open(filepath_encrypt, 'rb') as f:
+            # passphrase is always None, the gpg-agent is taking care of it
+            status = self.gpg.decrypt_file(f, passphrase=passphrase,
+                                           output=filepath_plain)
+        if status.ok:
+            # delete encrypted file
+            os.remove(filepath_encrypt)
+            return "Note decrypted"
+        else:
+            return "Wrong passphrase"
 
-    def get_encrypted_note_text(self, contact, note_id, passphrase=None):
-        assert self.has_note(contact.get_id(), note_id)
+    def get_encrypted_note_text(self, contact_id, note_id, passphrase=None):
+        if not self.has_note(contact_id, note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        filepath_plain = self.get_note_filepath(contact.get_id(), note_id)
+        filepath_plain = self.get_note_filepath(contact_id, note_id)
         filepath_encrypt = f'{filepath_plain}.gpg'
 
-        try:
-            # decrypt file
-            with open(filepath_encrypt, 'rb') as f:
-                # passphrase is always None, the gpg-agent is taking care of it
-                status = self.gpg.decrypt_file(
-                    f, passphrase=passphrase, output=filepath_plain)
-            if status.ok:
-                # read decrypted file
-                with open(filepath_plain) as f:
-                    content = f.read()
-                # delete decrypted file again
-                # TODO Is there a way to not even create the decrypted file?
-                os.remove(filepath_plain)
-                return content.strip()
-            else:
-                return "Wrong passphrase"
-        except OSError:
-            return "Error: Note not decrypted."
+        with open(filepath_encrypt, 'rb') as f:
+            # passphrase is always None, the gpg-agent is taking care of it
+            status = self.gpg.decrypt_file(f, passphrase=passphrase,
+                                           output=filepath_plain)
+        if status.ok:
+            # read decrypted file
+            with open(filepath_plain) as f:
+                content = f.read()
+            # delete decrypted file again
+            # TODO Is there a way to not even create the decrypted file?
+            os.remove(filepath_plain)
+            return content.strip()
+        else:
+            return "Wrong passphrase"
 
     def is_key_in_keyring(self):
         found_public_key = False

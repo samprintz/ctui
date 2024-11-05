@@ -86,93 +86,10 @@ class Contact:
     def has_note(self, note_id):
         return self.core.textfilestore.has_note(self.get_id(), note_id)
 
-    def add_encrypted_note(self, note_id):
-        Note.validate_name(note_id)
-
-        if not self.core.textfilestore.contains_contact(self):
-            self.core.textfilestore.add_contact(self)
-
-        if self.has_note(note_id):
-            return self.core.textfilestore.edit_note(self.get_id(), note_id)
-
-        try:
-            filepath = os.path.join(self.get_notes_path(), note_id)
-            content = self.core.editor.add(filepath)
-            note = EncryptedNote(note_id, content)
-        except OSError:
-            return "Error: Note couldn't be added."
-
-        return self.core.textfilestore.add_encrypted_note(self, note)
-
-    def encrypt_note(self, note_id):
-        if not self.core.textfilestore.contains_contact(self):
-            return "Contact \"{}\" not found.".format(self.name)
-
-        if not self.has_note(note_id):
-            return "Note \"{}\" not found.".format(note_id)
-
-        return self.core.textfilestore.encrypt_note(self, note_id)
-
-    def decrypt_note(self, note_id, passphrase=None):
-        if not self.core.textfilestore.contains_contact(self):
-            return "Contact \"{}\" not found.".format(self.name)
-
-        if not self.has_note(note_id):
-            return "Note \"{}\" not found.".format(note_id)
-
-        return self.core.textfilestore.decrypt_note(self, note_id, passphrase)
-
-    def toggle_note_encryption(self, note_id, passphrase=None):
-        if not self.core.textfilestore.contains_contact(self):
-            return "Contact \"{}\" not found.".format(self.name)
-
-        if not self.has_note(note_id):
-            return "Note \"{}\" not found.".format(note_id)
-
-        if self.core.memorystore.has_note(self, note_id):  # hide
-            content = self.core.memorystore.delete_note(self, note_id)
-            return "Hide encrypted note content."
-        else:  # show
-            content = self.core.textfilestore.get_encrypted_note_text(self,
-                                                                      note_id,
-                                                                      passphrase)
-            note = EncryptedNote(note_id, content)
-            if self.core.memorystore.add_note(self, note):
-                return "Show encrypted note content."
-            else:
-                return "Failed to show encrypted note content."
-
-    def show_all_encrypted_notes(self, passphrase=None):
-        if not self.core.textfilestore.has_encrypted_notes(self.get_id()):
-            return "No encrypted notes found."
-
-        result = True
-        for note in self.core.textfilestore.get_encrypted_notes(self):
-            content = self.core.textfilestore.get_encrypted_note_text(self,
-                                                                      note.note_id,
-                                                                      passphrase)
-            note = EncryptedNote(note.note_id, content)
-            if not self.core.memorystore.add_note(self, note):
-                result = False
-
-        if result:
-            return "Show content of all encrypted notes."
-        else:
-            return "Failed to show content of all encrypted notes."
-
-    def hide_all_encrypted_notes(self, passphrase=None):
-        if not self.core.memorystore.has_notes(self):
-            return "All encrypted notes are hidden."
-
-        if self.core.memorystore.delete_all_notes(self):
-            return "Hide content of all encrypted notes."
-        else:
-            return "Failed to hide content of all encrypted notes."
-
     # memory
 
     def has_visible_note(self, note):
-        return self.core.memorystore.has_note(self, note.note_id)
+        return self.core.memorystore.has_note(self.get_id(), note.note_id)
 
     def get_visible_note(self, note):
-        return self.core.memorystore.get_note(self, note.note_id)
+        return self.core.memorystore.get_note(self.get_id(), note.note_id)

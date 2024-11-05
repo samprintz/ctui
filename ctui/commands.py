@@ -1,6 +1,7 @@
 from ctui.enum.view import View
 from ctui.model.attribute import Attribute
 from ctui.model.contact import Contact
+from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
 from ctui.model.note import Note
 
@@ -26,8 +27,7 @@ class AddContact(Command):
 
         # TODO not define this parameters in execute()?
         self.core.ui.update_view(True, True, View.LIST, contact, 0)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class RenameContact(Command):
@@ -42,8 +42,7 @@ class RenameContact(Command):
 
         # TODO not define this parameters in execute()?
         self.core.ui.update_view(True, False, View.LIST, contact, None)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class DeleteContact(Command):
@@ -56,8 +55,7 @@ class DeleteContact(Command):
 
         # TODO not define this parameters in execute()?
         self.core.ui.update_view(True, True, View.LIST, None, 0)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class AddAttribute(Command):
@@ -72,9 +70,8 @@ class AddAttribute(Command):
         msg = contact.add_attribute(attribute)
 
         self.core.ui.set_contact_details(contact)
-
         self.core.ui.focus_detail(attribute)
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class EditAttribute(Command):
@@ -90,10 +87,8 @@ class EditAttribute(Command):
         msg = contact.edit_attribute(old_attr, new_attr)
 
         self.core.ui.set_contact_details(contact)
-
         self.core.ui.focus_detail(new_attr)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class DeleteAttribute(Command):
@@ -117,13 +112,42 @@ class DeleteAttribute(Command):
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
         self.core.ui.focus_detail_pos(new_detail_pos)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class AddNote(Command):
     name = 'add-note'
     names = ['add-note']
+
+    def execute(self, args):
+        # TODO refactor, is very similar to add-gift (create interface for both?)
+
+        contact = self.core.ui.list_view.get_focused_contact()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" does already exist')
+
+        # TODO use random temp path instead?
+        self.core.textfilestore.create_note_dir(contact.get_id())
+        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
+                                                             note_id)
+
+        content = self.core.editor.add(filepath)
+        note = Note.from_dump(note_id, content)
+        msg = self.core.textfilestore.add_note(contact.get_id(), note)
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail(note)
+        self.core.ui.console.show_message(msg)
+
+
+class AddEncryptedNote(Command):
+    name = 'add-encrypted-note'
+    names = ['add-encrypted-note']
 
     def execute(self, args):
         # TODO refactor, is very similar to add-gift (create interface for both?)
@@ -143,13 +167,12 @@ class AddNote(Command):
                                                              note_id)
 
         content = self.core.editor.add(filepath)
-        note = Note.from_dump(note_id, content)
-        msg = self.core.textfilestore.add_note(contact.get_id(), note)
+        note = EncryptedNote.from_dump(note_id, content)
+        msg = self.core.textfilestore.add_encrypted_note(contact.get_id(), note)
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(note)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class RenameNote(Command):
@@ -168,8 +191,7 @@ class RenameNote(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(note)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class EditNote(Command):
@@ -198,8 +220,7 @@ class EditNote(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(note)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class DeleteNote(Command):
@@ -214,11 +235,10 @@ class DeleteNote(Command):
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
-        if self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        msg = self.core.textfilestore.delete_note(self, contact.get_id(),
-                                                  note_id)
+        msg = self.core.textfilestore.delete_note(contact.get_id(), note_id)
 
         self.core.ui.set_contact_details(contact)
 
@@ -228,8 +248,129 @@ class DeleteNote(Command):
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
         self.core.ui.focus_detail_pos(new_detail_pos)
+        self.core.ui.console.show_message(msg)
 
-        return msg
+
+class EncryptNote(Command):
+    name = 'encrypt-note'
+    names = ['encrypt-note']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        msg = self.core.textfilestore.encrypt_note(contact.get_id(), note_id)
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail_pos(detail_pos)
+        self.core.ui.console.show_message(msg)
+
+
+class DecryptNote(Command):
+    name = 'decrypt-note'
+    names = ['decrypt-note']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        msg = self.core.textfilestore.decrypt_note(contact.get_id(), note_id)
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail_pos(detail_pos)
+        self.core.ui.console.show_message(msg)
+
+
+class ToggleNoteEncryption(Command):
+    name = 'toggle-note-encryption'
+    names = ['toggle-note-encryption']
+
+    def execute(self, args):
+        contact = self.core.ui.list_view.get_focused_contact()
+        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        note_name = " ".join(args)
+        Note.validate_name(note_name)
+        note_id = Note.name_to_id(note_name)
+
+        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+
+        if self.core.memorystore.has_note(contact.get_id(), note_id):  # hide
+            self.core.memorystore.delete_note(contact.get_id(), note_id)
+            msg = "Hide encrypted note content"
+        else:  # show
+            content = self.core.textfilestore.get_encrypted_note_text(
+                contact.get_id(),
+                note_id)
+            encrypted_note = EncryptedNote(note_id, content)
+            if self.core.memorystore.add_note(contact.get_id(), encrypted_note):
+                msg = "Show encrypted note content"
+            else:
+                raise Exception("Failed to show encrypted note content")
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail_pos(detail_pos)
+        self.core.ui.console.show_message(msg)
+
+
+class ShowAllEncryptedNotes(Command):
+    name = 'show-all-encrypted-notes'
+    names = ['show-all-encrypted-notes']
+
+    def execute(self, args=None):
+        contact = self.core.ui.list_view.get_focused_contact()
+        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        if not self.core.textfilestore.has_encrypted_notes(contact.get_id()):
+            raise Exception("No encrypted notes found")
+
+        for note in self.core.textfilestore.get_encrypted_notes(
+                contact.get_id()):
+            content = self.core.textfilestore.get_encrypted_note_text(
+                contact.get_id(),
+                note.note_id)
+            note = EncryptedNote(note.note_id, content)
+            self.core.memorystore.add_note(contact.get_id(), note)
+
+        msg = "Show content of all encrypted notes"
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail_pos(detail_pos)
+        self.core.ui.console.show_message(msg)
+
+
+class HideAllEncryptedNotes(Command):
+    name = 'hide-all-encrypted-notes'
+    names = ['hide-all-encrypted-notes']
+
+    def execute(self, args=None):
+        contact = self.core.ui.list_view.get_focused_contact()
+        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+
+        if not self.core.memorystore.has_notes(contact.get_id()):
+            raise Exception("All encrypted notes are hidden")
+
+        self.core.memorystore.delete_all_notes(contact.get_id())
+        msg = "Hide content of all encrypted notes"
+
+        self.core.ui.set_contact_details(contact)
+        self.core.ui.focus_detail_pos(detail_pos)
+        self.core.ui.console.show_message(msg)
 
 
 class AddGift(Command):
@@ -257,8 +398,7 @@ class AddGift(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class RenameGift(Command):
@@ -286,8 +426,7 @@ class RenameGift(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class EditGift(Command):
@@ -316,8 +455,7 @@ class EditGift(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class DeleteGift(Command):
@@ -346,8 +484,7 @@ class DeleteGift(Command):
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
         self.core.ui.focus_detail_pos(new_detail_pos)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class MarkGifted(Command):
@@ -371,8 +508,7 @@ class MarkGifted(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class UnmarkGifted(Command):
@@ -396,8 +532,7 @@ class UnmarkGifted(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class MarkPermanent(Command):
@@ -421,8 +556,7 @@ class MarkPermanent(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)
 
 
 class UnmarkPermanent(Command):
@@ -446,5 +580,4 @@ class UnmarkPermanent(Command):
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(gift)
-
-        return msg
+        self.core.ui.console.show_message(msg)

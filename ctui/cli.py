@@ -1,10 +1,6 @@
-from datetime import date, datetime
 from enum import Enum
 
 from ctui.commands import Command
-from ctui.model.encrypted_note import EncryptedNote
-from ctui.model.gift import Gift
-from ctui.model.note import Note
 
 
 class CLI:
@@ -51,8 +47,6 @@ class CLI:
         else:
             command = args[0]
 
-            found_in_new_commands = False
-
             for command_class in Command.__subclasses__():
                 if command in command_class.names:
                     command_instance = command_class(self.core)
@@ -61,58 +55,12 @@ class CLI:
                     # focused_contact, focused_detail, focused_contact_pos, focused_detail_pos?
                     # TODO pass the args already joined (as id or name)? if not everywhere, then dependent on a class attribute?
                     # also validate it here?
-                    msg = command_instance.execute(args[1:])
+                    command_instance.execute(args[1:])
                     # TODO execute view update commands (focus_detail() etc.) here depending on class attributes?
 
-                    found_in_new_commands = True
-
-            if not found_in_new_commands:
-                if command in ('add-encrypted-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.add_encrypted_note(note_id)
-                    self.detail = EncryptedNote(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('encrypt-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.encrypt_note(note_id)
-                    self.detail = EncryptedNote(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('decrypt-note'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.decrypt_note(note_id)
-                    self.detail = Note(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('toggle-note-encryption'):
-                    note_id = " ".join(args[1:])
-                    msg = self.contact.toggle_note_encryption(note_id)
-                    self.detail = EncryptedNote(note_id, None)
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('show-all-encrypted-notes'):
-                    msg = self.contact.show_all_encrypted_notes()
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('hide-all-encrypted-notes'):
-                    msg = self.contact.hide_all_encrypted_notes()
-                    self.action = Action.DETAIL_ADDED_OR_EDITED
-                elif command in ('add-google-contact'):
-                    name = " ".join(args[1:])
-                    contact, msg = self.core.add_google_contact(name)
-                    self.contact = contact  # to focus it when refreshing contact list
-                    self.action = Action.CONTACT_ADDED_OR_EDITED
-                else:
-                    msg = 'Not a valid command.'
-
-                self.core.ui.refresh_contact_list(self.action, self.contact,
-                                                  self.detail,
-                                                  self.filter_string)
+                    break
 
             self.core.ui.frame.focus_position = 'body'
-            self.core.ui.console.show_message(msg)
-
-    # contacts
-
-    def add_google_contact(self):
-        command = 'add-google-contact '
-        self.core.ui.console.show_console(command)
 
     def search_contact(self):
         self.mode = Mode.SEARCH
@@ -136,42 +84,6 @@ class CLI:
                                           self.detail, self.filter_string)
         self.core.ui.console.clear()
         self.core.ui.frame.focus_position = 'body'
-
-    # notes
-
-    def add_encrypted_note(self, contact):
-        self.contact = contact
-        note_id = datetime.strftime(date.today(), "%Y%m%d")
-        command = 'add-encrypted-note {}'.format(note_id)
-        self.core.ui.console.show_console(command)
-
-    def encrypt_note(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        args = 'encrypt-note {}'.format(note.note_id).split()
-        self.core.cli.handle(args)
-
-    def decrypt_note(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        args = 'decrypt-note {}'.format(note.note_id).split()
-        self.core.cli.handle(args)
-
-    def toggle_note_encryption(self, contact, note):
-        self.contact = contact
-        self.detail = note
-        args = 'toggle-note-encryption {}'.format(note.note_id).split()
-        self.core.cli.handle(args)
-
-    def show_all_encrypted_notes(self, contact):
-        self.contact = contact
-        args = ['show-all-encrypted-notes']
-        self.core.cli.handle(args)
-
-    def hide_all_encrypted_notes(self, contact):
-        self.contact = contact
-        args = ['hide-all-encrypted-notes']
-        self.core.cli.handle(args)
 
 
 class Mode(Enum):

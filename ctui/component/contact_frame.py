@@ -3,7 +3,7 @@ from datetime import datetime, date
 import urwid
 
 from ctui.cli import Action
-from ctui.commands import AddAttribute, AddNote
+from ctui.commands import AddAttribute, AddNote, AddEncryptedNote
 
 
 class CFrame(urwid.Frame):
@@ -43,9 +43,9 @@ class CFrame(urwid.Frame):
                 command = f'{AddNote.name} {note_id}'
                 self.core.ui.console.show_console(command)
             case 'add_encrypted_note':
-                focused_contact = self.core.ui.list_view \
-                    .get_focused_contact()
-                self.core.cli.add_encrypted_note(focused_contact)
+                note_id = datetime.strftime(date.today(), "%Y%m%d")
+                command = f'{AddEncryptedNote.name} {note_id}'
+                self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set_bubbling(False)
                 if not self.core.keybindings.is_prefix(command_key):

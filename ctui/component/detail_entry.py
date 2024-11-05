@@ -1,7 +1,8 @@
 import pyperclip
 
 from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift, \
-    EditNote, RenameNote, DeleteNote, DeleteGift
+    EditNote, RenameNote, DeleteNote, DeleteGift, EncryptNote, DecryptNote, \
+    ToggleNoteEncryption, ShowAllEncryptedNotes, HideAllEncryptedNotes
 from ctui.component.list_entry import CListEntry
 
 
@@ -118,13 +119,11 @@ class NoteEntry(DetailEntry):
                 command = f'{DeleteNote.name} {self.note.note_id}'
                 self.core.ui.console.show_console(command)
             case 'encrypt_note':
-                self.core.cli.encrypt_note(self.contact, self.note)
-            case 'toggle_note_encryption':
-                self.core.cli.toggle_note_encryption(self.contact, self.note)
+                EncryptNote(self.core).execute([self.note.note_id])
             case 'show_all_encrypted_notes':
-                self.core.cli.show_all_encrypted_notes(self.contact)
+                ShowAllEncryptedNotes(self.core).execute()
             case 'hide_all_encrypted_notes':
-                self.core.cli.hide_all_encrypted_notes(self.contact)
+                HideAllEncryptedNotes(self.core).execute()
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
@@ -134,12 +133,12 @@ class NoteEntry(DetailEntry):
 class EncryptedNoteEntry(DetailEntry):
     def __init__(self, contact, note, pos, core, visible=False):
         if visible:
-            content = '[' + note.content + ']'
+            content = '🔒' + note.content
             super(EncryptedNoteEntry, self).__init__(contact, note, content,
                                                      pos, core)
         else:
             super(EncryptedNoteEntry, self).__init__(contact, note,
-                                                     '(encrypted)', pos, core)
+                                                     '🔒(encrypted)', pos, core)
         self.note = note
         self.name = 'note_entry'
 
@@ -161,16 +160,14 @@ class EncryptedNoteEntry(DetailEntry):
             case 'delete_note':
                 command = f'{DeleteNote.name} {self.note.note_id}'
                 self.core.ui.console.show_console(command)
-            case 'encrypt_note':
-                self.core.cli.encrypt_note(self.contact, self.note)
             case 'decrypt_note':
-                self.core.cli.decrypt_note(self.contact, self.note)
+                DecryptNote(self.core).execute([self.note.note_id])
             case 'toggle_note_encryption':
-                self.core.cli.toggle_note_encryption(self.contact, self.note)
+                ToggleNoteEncryption(self.core).execute([self.note.note_id])
             case 'show_all_encrypted_notes':
-                self.core.cli.show_all_encrypted_notes(self.contact)
+                ShowAllEncryptedNotes(self.core).execute()
             case 'hide_all_encrypted_notes':
-                self.core.cli.hide_all_encrypted_notes(self.contact)
+                HideAllEncryptedNotes(self.core).execute()
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)
