@@ -130,33 +130,32 @@ class RDFStore:
             raise e  # TODO
 
     def edit_attribute(self, contact, old_attr, new_attr):
-        assert self.has_attribute(contact, old_attr)
-        assert old_attr.key != new_attr.key or old_attr.value != new_attr.value
+        if not self.has_attribute(contact, old_attr):
+            raise ValueError(
+                f'"{contact.get_id()}" doesn\'t own attribute {old_attr.key}={old_attr.value}')
 
-        try:
-            old_attr_ref = URIRef(self.namespace + old_attr.key)
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-            self.g.remove((s, old_attr_ref, Literal(old_attr.value)))
-            self.save_file(self.path)
-            new_attr_ref = URIRef(self.namespace + new_attr.key)
-            self.g.add((s, new_attr_ref, Literal(new_attr.value)))
-            self.save_file(self.path)
-            return [new_attr.key, " changed to ", new_attr.value, "."]
-            return "{} changed to {}.".format(new_attr.key, new_attr.value)
-        except Exception as e:
-            raise e  # TODO
+        if old_attr.key == new_attr.key and old_attr.value == new_attr.value:
+            return "Warning: Attribute unchanged."
+
+        old_attr_ref = URIRef(self.namespace + old_attr.key)
+        s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        self.g.remove((s, old_attr_ref, Literal(old_attr.value)))
+        self.save_file(self.path)
+        new_attr_ref = URIRef(self.namespace + new_attr.key)
+        self.g.add((s, new_attr_ref, Literal(new_attr.value)))
+        self.save_file(self.path)
+        return f'{new_attr.key} changed to {new_attr.value}'
 
     def delete_attribute(self, contact, attribute):
-        assert self.has_attribute(contact, attribute)
+        if not self.has_attribute(contact, attribute):
+            raise ValueError(
+                f'{contact.name} doesn\'t own attribute {attribute.key}={attribute.value}')
 
-        try:
-            attribute_ref = URIRef(self.namespace + attribute.key)
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-            self.g.remove((s, attribute_ref, Literal(attribute.value)))
-            self.save_file(self.path)
-            return "{}={} deleted".format(attribute.key, attribute.value)
-        except Exception as e:
-            raise e  # TODO
+        attribute_ref = URIRef(self.namespace + attribute.key)
+        s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+        self.g.remove((s, attribute_ref, Literal(attribute.value)))
+        self.save_file(self.path)
+        return "{}={} deleted".format(attribute.key, attribute.value)
 
     # helper
 

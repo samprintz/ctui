@@ -35,43 +35,9 @@ class Contact:
             self.core.textfilestore.has_notes(self.get_id())
 
     def load_details(self):
-        self.attributes = self.get_attributes()
+        self.attributes = self.core.rdfstore.get_attributes(self)
         self.gifts = self.core.textfilestore.get_gifts(self.get_id())
         self.notes = self.core.textfilestore.get_notes(self.get_id())
-
-    # attributes
-
-    def has_attributes(self):
-        return self.core.rdfstore.has_attributes(self)
-
-    def get_attributes(self):
-        return self.core.rdfstore.get_attributes(self)
-
-    def has_attribute(self, attribute):
-        return self.core.rdfstore.has_attribute(self, attribute)
-
-    def add_attribute(self, attribute):
-        return self.core.rdfstore.add_attribute(self, attribute)
-
-    def edit_attribute(self, old_attr, new_attr):
-        if old_attr.key == "givenName":  # special case: rename
-            return self.core.rename_contact(self, new_attr.value)
-
-        if not self.has_attribute(old_attr):
-            return "Error: {} doesn't own attribute {}={}.".format(
-                self.name, old_attr.key, old_attr.value)
-
-        if old_attr.key == new_attr.key and old_attr.value == new_attr.value:
-            return "Warning: Attribute unchanged."
-
-        return self.core.rdfstore.edit_attribute(self, old_attr, new_attr)
-
-    def delete_attribute(self, attribute):
-        if not self.has_attribute(attribute):
-            return "Error: {} doesn't own attribute {}={}.".format(
-                self.name, attribute.key, attribute.value)
-
-        return self.core.rdfstore.delete_attribute(self, attribute)
 
     # notes
 

@@ -67,7 +67,8 @@ class AddAttribute(Command):
         key = args[0]
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
-        msg = contact.add_attribute(attribute)
+
+        msg = self.core.rdfstore.add_attribute(contact, attribute)
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(attribute)
@@ -84,11 +85,17 @@ class EditAttribute(Command):
         value = " ".join(args[1:])
         new_attr = Attribute(key, value)
         old_attr = self.core.ui.detail_view.get_focused_detail()
-        msg = contact.edit_attribute(old_attr, new_attr)
+
+        if old_attr.key == "givenName":  # special case: rename
+            msg = self.core.rename_contact(contact, new_attr.value)
+        else:
+            self.core.rdfstore.edit_attribute(contact, old_attr, new_attr)
 
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(new_attr)
         self.core.ui.console.show_message(msg)
+
+        return msg
 
 
 class DeleteAttribute(Command):
@@ -102,7 +109,8 @@ class DeleteAttribute(Command):
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
         old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-        msg = contact.delete_attribute(attribute)
+
+        msg = self.core.rdfstore.delete_attribute(contact, attribute)
 
         self.core.ui.set_contact_details(contact)
 
