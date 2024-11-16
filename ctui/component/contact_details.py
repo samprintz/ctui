@@ -141,8 +141,10 @@ class GeneralDetails(ContactDetails):
                     entries.append(NoteEntry(contact, note, pos, self.core))
                 else:  # encrypted note
                     # check if made visible
-                    if contact.has_visible_note(note):
-                        visible_note = contact.get_visible_note(note)
+                    if self.core.memorystore.has_note(
+                            contact.get_id(), note.note_id):
+                        visible_note = self.core.memorystore.get_note(
+                            contact.get_id(), note.note_id)
                         entries.append(
                             EncryptedNoteEntry(contact, visible_note, pos,
                                                self.core, visible=True))
@@ -184,8 +186,10 @@ class NoteDetails(ContactDetails):
                     entries.append(NoteEntry(contact, note, pos, self.core))
                 else:  # encrypted note
                     # check if made visible
-                    if contact.has_visible_note(note):
-                        visible_note = contact.get_visible_note(note)
+                    if self.core.memorystore.has_note(
+                            contact.get_id(), note.note_id):
+                        visible_note = self.core.memorystore.get_note(
+                            contact.get_id(), note.note_id)
                         entries.append(
                             EncryptedNoteEntry(contact, visible_note, pos,
                                                self.core, visible=True))

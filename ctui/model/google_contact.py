@@ -5,7 +5,7 @@ class GoogleContact(Contact):
 
     def __init__(self, name, core, google_id, google_attributes=None,
                  google_notes=None):
-        super(GoogleContact, self).__init__(name, core)
+        super(GoogleContact, self).__init__(name)
         self.google_id = google_id
         self.google_attributes = google_attributes
         self.google_notes = google_notes

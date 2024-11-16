@@ -48,7 +48,9 @@ class UI:
         self.list_view.set_data(contact_list)
 
     def set_contact_details(self, contact):
-        contact.load_details()  # augment existing contact with details (not before for performance)
+        # augment existing contact with details (not before for performance)
+        self.core.contact_handler.load_details(contact)
+
         self.detail_view.set_contact(contact)
 
     def focus_list_view(self):
@@ -114,7 +116,8 @@ class UI:
                 detail)
             self.frame.body.focus_position = 1
         elif action is Action.DETAIL_DELETED:
-            if contact.has_details():  # don't focus details column if contact has no details
+            if self.core.contact_handler.has_details(contact):
+                # don't focus details column if contact has no details
                 detail_pos = min(self.current_detail_pos,
                                  len(self.detail_view.body.original_widget.body) - 1)
                 self.frame.body.focus_position = 1

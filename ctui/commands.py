@@ -22,7 +22,7 @@ class AddContact(Command):
 
     def execute(self, args):
         name = " ".join(args)
-        contact = Contact(name, self.core)
+        contact = Contact(name)
         msg = self.core.add_contact(contact)
 
         # TODO not define this parameters in execute()?
@@ -115,7 +115,8 @@ class DeleteAttribute(Command):
         self.core.ui.set_contact_details(contact)
 
         new_detail_pos = 0
-        if contact.has_details():  # don't focus details column if contact has no details
+        if self.core.contact_handler.has_details(contact):
+            # don't focus details column if contact has no details
             detail_count = self.core.ui.detail_view.get_tab_body().get_count()
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
@@ -251,7 +252,8 @@ class DeleteNote(Command):
         self.core.ui.set_contact_details(contact)
 
         new_detail_pos = 0
-        if contact.has_details():  # don't focus details column if contact has no details
+        if self.core.contact_handler.has_details(contact):
+            # don't focus details column if contact has no details
             detail_count = self.core.ui.detail_view.get_tab_body().get_count()
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
@@ -487,7 +489,8 @@ class DeleteGift(Command):
         self.core.ui.set_contact_details(contact)
 
         new_detail_pos = 0
-        if contact.has_details():  # don't focus details column if contact has no details
+        if self.core.contact_handler.has_details(contact):
+            # don't focus details column if contact has no details
             detail_count = self.core.ui.detail_view.get_tab_body().get_count()
             new_detail_pos = min(old_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()

@@ -6,6 +6,7 @@ from httplib2 import ServerNotFoundError
 
 from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
+from ctui.handler.contact_handler import ContactHandler
 from ctui.keybindings import Keybindings
 from ctui.memory import MemoryStore
 from ctui.model.contact import Contact
@@ -19,6 +20,8 @@ class Core:
         self.ui = None
         self.current_contact = None
         self.current_contact_pos = None
+
+        self.contact_handler = ContactHandler(self)
 
         self.rdfstore = RDFStore(config['path']['rdf_file'],
                                  config['rdf']['namespace'])
@@ -71,13 +74,13 @@ class Core:
     def get_all_contacts(self):
         contacts = []
         for c in self.rdfstore.get_all_contact_names():
-            contacts.append(Contact(c, self))
+            contacts.append(Contact(c))
         for c in self.textfilestore.get_all_contact_names():
             # check if contact already in list
             try:
                 existing_contact = next(x for x in contacts if c == x.name)
             except StopIteration:
-                contacts.append(Contact(c, self))
+                contacts.append(Contact(c))
         if self.googlestore is not None:
             for contact in self.googlestore.get_all_contacts():
                 # check if contact already in list

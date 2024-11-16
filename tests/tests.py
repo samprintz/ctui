@@ -21,8 +21,8 @@ class TestCore(unittest.TestCase):
         self.core = Core(config, True)
         self.name1 = "Test Contact A"
         self.name2 = "Test Contact B"
-        self.contact1 = Contact(self.name1, self.core)
-        self.contact2 = Contact(self.name2, self.core)
+        self.contact1 = Contact(self.name1)
+        self.contact2 = Contact(self.name2)
 
     @classmethod
     def setUp(self):
@@ -156,7 +156,7 @@ class TestObjects(unittest.TestCase):
     def setUpClass(self):
         self.core = Core(config, True)
         self.name = "Test Contact"
-        self.contact = Contact(self.name, self.core)
+        self.contact = Contact(self.name)
         self.attr_key1 = "key1"
         self.attr_key2 = "key2"
         self.attr_value1 = "Attribute 1"
@@ -637,10 +637,10 @@ class TestListViewUI(unittest.TestCase):
         self.name2 = "Test Contact B"
         self.name_first = "A"
         self.name_last = "zzz"
-        self.contact1 = Contact(self.name1, self.core)
-        self.contact2 = Contact(self.name2, self.core)
-        self.contact_first = Contact(self.name_first, self.core)
-        self.contact_last = Contact(self.name_last, self.core)
+        self.contact1 = Contact(self.name1)
+        self.contact2 = Contact(self.name2)
+        self.contact_first = Contact(self.name_first)
+        self.contact_last = Contact(self.name_last)
         self.pos = 0
 
     # test initialization entries objects
@@ -802,7 +802,7 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
         self.attr_value1 = "Attribute 1"
         self.attr_value2 = "Attribute 2"
 
-        self.contact_first = Contact(self.name_first, self.core)
+        self.contact_first = Contact(self.name_first)
         self.core.add_contact(self.contact_first)
         self.core.ui.update_view(True, False, None, self.contact_first)
 
@@ -923,7 +923,7 @@ class TestTUIDetailFocusSomeContact(unittest.TestCase):
     def setUp(self):
         self.core = Core(config, True)
         self.name1 = "Test Contact A"
-        self.contact1 = Contact(self.name1, self.core)
+        self.contact1 = Contact(self.name1)
         self.core.add_contact(self.contact1)
         self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
                                           self.contact1)
@@ -982,7 +982,7 @@ class TestTUIDetailFocusLastContact(unittest.TestCase):
     def setUp(self):
         self.core = Core(config, True)
         self.name_last = "zzz"
-        self.contact_last = Contact(self.name_last, self.core)
+        self.contact_last = Contact(self.name_last)
         self.core.add_contact(self.contact_last)
         self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
                                           self.contact_last)
