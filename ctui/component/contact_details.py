@@ -32,8 +32,8 @@ class ContactDetails(CListBox):
             # self.core.ui.console.show_meta(str(self.focus.pos))
 
     def get_focused_detail(self):
-        #        if not hasattr(self.focus, 'detail'):
-        #            return None
+        if not hasattr(self.focus, 'detail'):
+            return None
         return self.focus.detail
 
     def get_focus_position(self):

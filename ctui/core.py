@@ -95,6 +95,17 @@ class Core:
         contacts.sort(key=lambda x: x.name)
         return contacts
 
+    def update_contact_list(self):
+        self.contact_list = self.get_all_contacts()
+        contact_list = self.get_filtered_contacts(
+            self.get_filter_string())  # keep filter applied
+        self.ui.set_contact_list(contact_list)
+
+    def update_contact_details(self, contact):
+        # augment existing contact with details (not before for performance)
+        self.contact_handler.load_details(contact)
+        self.ui.set_contact_details(contact)
+
     def get_filtered_contacts(self, filter_string):
         if not filter_string:  # shortcut for empty filter (unfilter)
             return self.contact_list
@@ -132,7 +143,7 @@ class Core:
                 return contact
 
     def select_contact(self, contact):
-        self.ui.set_contact_details(contact)
+        self.update_contact_details(contact)
 
     def search_contact(self, name):
         self.ui.list_view.jump_to_contact(name)

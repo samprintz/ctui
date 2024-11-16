@@ -12,57 +12,116 @@ class Command:
     def __init__(self, core):
         self.core = core
 
+        self.custom_input_handling = False
+        self.input = ""
+
+        self.focused_contact = None
+        self.focused_detail = None
+
+        self.to_focus_contact = None
+        self.to_focus_detail = None
+
+        self.update_contact_list = False
+        self.update_contact_details = False
+        self.focused_view = View.LIST
+        self.update_contact_focus = False
+        self.update_details_focus = False
+
+        self.msg = ""
+
     def execute(self, args):
-        pass
+        self.focused_contact = self.core.ui.list_view.get_focused_contact()
+        self.focused_detail = self.core.ui.detail_view.get_focused_detail()
+
+        arg = " ".join(args)
+        if self.custom_input_handling:
+            arg = args
+
+        self._execute(arg)
+
+        self._update_focus()
+        self.core.ui.console.show_message(self.msg)
+
+    def _update_focus(self):
+        if self.update_contact_list:
+            self.core.update_contact_list()
+
+        if self.update_contact_details:
+            self.core.update_contact_details(self._get_to_focus_contact())
+
+        if self.focused_view is View.DETAIL:
+            self.core.ui.focus_detail_view()
+        else:
+            self.core.ui.focus_list_view()
+
+        if self.update_contact_focus:
+            self.core.ui.focus_contact(self._get_to_focus_contact())
+
+        if self.update_details_focus:
+            self.core.ui.focus_detail(self._get_to_focus_detail())
+
+    def _get_to_focus_contact(self):
+        if self.to_focus_contact:
+            return self.to_focus_contact
+        else:
+            return self.focused_contact
+
+    def _get_to_focus_detail(self):
+        if self.to_focus_detail:
+            return self.to_focus_detail
+        else:
+            return self.focused_detail
+
+    def _execute(self, args):
+        raise NotImplementedError()
 
 
 class AddContact(Command):
     name = 'add-contact'
     names = ['add-contact']
 
-    def execute(self, args):
-        name = " ".join(args)
-        contact = Contact(name)
-        msg = self.core.add_contact(contact)
+    def __init__(self, core):
+        super().__init__(core)
+        self.update_contact_list = True
+        self.update_contact_focus = True
 
-        # TODO not define this parameters in execute()?
-        self.core.ui.update_view(True, True, View.LIST, contact, 0)
-        self.core.ui.console.show_message(msg)
+    def _execute(self, name):
+        contact = Contact(name)
+        self.msg = self.core.add_contact(contact)
+        self.to_focus_contact = contact
 
 
 class RenameContact(Command):
     name = 'rename-contact'
     names = ['rename-contact']
 
-    def execute(self, args):
-        contact = self.core.ui.list_view.get_focused_contact()
-        new_name = " ".join(args)
-        msg = self.core.rename_contact(contact, new_name)
-        contact.name = new_name  # to find the position by the name
+    def __init__(self, core):
+        super().__init__(core)
+        self.update_contact_list = True
+        self.update_contact_focus = True
 
-        # TODO not define this parameters in execute()?
-        self.core.ui.update_view(True, False, View.LIST, contact, None)
-        self.core.ui.console.show_message(msg)
+    def _execute(self, new_name):
+        self.msg = self.core.rename_contact(self.focused_contact, new_name)
 
 
 class DeleteContact(Command):
     name = 'delete-contact'
     names = ['delete-contact']
 
-    def execute(self, args):
-        name = " ".join(args)
-        msg = self.core.delete_contact_by_name(name)
+    def __init__(self, core):
+        super().__init__(core)
+        self.update_contact_list = True
+        self.update_contact_details = True
 
-        # TODO not define this parameters in execute()?
-        self.core.ui.update_view(True, True, View.LIST, None, 0)
-        self.core.ui.console.show_message(msg)
+    def _execute(self, name):
+        self.msg = self.core.delete_contact_by_name(name)
 
 
 class AddAttribute(Command):
     name = 'add-attribute'
     names = ['add-attribute']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         key = args[0]
         value = " ".join(args[1:])
@@ -79,7 +138,7 @@ class EditAttribute(Command):
     name = 'edit-attribute'
     names = ['edit-attribute']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         key = args[0]
         value = " ".join(args[1:])
@@ -102,7 +161,7 @@ class DeleteAttribute(Command):
     name = 'delete-attribute'
     names = ['delete-attribute']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         key = args[0]
@@ -128,7 +187,7 @@ class AddNote(Command):
     name = 'add-note'
     names = ['add-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         # TODO refactor, is very similar to add-gift (create interface for both?)
 
         contact = self.core.ui.list_view.get_focused_contact()
@@ -158,7 +217,7 @@ class AddEncryptedNote(Command):
     name = 'add-encrypted-note'
     names = ['add-encrypted-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         # TODO refactor, is very similar to add-gift (create interface for both?)
 
         contact = self.core.ui.list_view.get_focused_contact()
@@ -188,7 +247,7 @@ class RenameNote(Command):
     name = 'rename-note'
     names = ['rename-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         note = self.core.ui.detail_view.get_focused_detail()
 
@@ -207,7 +266,7 @@ class EditNote(Command):
     name = 'edit-note'
     names = ['edit-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         note_name = " ".join(args)
@@ -236,7 +295,7 @@ class DeleteNote(Command):
     name = 'delete-note'
     names = ['delete-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -265,7 +324,7 @@ class EncryptNote(Command):
     name = 'encrypt-note'
     names = ['encrypt-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -287,7 +346,7 @@ class DecryptNote(Command):
     name = 'decrypt-note'
     names = ['decrypt-note']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -309,7 +368,7 @@ class ToggleNoteEncryption(Command):
     name = 'toggle-note-encryption'
     names = ['toggle-note-encryption']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -342,7 +401,7 @@ class ShowAllEncryptedNotes(Command):
     name = 'show-all-encrypted-notes'
     names = ['show-all-encrypted-notes']
 
-    def execute(self, args=None):
+    def _execute(self, args=None):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -368,7 +427,7 @@ class HideAllEncryptedNotes(Command):
     name = 'hide-all-encrypted-notes'
     names = ['hide-all-encrypted-notes']
 
-    def execute(self, args=None):
+    def _execute(self, args=None):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -387,7 +446,7 @@ class AddGift(Command):
     name = 'add-gift'
     names = ['add-gift']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)
@@ -415,7 +474,7 @@ class RenameGift(Command):
     name = 'rename-gift'
     names = ['rename-gift']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         gift = self.core.ui.detail_view.get_focused_detail()
 
@@ -443,7 +502,7 @@ class EditGift(Command):
     name = 'edit-gift'
     names = ['edit-gift']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)
@@ -472,7 +531,7 @@ class DeleteGift(Command):
     name = 'delete-gift'
     names = ['delete-gift']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
         old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
@@ -502,7 +561,7 @@ class MarkGifted(Command):
     name = 'mark-gifted'
     names = ['mark-gifted']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)
@@ -526,7 +585,7 @@ class UnmarkGifted(Command):
     name = 'unmark-gifted'
     names = ['unmark-gifted']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)
@@ -550,7 +609,7 @@ class MarkPermanent(Command):
     name = 'mark-permanent'
     names = ['mark-permanent']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)
@@ -574,7 +633,7 @@ class UnmarkPermanent(Command):
     name = 'unmark-permanent'
     names = ['unmark-permanent']
 
-    def execute(self, args):
+    def _execute(self, args):
         contact = self.core.ui.list_view.get_focused_contact()
 
         gift_name = " ".join(args)

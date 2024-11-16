@@ -48,9 +48,6 @@ class UI:
         self.list_view.set_data(contact_list)
 
     def set_contact_details(self, contact):
-        # augment existing contact with details (not before for performance)
-        self.core.contact_handler.load_details(contact)
-
         self.detail_view.set_contact(contact)
 
     def focus_list_view(self):
@@ -93,7 +90,7 @@ class UI:
         if contact is None:
             contact = self.list_view.get_focused_contact()
 
-        self.set_contact_details(contact)
+        self.core.update_contact_details(contact)
 
         if action is not Action.FILTERING:
             self.refresh_focus(action, contact, detail)
@@ -207,4 +204,4 @@ class UI:
         # do this after the contact focus is updated
         if update_contact_details:
             contact = self.list_view.get_focused_contact()
-            self.core.ui.set_contact_details(contact)
+            self.core.update_contact_details(contact)
