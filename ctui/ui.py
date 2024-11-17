@@ -62,7 +62,7 @@ class UI:
 
     def focus_detail(self, detail):
         # TODO remove this or focus_detail_pos?
-        self.focus_detail_view()
+        self.focus_detail_view()  # TODO is this good? shouldn't it be separate?
         self.detail_view.focus_detail(detail)
 
     def focus_detail_pos(self, detail_pos):

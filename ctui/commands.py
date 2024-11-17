@@ -4,6 +4,7 @@ from ctui.model.contact import Contact
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
 from ctui.model.note import Note
+from handler.redraw import DetailAddedOrEditedRedraw, ContactAddedOrEditedRedraw
 
 
 class Command:
@@ -90,6 +91,9 @@ class AddContact(Command):
         self.msg = self.core.add_contact(contact)
         self.to_focus_contact = contact
 
+    def _update(self):
+        ContactAddedOrEditedRedraw(self.core, self.to_focus_contact).redraw()
+
 
 class RenameContact(Command):
     name = 'rename-contact'
@@ -102,6 +106,9 @@ class RenameContact(Command):
 
     def _execute(self, new_name):
         self.msg = self.core.rename_contact(self.focused_contact, new_name)
+
+    def _update(self):
+        ContactAddedOrEditedRedraw(self.core, self.to_focus_contact).redraw()
 
 
 class DeleteContact(Command):
@@ -132,6 +139,9 @@ class AddAttribute(Command):
         self.core.ui.set_contact_details(contact)
         self.core.ui.focus_detail(attribute)
         self.core.ui.console.show_message(msg)
+
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class EditAttribute(Command):
