@@ -1,10 +1,13 @@
-from ctui.enum.view import View
+from ctui.handler.redraw import \
+    ContactDeletedRedraw, \
+    DetailDeletedRedraw, \
+    DetailAddedOrEditedRedraw, \
+    ContactAddedOrEditedRedraw
 from ctui.model.attribute import Attribute
 from ctui.model.contact import Contact
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
 from ctui.model.note import Note
-from handler.redraw import DetailAddedOrEditedRedraw, ContactAddedOrEditedRedraw
 
 
 class Command:
@@ -22,12 +25,6 @@ class Command:
         self.to_focus_contact = None
         self.to_focus_detail = None
 
-        self.update_contact_list = False
-        self.update_contact_details = False
-        self.focused_view = View.LIST
-        self.update_contact_focus = False
-        self.update_details_focus = False
-
         self.msg = ""
 
     def execute(self, args):
@@ -39,52 +36,19 @@ class Command:
             arg = args
 
         self._execute(arg)
-
-        self._update_focus()
+        self._update()
         self.core.ui.console.show_message(self.msg)
 
-    def _update_focus(self):
-        if self.update_contact_list:
-            self.core.update_contact_list()
-
-        if self.update_contact_details:
-            self.core.update_contact_details(self._get_to_focus_contact())
-
-        if self.focused_view is View.DETAIL:
-            self.core.ui.focus_detail_view()
-        else:
-            self.core.ui.focus_list_view()
-
-        if self.update_contact_focus:
-            self.core.ui.focus_contact(self._get_to_focus_contact())
-
-        if self.update_details_focus:
-            self.core.ui.focus_detail(self._get_to_focus_detail())
-
-    def _get_to_focus_contact(self):
-        if self.to_focus_contact:
-            return self.to_focus_contact
-        else:
-            return self.focused_contact
-
-    def _get_to_focus_detail(self):
-        if self.to_focus_detail:
-            return self.to_focus_detail
-        else:
-            return self.focused_detail
-
     def _execute(self, args):
+        raise NotImplementedError()
+
+    def _update(self):
         raise NotImplementedError()
 
 
 class AddContact(Command):
     name = 'add-contact'
     names = ['add-contact']
-
-    def __init__(self, core):
-        super().__init__(core)
-        self.update_contact_list = True
-        self.update_contact_focus = True
 
     def _execute(self, name):
         contact = Contact(name)
@@ -99,13 +63,9 @@ class RenameContact(Command):
     name = 'rename-contact'
     names = ['rename-contact']
 
-    def __init__(self, core):
-        super().__init__(core)
-        self.update_contact_list = True
-        self.update_contact_focus = True
-
     def _execute(self, new_name):
         self.msg = self.core.rename_contact(self.focused_contact, new_name)
+        self.to_focus_contact = Contact(new_name)
 
     def _update(self):
         ContactAddedOrEditedRedraw(self.core, self.to_focus_contact).redraw()
@@ -115,13 +75,11 @@ class DeleteContact(Command):
     name = 'delete-contact'
     names = ['delete-contact']
 
-    def __init__(self, core):
-        super().__init__(core)
-        self.update_contact_list = True
-        self.update_contact_details = True
-
     def _execute(self, name):
         self.msg = self.core.delete_contact_by_name(name)
+
+    def _update(self):
+        ContactDeletedRedraw(self.core).redraw()
 
 
 class AddAttribute(Command):
@@ -129,16 +87,12 @@ class AddAttribute(Command):
     names = ['add-attribute']
 
     def _execute(self, args):
-        contact = self.core.ui.list_view.get_focused_contact()
         key = args[0]
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
-
-        msg = self.core.rdfstore.add_attribute(contact, attribute)
-
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(attribute)
-        self.core.ui.console.show_message(msg)
+        self.to_focus_detail = attribute
+        self.msg = self.core.rdfstore.add_attribute(self.focused_contact,
+                                                    attribute)
 
     def _update(self):
         DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
@@ -149,22 +103,21 @@ class EditAttribute(Command):
     names = ['edit-attribute']
 
     def _execute(self, args):
-        contact = self.core.ui.list_view.get_focused_contact()
         key = args[0]
         value = " ".join(args[1:])
         new_attr = Attribute(key, value)
         old_attr = self.core.ui.detail_view.get_focused_detail()
+        self.to_focus_detail = new_attr
 
         if old_attr.key == "givenName":  # special case: rename
-            msg = self.core.rename_contact(contact, new_attr.value)
+            self.msg = self.core.rename_contact(self.focused_contact,
+                                                new_attr.value)
         else:
-            self.core.rdfstore.edit_attribute(contact, old_attr, new_attr)
+            self.msg = self.core.rdfstore.edit_attribute(self.focused_contact,
+                                                         old_attr, new_attr)
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(new_attr)
-        self.core.ui.console.show_message(msg)
-
-        return msg
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class DeleteAttribute(Command):
@@ -172,25 +125,14 @@ class DeleteAttribute(Command):
     names = ['delete-attribute']
 
     def _execute(self, args):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         key = args[0]
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
-        old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+        self.msg = self.core.rdfstore.delete_attribute(self.focused_contact,
+                                                       attribute)
 
-        msg = self.core.rdfstore.delete_attribute(contact, attribute)
-
-        self.core.ui.set_contact_details(contact)
-
-        new_detail_pos = 0
-        if self.core.contact_handler.has_details(contact):
-            # don't focus details column if contact has no details
-            detail_count = self.core.ui.detail_view.get_tab_body().get_count()
-            new_detail_pos = min(old_detail_pos, detail_count - 1)
-            self.core.ui.focus_detail_view()
-        self.core.ui.focus_detail_pos(new_detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailDeletedRedraw(self, self.focused_contact)
 
 
 class AddNote(Command):
