@@ -8,3 +8,6 @@ class Contact:
 
     def get_id(self):
         return self.name.replace(' ', '_')
+
+    def __str__(self):
+        return f'Contact({self.name})'
