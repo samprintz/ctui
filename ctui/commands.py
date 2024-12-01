@@ -45,7 +45,7 @@ class Command:
         raise NotImplementedError()
 
     def _update(self):
-        raise NotImplementedError()
+        pass
 
 
 class AddContact(Command):
