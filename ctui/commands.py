@@ -143,7 +143,7 @@ class DeleteAttribute(Command):
                                                        attribute)
 
     def _update(self):
-        DetailDeletedRedraw(self, self.focused_contact)
+        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
 
 
 class AddNote(Command):
@@ -151,28 +151,26 @@ class AddNote(Command):
     names = ['add-note']
 
     def _execute(self, note_name):
-        # TODO refactor, is very similar to add-gift (create interface for both?)
-
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if self.core.textfilestore.has_note(contact_id,
+                                            note_id):
             raise ValueError(f'Note "{note_id}" does already exist')
 
         # TODO use random temp path instead?
-        self.core.textfilestore.create_note_dir(contact.get_id())
-        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
+        self.core.textfilestore.create_note_dir(contact_id)
+        filepath = self.core.textfilestore.get_note_filepath(contact_id,
                                                              note_id)
 
         content = self.core.editor.add(filepath)
         note = Note.from_dump(note_id, content)
-        msg = self.core.textfilestore.add_note(contact.get_id(), note)
+        self.msg = self.core.textfilestore.add_note(contact_id, note)
+        self.to_focus_detail = note
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(note)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class AddEncryptedNote(Command):
@@ -180,28 +178,29 @@ class AddEncryptedNote(Command):
     names = ['add-encrypted-note']
 
     def _execute(self, note_name):
-        # TODO refactor, is very similar to add-gift (create interface for both?)
-
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), note_id):
+        if self.core.textfilestore.has_gift(contact_id,
+                                            note_id):
             raise ValueError(f'Note "{note_id}" does already exist')
 
         # TODO use random temp path instead?
-        self.core.textfilestore.create_note_dir(contact.get_id())
-        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
-                                                             note_id)
+        self.core.textfilestore.create_note_dir(contact_id)
+        filepath = self.core.textfilestore.get_note_filepath(
+            contact_id,
+            note_id)
 
         content = self.core.editor.add(filepath)
         note = EncryptedNote.from_dump(note_id, content)
-        msg = self.core.textfilestore.add_encrypted_note(contact.get_id(), note)
+        self.msg = self.core.textfilestore.add_encrypted_note(
+            contact_id, note)
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(note)
-        self.core.ui.console.show_message(msg)
+        self.to_focus_detail = note
+
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class RenameNote(Command):
@@ -210,16 +209,24 @@ class RenameNote(Command):
 
     def _execute(self, new_name):
         contact = self.core.ui.list_view.get_focused_contact()
-        note = self.core.ui.detail_view.get_focused_detail()
+        note = self.focused_detail
+        Note.validate_name(new_name)
 
-        msg = contact.rename_note(note, new_name)
+        if note.name == new_name:
+            return "Warning: Gift unchanged"
 
-        # TODO doesn't work; does date must be Date class?
+        if self.core.textfilestore.has_note(Note.name_to_id(new_name)):
+            raise ValueError(f'Note {new_name} already exists')
+
+        self.msg = self.core.textfilestore.rename_note(contact.get_id(),
+                                                       note.get_id(),
+                                                       new_name)
+
         note.note_id = new_name  # to find the position by the name
+        self.to_focus_detail = note
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(note)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class EditNote(Command):
@@ -227,27 +234,27 @@ class EditNote(Command):
     names = ['edit-note']
 
     def _execute(self, note_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
-        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+        contact_id = self.focused_contact.get_id()
+
+        if not self.core.textfilestore.has_note(contact_id, note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        filepath = self.core.textfilestore.get_note_filepath(contact.get_id(),
+        filepath = self.core.textfilestore.get_note_filepath(contact_id,
                                                              note_id)
 
         # TODO use random temp path instead?
-        self.core.textfilestore.create_note_dir(contact.get_id())
+        self.core.textfilestore.create_note_dir(contact_id)
 
         new_content = self.core.editor.edit(filepath)
         note = Note.from_dump(note_id, new_content)
-        msg = self.core.textfilestore.edit_note(contact.get_id(), note_id, note)
+        self.msg = self.core.textfilestore.edit_note(contact_id, note_id, note)
+        self.to_focus_detail = note
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(note)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class DeleteNote(Command):
@@ -255,27 +262,17 @@ class DeleteNote(Command):
     names = ['delete-note']
 
     def _execute(self, note_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-        old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if not self.core.textfilestore.has_note(contact_id, note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        msg = self.core.textfilestore.delete_note(contact.get_id(), note_id)
+        self.msg = self.core.textfilestore.delete_note(contact_id, note_id)
 
-        self.core.ui.set_contact_details(contact)
-
-        new_detail_pos = 0
-        if self.core.contact_handler.has_details(contact):
-            # don't focus details column if contact has no details
-            detail_count = self.core.ui.detail_view.get_tab_body().get_count()
-            new_detail_pos = min(old_detail_pos, detail_count - 1)
-            self.core.ui.focus_detail_view()
-        self.core.ui.focus_detail_pos(new_detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
 
 
 class EncryptNote(Command):
@@ -283,20 +280,17 @@ class EncryptNote(Command):
     names = ['encrypt-note']
 
     def _execute(self, note_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if not self.core.textfilestore.has_note(contact_id, note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        msg = self.core.textfilestore.encrypt_note(contact.get_id(), note_id)
+        self.msg = self.core.textfilestore.encrypt_note(contact_id, note_id)
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail_pos(detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class DecryptNote(Command):
@@ -304,20 +298,17 @@ class DecryptNote(Command):
     names = ['decrypt-note']
 
     def _execute(self, note_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if not self.core.textfilestore.has_note(contact_id, note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        msg = self.core.textfilestore.decrypt_note(contact.get_id(), note_id)
+        self.msg = self.core.textfilestore.decrypt_note(contact_id, note_id)
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail_pos(detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class ToggleNoteEncryption(Command):
@@ -325,31 +316,28 @@ class ToggleNoteEncryption(Command):
     names = ['toggle-note-encryption']
 
     def _execute(self, note_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_note(contact.get_id(), note_id):
+        if not self.core.textfilestore.has_note(contact_id, note_id):
             raise ValueError(f'Note "{note_id}" doesn\'t exist')
 
-        if self.core.memorystore.has_note(contact.get_id(), note_id):  # hide
-            self.core.memorystore.delete_note(contact.get_id(), note_id)
-            msg = "Hide encrypted note content"
+        if self.core.memorystore.has_note(contact_id, note_id):  # hide
+            self.core.memorystore.delete_note(contact_id, note_id)
+            self.msg = "Hide encrypted note content"
         else:  # show
             content = self.core.textfilestore.get_encrypted_note_text(
-                contact.get_id(),
+                contact_id,
                 note_id)
             encrypted_note = EncryptedNote(note_id, content)
-            if self.core.memorystore.add_note(contact.get_id(), encrypted_note):
-                msg = "Show encrypted note content"
+            if self.core.memorystore.add_note(contact_id, encrypted_note):
+                self.msg = "Show encrypted note content"
             else:
                 raise Exception("Failed to show encrypted note content")
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail_pos(detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class ShowAllEncryptedNotes(Command):
@@ -357,25 +345,24 @@ class ShowAllEncryptedNotes(Command):
     names = ['show-all-encrypted-notes']
 
     def _execute(self, args=None):
-        contact = self.core.ui.list_view.get_focused_contact()
-        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_encrypted_notes(contact.get_id()):
+        if not self.core.textfilestore.has_encrypted_notes(contact_id):
             raise Exception("No encrypted notes found")
 
         for note in self.core.textfilestore.get_encrypted_notes(
-                contact.get_id()):
+                contact_id):
             content = self.core.textfilestore.get_encrypted_note_text(
-                contact.get_id(),
+                contact_id,
                 note.note_id)
             note = EncryptedNote(note.note_id, content)
-            self.core.memorystore.add_note(contact.get_id(), note)
+            self.core.memorystore.add_note(contact_id, note)
 
-        msg = "Show content of all encrypted notes"
+        self.msg = "Show content of all encrypted notes"
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail_pos(detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        # TODO
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class HideAllEncryptedNotes(Command):
@@ -383,18 +370,17 @@ class HideAllEncryptedNotes(Command):
     names = ['hide-all-encrypted-notes']
 
     def _execute(self, args=None):
-        contact = self.core.ui.list_view.get_focused_contact()
-        detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.memorystore.has_notes(contact.get_id()):
+        if not self.core.memorystore.has_notes(contact_id):
             raise Exception("All encrypted notes are hidden")
 
-        self.core.memorystore.delete_all_notes(contact.get_id())
-        msg = "Hide content of all encrypted notes"
+        self.core.memorystore.delete_all_notes(contact_id)
+        self.msg = "Hide content of all encrypted notes"
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail_pos(detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        # TODO
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class AddGift(Command):
@@ -402,26 +388,24 @@ class AddGift(Command):
     names = ['add-gift']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_name}" does already exist')
 
         # TODO use random temp path instead?
-        self.core.textfilestore.create_gift_dir(contact.get_id())
-        filepath = self.core.textfilestore.get_gift_filepath(contact.get_id(),
+        self.core.textfilestore.create_gift_dir(contact_id)
+        filepath = self.core.textfilestore.get_gift_filepath(contact_id,
                                                              gift_id)
 
         content = self.core.editor.add(filepath)
         gift = Gift.from_dump(gift_id, content)
-        msg = self.core.textfilestore.add_gift(contact.get_id(), gift)
+        self.msg = self.core.textfilestore.add_gift(contact_id, gift)
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class RenameGift(Command):
@@ -430,8 +414,7 @@ class RenameGift(Command):
 
     def _execute(self, new_name):
         contact = self.core.ui.list_view.get_focused_contact()
-        gift = self.core.ui.detail_view.get_focused_detail()
-
+        gift = self.focused_detail
         Gift.validate_name(new_name)
 
         if gift.name == new_name:
@@ -440,15 +423,15 @@ class RenameGift(Command):
         if self.core.textfilestore.has_gift(Gift.name_to_id(new_name)):
             raise ValueError(f'Gift {new_name} already exists')
 
-        msg = self.core.textfilestore.rename_gift(contact.get_id(),
-                                                  gift.get_id(),
-                                                  new_name)
+        self.msg = self.core.textfilestore.rename_gift(contact.get_id(),
+                                                       gift.get_id(),
+                                                       new_name)
 
-        gift.name = new_name  # to focus the renamed detail
+        gift.name = new_name  # to find the position by the name
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class EditGift(Command):
@@ -456,27 +439,26 @@ class EditGift(Command):
     names = ['edit-gift']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
-        filepath = self.core.textfilestore.get_gift_filepath(contact.get_id(),
+        filepath = self.core.textfilestore.get_gift_filepath(contact_id,
                                                              gift_id)
 
         # TODO use random temp path instead?
-        self.core.textfilestore.create_gift_dir(contact.get_id())
+        self.core.textfilestore.create_gift_dir(contact_id)
 
         new_content = self.core.editor.edit(filepath)
         gift = Gift.from_dump(gift_id, new_content)
-        msg = self.core.textfilestore.edit_gift(contact.get_id(), gift_id, gift)
+        self.msg = self.core.textfilestore.edit_gift(contact_id, gift_id, gift)
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class DeleteGift(Command):
@@ -484,28 +466,18 @@ class DeleteGift(Command):
     names = ['delete-gift']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-        old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
-
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
 
-        msg = self.core.textfilestore.delete_gift(self, contact.get_id(),
-                                                  gift_id)
+        self.msg = self.core.textfilestore.delete_gift(self, contact_id,
+                                                       gift_id)
 
-        self.core.ui.set_contact_details(contact)
-
-        new_detail_pos = 0
-        if self.core.contact_handler.has_details(contact):
-            # don't focus details column if contact has no details
-            detail_count = self.core.ui.detail_view.get_tab_body().get_count()
-            new_detail_pos = min(old_detail_pos, detail_count - 1)
-            self.core.ui.focus_detail_view()
-        self.core.ui.focus_detail_pos(new_detail_pos)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
 
 
 class MarkGifted(Command):
@@ -513,22 +485,21 @@ class MarkGifted(Command):
     names = ['mark-gifted']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" does not exist')
 
-        msg = self.core.textfilestore.mark_gifted(self, contact.get_id(),
-                                                  gift_id)
+        self.msg = self.core.textfilestore.mark_gifted(self, contact_id,
+                                                       gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact.get_id(), gift_id)
+        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class UnmarkGifted(Command):
@@ -544,14 +515,14 @@ class UnmarkGifted(Command):
         if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
             raise ValueError(f'Gift "{gift_id}" does not exist')
 
-        msg = self.core.textfilestore.unmark_gifted(self, contact.get_id(),
-                                                    gift_id)
+        self.msg = self.core.textfilestore.unmark_gifted(self, contact.get_id(),
+                                                         gift_id)
 
         gift = self.core.textfilestore.get_gift(self, contact.get_id(), gift_id)
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class MarkPermanent(Command):
@@ -559,22 +530,21 @@ class MarkPermanent(Command):
     names = ['mark-permanent']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" does not exist')
 
-        msg = self.core.textfilestore.mark_permanent(self, contact.get_id(),
-                                                     gift_id)
+        self.msg = self.core.textfilestore.mark_permanent(self, contact_id,
+                                                          gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact.get_id(), gift_id)
+        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
 
 
 class UnmarkPermanent(Command):
@@ -582,19 +552,18 @@ class UnmarkPermanent(Command):
     names = ['unmark-permanent']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
+        contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" does not exist')
 
-        msg = self.core.textfilestore.unmark_permanent(self, contact.get_id(),
-                                                       gift_id)
+        self.msg = self.core.textfilestore.unmark_permanent(self, contact_id,
+                                                            gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact.get_id(), gift_id)
+        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        self.to_focus_detail = gift
 
-        self.core.ui.set_contact_details(contact)
-        self.core.ui.focus_detail(gift)
-        self.core.ui.console.show_message(msg)
+    def _update(self):
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
