@@ -16,7 +16,6 @@ class Command:
     def __init__(self, core):
         self.core = core
 
-        self.custom_input_handling = False
         self.input = ""
 
         self.focused_contact = None
@@ -32,12 +31,15 @@ class Command:
         self.focused_detail = self.core.ui.detail_view.get_focused_detail()
 
         arg = " ".join(args)
-        if self.custom_input_handling:
+        if self._is_custom_input_handling():
             arg = args
 
         self._execute(arg)
         self._update()
         self.core.ui.console.show_message(self.msg)
+
+    def _is_custom_input_handling(self):
+        return False
 
     def _execute(self, args):
         raise NotImplementedError()
@@ -86,6 +88,9 @@ class AddAttribute(Command):
     name = 'add-attribute'
     names = ['add-attribute']
 
+    def _is_custom_input_handling(self):
+        return True
+
     def _execute(self, args):
         key = args[0]
         value = " ".join(args[1:])
@@ -101,6 +106,9 @@ class AddAttribute(Command):
 class EditAttribute(Command):
     name = 'edit-attribute'
     names = ['edit-attribute']
+
+    def _is_custom_input_handling(self):
+        return True
 
     def _execute(self, args):
         key = args[0]
@@ -124,6 +132,9 @@ class DeleteAttribute(Command):
     name = 'delete-attribute'
     names = ['delete-attribute']
 
+    def _is_custom_input_handling(self):
+        return True
+
     def _execute(self, args):
         key = args[0]
         value = " ".join(args[1:])
@@ -139,12 +150,11 @@ class AddNote(Command):
     name = 'add-note'
     names = ['add-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         # TODO refactor, is very similar to add-gift (create interface for both?)
 
         contact = self.core.ui.list_view.get_focused_contact()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -169,12 +179,11 @@ class AddEncryptedNote(Command):
     name = 'add-encrypted-note'
     names = ['add-encrypted-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         # TODO refactor, is very similar to add-gift (create interface for both?)
 
         contact = self.core.ui.list_view.get_focused_contact()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -199,11 +208,10 @@ class RenameNote(Command):
     name = 'rename-note'
     names = ['rename-note']
 
-    def _execute(self, args):
+    def _execute(self, new_name):
         contact = self.core.ui.list_view.get_focused_contact()
         note = self.core.ui.detail_view.get_focused_detail()
 
-        new_name = " ".join(args)
         msg = contact.rename_note(note, new_name)
 
         # TODO doesn't work; does date must be Date class?
@@ -218,10 +226,9 @@ class EditNote(Command):
     name = 'edit-note'
     names = ['edit-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -247,11 +254,10 @@ class DeleteNote(Command):
     name = 'delete-note'
     names = ['delete-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         contact = self.core.ui.list_view.get_focused_contact()
         old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -276,11 +282,10 @@ class EncryptNote(Command):
     name = 'encrypt-note'
     names = ['encrypt-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -298,11 +303,10 @@ class DecryptNote(Command):
     name = 'decrypt-note'
     names = ['decrypt-note']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -320,11 +324,10 @@ class ToggleNoteEncryption(Command):
     name = 'toggle-note-encryption'
     names = ['toggle-note-encryption']
 
-    def _execute(self, args):
+    def _execute(self, note_name):
         contact = self.core.ui.list_view.get_focused_contact()
         detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
-        note_name = " ".join(args)
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
 
@@ -398,10 +401,9 @@ class AddGift(Command):
     name = 'add-gift'
     names = ['add-gift']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
 
@@ -426,11 +428,10 @@ class RenameGift(Command):
     name = 'rename-gift'
     names = ['rename-gift']
 
-    def _execute(self, args):
+    def _execute(self, new_name):
         contact = self.core.ui.list_view.get_focused_contact()
         gift = self.core.ui.detail_view.get_focused_detail()
 
-        new_name = " ".join(args)
         Gift.validate_name(new_name)
 
         if gift.name == new_name:
@@ -454,10 +455,9 @@ class EditGift(Command):
     name = 'edit-gift'
     names = ['edit-gift']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
 
@@ -483,11 +483,10 @@ class DeleteGift(Command):
     name = 'delete-gift'
     names = ['delete-gift']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
         old_detail_pos = self.core.ui.detail_view.get_tab_body().get_focus_position()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = Gift.name_to_id(gift_name)
 
@@ -513,10 +512,9 @@ class MarkGifted(Command):
     name = 'mark-gifted'
     names = ['mark-gifted']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
 
@@ -537,10 +535,9 @@ class UnmarkGifted(Command):
     name = 'unmark-gifted'
     names = ['unmark-gifted']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
 
@@ -561,10 +558,9 @@ class MarkPermanent(Command):
     name = 'mark-permanent'
     names = ['mark-permanent']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
 
@@ -585,10 +581,9 @@ class UnmarkPermanent(Command):
     name = 'unmark-permanent'
     names = ['unmark-permanent']
 
-    def _execute(self, args):
+    def _execute(self, gift_name):
         contact = self.core.ui.list_view.get_focused_contact()
 
-        gift_name = " ".join(args)
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
 
