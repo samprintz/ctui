@@ -38,6 +38,8 @@ class DetailAddedOrEditedRedraw(Redraw):
         self.core = core
 
     def redraw(self):
+        contact = self.core.ui.list_view.get_focused_contact()
+        self.core.update_contact_details(contact)
         self.core.ui.focus_detail_view()
         self.core.ui.focus_detail(self.detail)
 
