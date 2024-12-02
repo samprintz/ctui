@@ -79,7 +79,7 @@ class Console(urwid.Filler):
                 self.core.ui.frame.focus_position = 'body'
             elif key == 'enter':
                 args = self.original_widget.edit_text.split()
-                self.core.handle(args)
+                self.handle(args)
                 self.core.ui.frame.focus_position = 'body'
             else:
                 return super(Console, self).keypress(size, key)

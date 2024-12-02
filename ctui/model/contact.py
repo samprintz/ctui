@@ -7,7 +7,15 @@ class Contact:
         self.notes = notes
 
     def get_id(self):
-        return self.name.replace(' ', '_')
+        return Contact.name_to_id()
 
     def __str__(self):
         return f'Contact({self.name})'
+
+    @classmethod
+    def id_to_name(cls, contact_id):
+        return contact_id.replace('_', ' ')
+
+    @classmethod
+    def name_to_id(cls, name):
+        return name.replace(' ', '_')

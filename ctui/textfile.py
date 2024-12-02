@@ -113,11 +113,11 @@ class TextFileStore:
             return "Couldn't rename directory \"{}\" to \"{}\"." \
                 .format(dirname, new_dirname)
 
-    def delete_contact(self, contact):
-        assert self.contains_contact(contact)
+    def delete_contact(self, contact_id):
+        assert self.contains_contact_id(contact_id)
 
         try:
-            dirname = self.get_textfile_path(contact.get_id())
+            dirname = self.get_textfile_path(contact_id)
             shutil.rmtree(dirname, ignore_errors=False)
             return True
         except Exception:

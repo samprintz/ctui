@@ -1,6 +1,8 @@
 from rdflib import *
 from rdflib.resource import *
 
+from model.contact import Contact
+
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
 
@@ -31,6 +33,10 @@ class RDFStore:
 
     def contains_contact(self, contact):
         return self.contains_contact_name(contact.name)
+
+    def contains_contact_id(self, contact_id):
+        name = Contact.id_to_name(contact_id)
+        return (None, GIVEN_NAME_REF, Literal(name)) in self.g
 
     def contains_contact_name(self, name):
         return (None, GIVEN_NAME_REF, Literal(name)) in self.g
@@ -70,10 +76,12 @@ class RDFStore:
         except Exception:
             raise Exception  # TODO
 
-    def delete_contact(self, contact):
-        assert self.contains_contact(contact)
+    def delete_contact(self, contact_id):
+        assert self.contains_contact_id(contact_id)
+       
         try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+            name = Contact.name_to_id(contact_id)
+            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
             self.g.remove((s, None, None))
             self.save_file(self.path)
             return True
