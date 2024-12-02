@@ -1,5 +1,7 @@
 import urwid
 
+from ctui.commands import Command
+
 
 class Console(urwid.Filler):
     def __init__(self, core):
@@ -34,6 +36,14 @@ class Console(urwid.Filler):
     def show_meta(self, meta):
         self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
+    def handle(self, args):
+        command = args[0]
+        for command_class in Command.__subclasses__():
+            if command in command_class.names:
+                command_instance = command_class(self.core)
+                command_instance.execute(args[1:])
+                break
+
     def clear(self):
         self.body = urwid.Text('')
 
@@ -49,23 +59,27 @@ class Console(urwid.Filler):
         if self.filter_mode is True:
             if key == 'esc':
                 self.filter_mode = False
-                self.core.cli.unfilter_contacts()
                 self.clear()
-                self.core.ui.frame.focus_position = 'body'
+                self.core.unfilter_contacts()
+                return
             elif key == 'enter':
                 self.filter_mode = False
-                args = self.original_widget.edit_text.split()
-                return self.core.cli.handle(False)
+                msg = 'f={}'.format(self.core.filter_string)
+                self.show_message(msg)
+                self.core.ui.frame.focus_position = 'body'
+                return
             else:
                 super(Console, self).keypress(size, key)
                 args = self.original_widget.edit_text.split()
-                return self.core.cli.handle(args)
+                filter_string = " ".join(args[0:])
+                return self.core.update_contact_list(filter_string)
         else:
             if key == 'esc':
                 self.clear()
                 self.core.ui.frame.focus_position = 'body'
             elif key == 'enter':
                 args = self.original_widget.edit_text.split()
-                return self.core.cli.handle(args)
+                self.core.handle(args)
+                self.core.ui.frame.focus_position = 'body'
             else:
                 return super(Console, self).keypress(size, key)

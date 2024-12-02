@@ -28,7 +28,7 @@ class UI:
         self.main_loop = urwid.MainLoop(self.frame, palette)
 
     def run(self):
-        self.set_contact_list(self.core.get_all_contacts())
+        self.set_contact_list(self.core.get_all_contacts())  # TODO remove
         self.main_loop.run()
 
     def is_focus_on_details(self):

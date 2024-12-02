@@ -109,13 +109,13 @@ class ContactList(CListBox):
                 self.core.keybindings.set_simulating(False)
                 return key
             case 'search_contact':
-                self.core.cli.search_contact()
+                self.core.ui.console.show_search()
             case 'set_contact_filter':
-                self.core.cli.filter_contacts()
+                self.core.filter_contacts()
             case 'clear_contact_filter':
-                self.core.cli.unfilter_contacts()
-            case 'add_google_contact':
-                self.core.cli.add_google_contact()
+                self.core.unfilter_contacts()
+            # case 'add_google_contact':
+            #     self.core.add_google_contact()
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)

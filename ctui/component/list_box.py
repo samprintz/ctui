@@ -12,8 +12,6 @@ class CListBox(urwid.ListBox):
         if key is None:
             return
 
-        self.core.ui.watch_focus()
-
         command_id, command_key, command_repeat \
             = self.core.keybindings.keypress(key, self.name)
 

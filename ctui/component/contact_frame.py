@@ -2,7 +2,6 @@ from datetime import datetime, date
 
 import urwid
 
-from ctui.cli import Action
 from ctui.commands import AddAttribute, AddNote, AddEncryptedNote
 
 
@@ -29,9 +28,7 @@ class CFrame(urwid.Frame):
             case 'quit':
                 raise urwid.ExitMainLoop()
             case 'reload':
-                self.core.ui.watch_focus()
-                self.core.ui.refresh_contact_list(Action.REFRESH, None, None,
-                                                  self.core.filter_string)
+                self.core.update_contact_list()
             case 'add_contact':
                 command = 'add-contact '
                 self.core.ui.console.show_console(command)

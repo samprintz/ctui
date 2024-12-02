@@ -198,10 +198,6 @@ class GoogleAttributeEntry(DetailEntry):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            # case 'edit_attribute':
-            #     self.core.cli.edit_attribute(self.contact, self.attribute)
-            # case 'delete_attribute':
-            #     self.core.cli.delete_attribute(self.contact, self.attribute)
             case 'copy_attribute':
                 pyperclip.copy(self.attribute.value)
                 msg = "Copied \"" + self.attribute.value + "\" to clipboard."

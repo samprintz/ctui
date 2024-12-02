@@ -2,7 +2,6 @@ import socket
 
 from httplib2 import ServerNotFoundError
 
-from ctui.cli import CLI
 from ctui.google_contacts import GoogleStore
 from ctui.handler.contact_handler import ContactHandler
 from ctui.keybindings import Keybindings
@@ -37,12 +36,9 @@ class Core:
         else:
             self.googlestore = None
 
-        self.cli = CLI(self)
         self.keybindings = Keybindings(config)
         self.editor = Editor(config['editor']['editor'])
         self.last_keypress = None
-
-        self.contact_list = self.get_all_contacts()
 
         self.filter_string = ''
 
@@ -94,10 +90,9 @@ class Core:
         contacts.sort(key=lambda x: x.name)
         return contacts
 
-    def update_contact_list(self):
+    def update_contact_list(self, filter_string):
         self.contact_list = self.get_all_contacts()
-        contact_list = self.get_filtered_contacts(
-            self.get_filter_string())  # keep filter applied
+        contact_list = self.get_filtered_contacts(filter_string)
         self.ui.set_contact_list(contact_list)
 
     def update_contact_details(self, contact):
@@ -200,3 +195,15 @@ class Core:
 
     def get_filter_string(self):
         return self.filter_string
+
+    def filter_contacts(self):
+        self.filter_string = ''
+        command = 'filter {}'.format(self.filter_string)
+        self.ui.console.show_filter(command)
+
+    def unfilter_contacts(self):
+        self.filter_string = ''
+        # TODO show unfiltered contact list
+        self.ui.frame.focus_position = 'body'
+        self.ui.focus_list_view()
+        self.ui.focus_contact(None)  # TODO which was the last contact?
