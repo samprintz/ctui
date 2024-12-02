@@ -7,7 +7,7 @@ class Contact:
         self.notes = notes
 
     def get_id(self):
-        return Contact.name_to_id()
+        return Contact.name_to_id(self.name)
 
     def __str__(self):
         return f'Contact({self.name})'

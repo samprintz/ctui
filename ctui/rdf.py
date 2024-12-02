@@ -1,7 +1,7 @@
 from rdflib import *
 from rdflib.resource import *
 
-from model.contact import Contact
+from ctui.model.contact import Contact
 
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
 GIFTIDEA_REF = URIRef('http://hiea.de/contact#giftIdea')
@@ -78,9 +78,9 @@ class RDFStore:
 
     def delete_contact(self, contact_id):
         assert self.contains_contact_id(contact_id)
-       
+
         try:
-            name = Contact.name_to_id(contact_id)
+            name = Contact.id_to_name(contact_id)
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
             self.g.remove((s, None, None))
             self.save_file(self.path)

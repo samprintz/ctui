@@ -91,8 +91,8 @@ class Core:
         return contacts
 
     def update_contact_list(self, filter_string=None):
-        self.contact_list = self.get_all_contacts()
-        contact_list = self.get_filtered_contacts(filter_string)
+        contact_list = self.get_all_contacts()
+        contact_list = self.apply_filter(contact_list, filter_string)
         self.ui.set_contact_list(contact_list)
 
     def update_contact_details(self, contact):
@@ -100,11 +100,13 @@ class Core:
         self.contact_handler.load_details(contact)
         self.ui.set_contact_details(contact)
 
-    def get_filtered_contacts(self, filter_string=None):
-        if not filter_string:  # shortcut for empty filter (unfilter)
-            return self.contact_list
+    @staticmethod
+    def apply_filter(contact_list, filter_string=None):
+        if not filter_string:
+            return contact_list
+
         contacts = []
-        for contact in self.contact_list:
+        for contact in contact_list:
             if filter_string.lower() in contact.name.lower():
                 contacts.append(contact)
         contacts.sort(key=lambda x: x.name)
@@ -120,17 +122,22 @@ class Core:
         return sorted(set(contact_names))
 
     def contains_contact(self, contact):
+        """
+        @deprecated use contains_contact_id
+        """
         return self.rdfstore.contains_contact(contact) or \
             self.textfilestore.contains_contact(contact)
+
+    def contains_contact_id(self, name):
+        """
+        TODO rename to contains_contact()
+        """
+        return self.rdfstore.contains_contact_id(name) or \
+            self.textfilestore.contains_contact_id(name)
 
     def contains_contact_name(self, name):
         return self.rdfstore.contains_contact_name(name) or \
             self.textfilestore.contains_contact_name(name)
-
-    def get_contact(self, name):
-        for contact in self.contact_list:
-            if contact.name == name:
-                return contact
 
     def select_contact(self, contact):
         self.update_contact_details(contact)
@@ -158,23 +165,23 @@ class Core:
             self.textfilestore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
-    def delete_contact_by_name(self, name):
-        contact = self.get_contact(name)
-        if contact is None:
-            return "Error: {} doesn't exists.".format(name)
-        else:
-            return self.delete_contact(contact)
-
     def delete_contact(self, contact):
-        if not self.contains_contact(contact):
-            return "Error: {} doesn't exists.".format(contact.name)
-        if type(contact) is GoogleContact:
-            self.googlestore.delete_contact(contact)
-        if self.rdfstore.contains_contact(contact):
-            self.rdfstore.delete_contact(contact)
-        if self.textfilestore.contains_contact(contact):
-            self.textfilestore.delete_contact(contact)
-        return "{} deleted.".format(contact.name)
+        """
+        @deprecated
+        """
+        return self.delete_contact_by_id(contact.get_id())
+
+    def delete_contact_by_id(self, contact_id):
+        name = Contact.id_to_name(contact_id)
+        if not self.contains_contact_id(contact_id):
+            return "Error: {} doesn't exists.".format(name)
+        # if type(contact_id) is GoogleContact:
+        #     self.googlestore.delete_contact(contact_id)
+        if self.rdfstore.contains_contact_id(contact_id):
+            self.rdfstore.delete_contact(contact_id)
+        if self.textfilestore.contains_contact_id(contact_id):
+            self.textfilestore.delete_contact(contact_id)
+        return "{} deleted.".format(name)
 
     def add_google_contact(self, name):
         # TODO Check if already exists (offline, not in Google)
