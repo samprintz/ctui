@@ -46,14 +46,32 @@ class UI:
     def focus_detail_view(self):
         self.frame.body.focus_position = 1
 
-    def focus_contact(self, contact):
+    def get_focused_tab(self):
+        pass  # TODO
+
+    def set_focused_tab(self):
+        pass  # TODO
+
+    def get_focused_contact(self):
+        return self.list_view.get_focused_contact()
+
+    def set_focused_contact(self, contact):
         self.list_view.set_focused_contact(contact)
 
-    def focus_contact_pos(self, contact):
+    def get_focused_contact_pos(self):
+        return self.list_view.get_focused_contact_pos()
+
+    def set_focused_contact_pos(self, contact):
         self.list_view.set_focused_contact_pos(contact)
 
-    def focus_detail(self, detail):
-        self.detail_view.focus_detail(detail)
+    def get_focused_detail(self):
+        return self.detail_view.get_focused_detail()
 
-    def focus_detail_pos(self, detail_pos):
-        self.detail_view.focus_detail_pos(detail_pos)
+    def set_focused_detail(self, detail):
+        self.detail_view.set_focused_detail(detail)
+
+    def get_focused_detail_pos(self):
+        return self.detail_view.get_focused_detail_pos()
+
+    def set_focused_detail_pos(self, detail_pos):
+        self.detail_view.set_focused_detail_pos(detail_pos)

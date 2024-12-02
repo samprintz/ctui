@@ -46,18 +46,6 @@ class ContactList(CListBox):
     def set_focused_contact_pos(self, pos):
         self.set_focus(pos)
 
-    def get_focus_position(self):
-        """
-        @deprecated
-        """
-        return self.focus_position
-
-    def set_focus_position(self, pos):
-        """
-        @deprecated
-        """
-        self.focus_position = pos
-
     def get_count(self):
         return len(self.body)
 

@@ -42,16 +42,14 @@ class CDetailsFrame(urwid.Frame):
         return self.body.original_widget
 
     def get_focused_detail(self):
-        # TODO proxy also other detail_view functions?
         return self.get_tab_body().get_focused_detail()
 
-    def get_focus_position(self):
-        # TODO proxy also other detail_view functions?
+    def set_focused_detail(self, detail):
+        detail_pos = self.get_tab_body().get_detail_position(detail)
+        self.set_focused_detail_pos(detail_pos)
+
+    def get_focused_detail_pos(self):
         return self.get_tab_body().get_focus_position()
 
-    def focus_detail(self, detail):
-        detail_pos = self.get_tab_body().get_detail_position(detail)
-        self.focus_detail_pos(detail_pos)
-
-    def focus_detail_pos(self, detail_pos):
+    def set_focused_detail_pos(self, detail_pos):
         self.get_tab_body().set_focus_position(detail_pos)

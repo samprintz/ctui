@@ -27,8 +27,8 @@ class Command:
         self.msg = ""
 
     def execute(self, args):
-        self.focused_contact = self.core.ui.list_view.get_focused_contact()
-        self.focused_detail = self.core.ui.detail_view.get_focused_detail()
+        self.focused_contact = self.core.ui.get_focused_contact()
+        self.focused_detail = self.core.ui.get_focused_detail()
 
         arg = " ".join(args)
         if self._is_custom_input_handling():
@@ -208,7 +208,7 @@ class RenameNote(Command):
     names = ['rename-note']
 
     def _execute(self, new_name):
-        contact = self.core.ui.list_view.get_focused_contact()
+        contact = self.core.ui.get_focused_contact()
         note = self.focused_detail
         Note.validate_name(new_name)
 
@@ -413,7 +413,7 @@ class RenameGift(Command):
     names = ['rename-gift']
 
     def _execute(self, new_name):
-        contact = self.core.ui.list_view.get_focused_contact()
+        contact = self.core.ui.get_focused_contact()
         gift = self.focused_detail
         Gift.validate_name(new_name)
 
@@ -507,7 +507,7 @@ class UnmarkGifted(Command):
     names = ['unmark-gifted']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.list_view.get_focused_contact()
+        contact = self.core.ui.get_focused_contact()
 
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")

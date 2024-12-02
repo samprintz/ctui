@@ -90,7 +90,7 @@ class Core:
         contacts.sort(key=lambda x: x.name)
         return contacts
 
-    def update_contact_list(self, filter_string):
+    def update_contact_list(self, filter_string=None):
         self.contact_list = self.get_all_contacts()
         contact_list = self.get_filtered_contacts(filter_string)
         self.ui.set_contact_list(contact_list)
@@ -100,7 +100,7 @@ class Core:
         self.contact_handler.load_details(contact)
         self.ui.set_contact_details(contact)
 
-    def get_filtered_contacts(self, filter_string):
+    def get_filtered_contacts(self, filter_string=None):
         if not filter_string:  # shortcut for empty filter (unfilter)
             return self.contact_list
         contacts = []
@@ -206,4 +206,4 @@ class Core:
         # TODO show unfiltered contact list
         self.ui.frame.focus_position = 'body'
         self.ui.focus_list_view()
-        self.ui.focus_contact(None)  # TODO which was the last contact?
+        self.ui.set_focused_contact(None)  # TODO which was the last contact?
