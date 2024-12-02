@@ -16,15 +16,15 @@ config = util.load_config(CONFIG_FILE)
 class TestCore(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.core = Core(config, True)
-        self.name1 = "Test Contact A"
-        self.name2 = "Test Contact B"
-        self.contact1 = Contact(self.name1)
-        self.contact2 = Contact(self.name2)
+    def setUpClass(cls):
+        cls.core = Core(config, True)
+        cls.name1 = "Test Contact A"
+        cls.name2 = "Test Contact B"
+        cls.contact1 = Contact(cls.name1)
+        cls.contact2 = Contact(cls.name2)
 
     @classmethod
-    def setUp(self):
+    def setUp(cls):
         pass
 
     # contacts
@@ -140,44 +140,44 @@ class TestCore(unittest.TestCase):
         self.assertFalse(self.core.rdfstore.contains_attribute(attr))
 
     @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact1)
-        self.core.delete_contact(self.contact2)
+    def tearDown(cls):
+        cls.core.delete_contact(cls.contact1)
+        cls.core.delete_contact(cls.contact2)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         pass
 
 
 class TestObjects(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.core = Core(config, True)
-        self.name = "Test Contact"
-        self.contact = Contact(self.name)
-        self.attr_key1 = "key1"
-        self.attr_key2 = "key2"
-        self.attr_value1 = "Attribute 1"
-        self.attr_value2 = "Attribute 2"
-        self.attr1 = Attribute(self.attr_key1, self.attr_value1)
-        self.attr2 = Attribute(self.attr_key2, self.attr_value2)
-        self.gift_name1 = "Gift 1"
-        self.gift_name2 = "Gift 2"
-        self.gift_content_new = "desc: new description"
-        self.gift_content_invalid = "invalid content"
-        self.gift1 = Gift(self.gift_name1, "")
-        self.gift2 = Gift(self.gift_name2, "")
-        self.note_id1 = "19990101"
-        self.note_id2 = "19991215"
-        self.note_id_invalid = "1248"
-        self.note_content1 = "Text 1"
-        self.note_content2 = "Text 2"
-        self.note1 = Note(self.note_id1, self.note_content1)
+    def setUpClass(cls):
+        cls.core = Core(config, True)
+        cls.name = "Test Contact"
+        cls.contact = Contact(cls.name)
+        cls.attr_key1 = "key1"
+        cls.attr_key2 = "key2"
+        cls.attr_value1 = "Attribute 1"
+        cls.attr_value2 = "Attribute 2"
+        cls.attr1 = Attribute(cls.attr_key1, cls.attr_value1)
+        cls.attr2 = Attribute(cls.attr_key2, cls.attr_value2)
+        cls.gift_name1 = "Gift 1"
+        cls.gift_name2 = "Gift 2"
+        cls.gift_content_new = "desc: new description"
+        cls.gift_content_invalid = "invalid content"
+        cls.gift1 = Gift(cls.gift_name1, "")
+        cls.gift2 = Gift(cls.gift_name2, "")
+        cls.note_id1 = "19990101"
+        cls.note_id2 = "19991215"
+        cls.note_id_invalid = "1248"
+        cls.note_content1 = "Text 1"
+        cls.note_content2 = "Text 2"
+        cls.note1 = Note(cls.note_id1, cls.note_content1)
 
     @classmethod
-    def setUp(self):
-        self.core.add_contact(self.contact)
+    def setUp(cls):
+        cls.core.add_contact(cls.contact)
 
     # attributes
 
@@ -496,25 +496,25 @@ class TestObjects(unittest.TestCase):
                                               new_note)
 
     @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact)
+    def tearDown(cls):
+        cls.core.delete_contact(cls.contact)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         pass
 
 
 class TestKeybindings(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         pass
 
     @classmethod
-    def setUp(self):
-        self.core = Core(config, True)
-        UI(self.core, config)
-        self.core.ui.set_contact_list(self.core.get_all_contacts())
+    def setUp(cls):
+        cls.core = Core(config, True)
+        UI(cls.core, config)
+        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
     def test_init(self):
         commands = self.core.keybindings.commands
@@ -609,35 +609,35 @@ class TestKeybindings(unittest.TestCase):
         self.assertTrue(self.core.ui.console.filter_mode)
 
     @classmethod
-    def tearDown(self):
+    def tearDown(cls):
         pass
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         pass
 
 
 class TestListViewUI(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         pass
 
     @classmethod
-    def setUp(self):
-        self.core = Core(config, True)
-        UI(self.core, config)
-        self.core.ui.set_contact_list(self.core.get_all_contacts())
+    def setUp(cls):
+        cls.core = Core(config, True)
+        UI(cls.core, config)
+        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
-        self.name1 = "Test Contact A"
-        self.name2 = "Test Contact B"
-        self.name_first = "A"
-        self.name_last = "zzz"
-        self.contact1 = Contact(self.name1)
-        self.contact2 = Contact(self.name2)
-        self.contact_first = Contact(self.name_first)
-        self.contact_last = Contact(self.name_last)
-        self.pos = 0
+        cls.name1 = "Test Contact A"
+        cls.name2 = "Test Contact B"
+        cls.name_first = "A"
+        cls.name_last = "zzz"
+        cls.contact1 = Contact(cls.name1)
+        cls.contact2 = Contact(cls.name2)
+        cls.contact_first = Contact(cls.name_first)
+        cls.contact_last = Contact(cls.name_last)
+        cls.pos = 0
 
     # test initialization entries objects
 
@@ -764,11 +764,11 @@ class TestListViewUI(unittest.TestCase):
         # self.core.add_contact(self.contact_last)
 
     @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact1)
-        self.core.delete_contact(self.contact2)
-        self.core.delete_contact(self.contact_first)
-        self.core.delete_contact(self.contact_last)
+    def tearDown(cls):
+        cls.core.delete_contact(cls.contact1)
+        cls.core.delete_contact(cls.contact2)
+        cls.core.delete_contact(cls.contact_first)
+        cls.core.delete_contact(cls.contact_last)
 
     @classmethod
     def tearDownClass(self):
@@ -781,30 +781,30 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         pass
 
     @classmethod
-    def setUp(self):
-        self.core = Core(config, True)
-        UI(self.core, config)
-        self.core.ui.set_contact_list(self.core.get_all_contacts())
+    def setUp(cls):
+        cls.core = Core(config, True)
+        UI(cls.core, config)
+        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
-        self.name_first = "A"
-        self.attr_key_first = "aaa-key"
-        self.attr_key1 = "key1"
-        self.attr_key2 = "key2"
-        self.attr_key_last = "zzz-key"
-        self.attr_value1 = "Attribute 1"
-        self.attr_value2 = "Attribute 2"
+        cls.name_first = "A"
+        cls.attr_key_first = "aaa-key"
+        cls.attr_key1 = "key1"
+        cls.attr_key2 = "key2"
+        cls.attr_key_last = "zzz-key"
+        cls.attr_value1 = "Attribute 1"
+        cls.attr_value2 = "Attribute 2"
 
-        self.contact_first = Contact(self.name_first)
-        self.core.add_contact(self.contact_first)
-        self.core.ui.update_view(True, False, None, self.contact_first)
+        cls.contact_first = Contact(cls.name_first)
+        cls.core.add_contact(cls.contact_first)
+        cls.core.ui.update_view(True, False, None, cls.contact_first)
 
     @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact_first)
+    def tearDown(cls):
+        cls.core.delete_contact(cls.contact_first)
 
     def test_setup(self):
         self.ct_pos = self.core.ui.list_view.get_contact_position(
