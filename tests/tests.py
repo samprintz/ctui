@@ -691,28 +691,28 @@ class TestListViewUI(unittest.TestCase):
 
     def test_focus_rename_first_to_some(self):
         self.core.add_contact(self.contact_first)
-        self.core.ui.update_view(True, False, None, self.contact_first)
+        self.core.update_contact_list()
         self.core.ui.console.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_some(self):
         self.core.add_contact(self.contact1)
-        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.update_contact_list()
         self.core.ui.console.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_last_to_some(self):
         self.core.add_contact(self.contact_last)
-        self.core.ui.update_view(True, False, None, self.contact_last)
+        self.core.update_contact_list()
         self.core.ui.console.handle(['rename-contact', self.name2])
         focused_contact = self.core.ui.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name2)
 
     def test_focus_rename_some_to_first(self):
         self.core.add_contact(self.contact1)
-        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.update_contact_list()
         self.core.ui.console.handle(['rename-contact', self.name_first])
         focused_contact = self.core.ui.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_first)
@@ -721,7 +721,7 @@ class TestListViewUI(unittest.TestCase):
 
     def test_focus_rename_some_to_last(self):
         self.core.add_contact(self.contact1)
-        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.update_contact_list()
         self.core.ui.console.handle(['rename-contact', self.name_last])
         focused_contact = self.core.ui.get_focused_contact()
         self.assertEqual(focused_contact.name, self.name_last)
@@ -738,7 +738,7 @@ class TestListViewUI(unittest.TestCase):
         self.core.add_contact(self.contact_last)
         self.core.add_contact(self.contact1)
         self.core.add_contact(self.contact2)
-        self.core.ui.update_view(True, False, None, self.contact1)
+        self.core.update_contact_list()
         pos = self.core.ui.list_view.get_contact_position(self.contact1)
         self.core.ui.console.handle(['delete-contact', self.name1])
         focused_contact = self.core.ui.get_focused_contact()
@@ -748,7 +748,7 @@ class TestListViewUI(unittest.TestCase):
 
     def test_focus_delete_last(self):
         self.core.add_contact(self.contact_last)
-        self.core.ui.update_view(True, False, None, self.contact_last)
+        self.core.update_contact_list()
         pos = self.core.ui.list_view.get_contact_position(self.contact_last)
         self.core.ui.console.handle(['delete-contact', self.name_last])
         focused_contact = self.core.ui.get_focused_contact()
@@ -800,7 +800,7 @@ class TestTUIDetailFocusFirstContact(unittest.TestCase):
 
         cls.contact_first = Contact(cls.name_first)
         cls.core.add_contact(cls.contact_first)
-        cls.core.ui.update_view(True, False, None, cls.contact_first)
+        cls.core.update_contact_list()
 
     @classmethod
     def tearDown(cls):
