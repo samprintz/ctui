@@ -792,10 +792,31 @@ class TestListViewUI(unittest.TestCase):
         pass
 
 
-class TestTUIDetailFocusFirstContact(unittest.TestCase):
-    """
-    Test focusing of details after CRUD operations
-    """
+class TestUIDetailView(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def setUp(cls):
+        cls.core = Core(config, True)
+        UI(cls.core, config)
+        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
+
+        cls.name_first = "Max Mustermann"
+
+        cls.contact_first = Contact(cls.name_first)
+        cls.core.add_contact(cls.contact_first)
+        cls.core.update_contact_list()
+
+    def test_load_details(self):
+        self.core.select_contact(self.contact_first)
+        self.assertEqual(len(self.contact_first.gifts), 1)
+        self.assertEqual(len(self.contact_first.notes), 1)
+
+
+class TestUIDetailViewFirstContact(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
