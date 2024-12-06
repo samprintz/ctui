@@ -13,7 +13,9 @@ class UI:
         self.core.register_ui(self)
         self.name = 'frame'
 
-        palette = [('selected', '', 'light gray')]
+        palette = [
+            ('selected', '', 'white')
+        ]
 
         self.list_view = ContactList(core)
         self.detail_view = CDetailsFrame(core, config)
