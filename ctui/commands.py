@@ -115,7 +115,7 @@ class EditAttribute(Command):
         key = args[0]
         value = " ".join(args[1:])
         new_attr = Attribute(key, value)
-        old_attr = self.core.ui.detail_view.get_focused_detail()
+        old_attr = self.focused_detail
         self.to_focus_detail = new_attr
 
         if old_attr.key == "givenName":  # special case: rename
@@ -475,8 +475,7 @@ class DeleteGift(Command):
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.delete_gift(self, contact_id,
-                                                       gift_id)
+        self.msg = self.core.textfilestore.delete_gift(contact_id, gift_id)
 
     def _update(self):
         DetailDeletedRedraw(self.core).redraw()
