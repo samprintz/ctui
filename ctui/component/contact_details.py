@@ -49,7 +49,12 @@ class ContactDetails(CListBox):
             pass
 
     def get_count(self):
-        return len(self.body)
+        count = 0
+        for entry in self.body:
+            if type(entry) is AttributeEntry or type(
+                    entry) is NoteEntry or type(entry) is GiftEntry:
+                count = count + 1
+        return count
 
     def get_detail_position(self, detail):
         pos = 0
