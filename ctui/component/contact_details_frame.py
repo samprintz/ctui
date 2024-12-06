@@ -10,12 +10,30 @@ class CDetailTabNavigation(urwid.Columns):
             CTabButton(name, on_press=callback, user_data=name)
             for name in tab_names
         ]
+
+        self.update_selected_tab_button(0)
+
         super().__init__(self.buttons)
+
+    def update_selected_tab_button(self, tab_pos):
+        for button in self.buttons:
+            button.set_selected(False)
+        self.buttons[tab_pos].set_selected(True)
 
 
 class CTabButton(urwid.Button):
     button_left = urwid.Text("")
     button_right = urwid.Text("")
+
+    def __init__(self, label, on_press=None, user_data=None):
+        super().__init__(label, on_press, user_data)
+        self._w = urwid.AttrMap(self._w, None, focus_map='selected')
+
+    def set_selected(self, selected):
+        if selected:
+            self._w.set_attr_map({None: 'selected'})
+        else:
+            self._w.set_attr_map({})
 
 
 class CDetailTabBody(urwid.WidgetPlaceholder):
@@ -34,6 +52,7 @@ class CDetailsFrame(urwid.Frame):
 
     def on_tab_click(self, button, tab_name):
         self.body.original_widget = self.tab_content[tab_name]
+        self.header.update_selected_tab_button(self.current_tab)
 
     def set_contact(self, contact):
         self.tab_content = {
