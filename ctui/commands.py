@@ -167,8 +167,8 @@ class AddNote(Command):
 
         content = self.core.editor.add(filepath)
         note = Note.from_dump(note_id, content)
-        self.msg = self.core.textfilestore.add_note(contact_id, note)
         self.to_focus_detail = note
+        self.msg = self.core.textfilestore.add_note(contact_id, note)
 
     def _update(self):
         DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
@@ -403,6 +403,7 @@ class AddGift(Command):
 
         content = self.core.editor.add(filepath)
         gift = Gift.from_dump(gift_id, content)
+        self.to_focus_detail = gift
         self.msg = self.core.textfilestore.add_gift(contact_id, gift)
 
     def _update(self):
