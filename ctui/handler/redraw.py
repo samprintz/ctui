@@ -50,14 +50,16 @@ class DetailDeletedRedraw(Redraw):
 
     def redraw(self):
         contact = self.core.ui.get_focused_contact()
-        self.core.update_contact_details(contact)
-        self.core.ui.focus_detail_view()
+        deleted_detail_pos = self.core.ui.get_focused_detail_pos()
 
-        old_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.core.update_contact_details(contact)
+
         new_detail_pos = 0
+
+        # don't focus details column if contact has no details
         if self.core.contact_handler.has_details(contact):
-            # don't focus details column if contact has no details
             detail_count = self.core.ui.detail_view.get_tab_body().get_count()
-            new_detail_pos = min(old_detail_pos, detail_count - 1)
+            new_detail_pos = min(deleted_detail_pos, detail_count - 1)
             self.core.ui.focus_detail_view()
+
         self.core.ui.set_focused_detail_pos(new_detail_pos)
