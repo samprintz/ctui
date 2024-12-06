@@ -158,7 +158,7 @@ class AddNote(Command):
 
         if self.core.textfilestore.has_note(contact_id,
                                             note_id):
-            raise ValueError(f'Note "{note_id}" does already exist')
+            raise ValueError(f'Note "{note_id}" already existing')
 
         # TODO use random temp path instead?
         self.core.textfilestore.create_note_dir(contact_id)
@@ -185,7 +185,7 @@ class AddEncryptedNote(Command):
 
         if self.core.textfilestore.has_gift(contact_id,
                                             note_id):
-            raise ValueError(f'Note "{note_id}" does already exist')
+            raise ValueError(f'Note "{note_id}" already existing')
 
         # TODO use random temp path instead?
         self.core.textfilestore.create_note_dir(contact_id)
@@ -241,7 +241,7 @@ class EditNote(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
-            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+            raise ValueError(f'Note "{note_id}" not existing')
 
         filepath = self.core.textfilestore.get_note_filepath(contact_id,
                                                              note_id)
@@ -268,7 +268,7 @@ class DeleteNote(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
-            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+            raise ValueError(f'Note "{note_id}" not existing')
 
         self.msg = self.core.textfilestore.delete_note(contact_id, note_id)
 
@@ -286,7 +286,7 @@ class EncryptNote(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
-            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+            raise ValueError(f'Note "{note_id}" not existing')
 
         self.msg = self.core.textfilestore.encrypt_note(contact_id, note_id)
 
@@ -304,7 +304,7 @@ class DecryptNote(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
-            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+            raise ValueError(f'Note "{note_id}" not existing')
 
         self.msg = self.core.textfilestore.decrypt_note(contact_id, note_id)
 
@@ -322,7 +322,7 @@ class ToggleNoteEncryption(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
-            raise ValueError(f'Note "{note_id}" doesn\'t exist')
+            raise ValueError(f'Note "{note_id}" not existing')
 
         if self.core.memorystore.has_note(contact_id, note_id):  # hide
             self.core.memorystore.delete_note(contact_id, note_id)
@@ -394,7 +394,7 @@ class AddGift(Command):
         contact_id = self.focused_contact.get_id()
 
         if self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_name}" does already exist')
+            raise ValueError(f'Gift "{gift_name}" already existing')
 
         # TODO use random temp path instead?
         self.core.textfilestore.create_gift_dir(contact_id)
@@ -445,7 +445,7 @@ class EditGift(Command):
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         filepath = self.core.textfilestore.get_gift_filepath(contact_id,
                                                              gift_id)
@@ -472,7 +472,7 @@ class DeleteGift(Command):
         contact_id = self.focused_contact.get_id()
 
         if self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_id}" doesn\'t exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.delete_gift(self, contact_id,
                                                        gift_id)
@@ -491,7 +491,7 @@ class MarkGifted(Command):
         contact_id = self.focused_contact.get_id()
 
         if self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.mark_gifted(self, contact_id,
                                                        gift_id)
@@ -514,7 +514,7 @@ class UnmarkGifted(Command):
         gift_id = gift_name.replace(" ", "_")
 
         if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.unmark_gifted(self, contact.get_id(),
                                                          gift_id)
@@ -536,7 +536,7 @@ class MarkPermanent(Command):
         contact_id = self.focused_contact.get_id()
 
         if self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.mark_permanent(self, contact_id,
                                                           gift_id)
@@ -558,7 +558,7 @@ class UnmarkPermanent(Command):
         contact_id = self.focused_contact.get_id()
 
         if self.core.textfilestore.has_gift(contact_id, gift_id):
-            raise ValueError(f'Gift "{gift_id}" does not exist')
+            raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.unmark_permanent(self, contact_id,
                                                             gift_id)
