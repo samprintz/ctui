@@ -6,9 +6,16 @@ from ctui.component.contact_details import GeneralDetails, GiftDetails, \
 
 class CDetailTabNavigation(urwid.Columns):
     def __init__(self, tab_names, callback):
-        self.buttons = [urwid.Button(name, on_press=callback, user_data=name)
-                        for name in tab_names]
+        self.buttons = [
+            CTabButton(name, on_press=callback, user_data=name)
+            for name in tab_names
+        ]
         super().__init__(self.buttons)
+
+
+class CTabButton(urwid.Button):
+    button_left = urwid.Text("")
+    button_right = urwid.Text("")
 
 
 class CDetailTabBody(urwid.WidgetPlaceholder):
