@@ -15,6 +15,9 @@ class Gift:
         self.gifted = gifted
         self.occasions = occasions
 
+    def __str__(self):
+        return f'Gift({self.name})'
+
     def __eq__(self, other):
         return self.name == other.name \
             and self.desc == other.desc \

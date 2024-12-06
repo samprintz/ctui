@@ -12,6 +12,9 @@ class Note:
     def __eq__(self, other):
         return self.note_id == other.note_id
 
+    def __str__(self):
+        return f'Note({self.note_id})'
+
     def to_dump(self):
         return self.content
 
