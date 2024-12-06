@@ -27,8 +27,6 @@ class TestCore(unittest.TestCase):
     def setUp(cls):
         pass
 
-    # contacts
-
     def test_get_all_contact_names(self):
         contact_names = self.core.get_all_contact_names()
         self.assertIsNotNone(contact_names)
@@ -147,6 +145,25 @@ class TestCore(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pass
+
+
+class TestContactHandler(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.core = Core(config, True)
+        cls.name = "Max Mustermann"
+        cls.contact = Contact(cls.name)
+
+    @classmethod
+    def setUp(cls):
+        pass
+
+    def test_load_details(self):
+        self.core.add_contact(self.contact)
+        self.core.contact_handler.load_details(self.contact)
+        self.assertEqual(len(self.contact.gifts), 1)
+        self.assertEqual(len(self.contact.notes), 1)
 
 
 class TestObjects(unittest.TestCase):
@@ -804,30 +821,6 @@ class TestUIDetailView(unittest.TestCase):
         UI(cls.core, config)
         cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
-        cls.name_first = "Max Mustermann"
-
-        cls.contact_first = Contact(cls.name_first)
-        cls.core.add_contact(cls.contact_first)
-        cls.core.update_contact_list()
-
-    def test_load_details(self):
-        self.core.select_contact(self.contact_first)
-        self.assertEqual(len(self.contact_first.gifts), 1)
-        self.assertEqual(len(self.contact_first.notes), 1)
-
-
-class TestUIDetailViewFirstContact(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        pass
-
-    @classmethod
-    def setUp(cls):
-        cls.core = Core(config, True)
-        UI(cls.core, config)
-        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
-
         cls.name_first = "A"
         cls.attr_key_first = "aaa-key"
         cls.attr_key1 = "key1"
@@ -853,14 +846,8 @@ class TestUIDetailViewFirstContact(unittest.TestCase):
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key1, self.attr_value1])
 
-        focused_contact = self.core.ui.get_focused_contact()
-        focused_contact_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
         focused_detail = self.core.ui.get_focused_detail()
         focused_detail_pos = self.core.ui.get_focused_detail_pos()
-
-        self.assertEqual(focused_contact.name, self.name_first)
-        self.assertEqual(focused_contact_pos, 0)
         self.assertEqual(focused_detail.key, self.attr_key1)
         self.assertEqual(focused_detail_pos, 0)
 
@@ -868,7 +855,6 @@ class TestUIDetailViewFirstContact(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_last = Attribute(self.attr_key_last, self.attr_value1)
-
         self.core.rdfstore.add_attribute(self.contact_first, attr_first)
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
         self.core.rdfstore.add_attribute(self.contact_first, attr_last)
@@ -876,14 +862,8 @@ class TestUIDetailViewFirstContact(unittest.TestCase):
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key2, self.attr_value1])
 
-        focused_contact = self.core.ui.get_focused_contact()
-        focused_contact_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
         focused_detail = self.core.ui.get_focused_detail()
         focused_detail_pos = self.core.ui.get_focused_detail_pos()
-
-        self.assertEqual(focused_contact.name, self.name_first)
-        self.assertEqual(focused_contact_pos, 0)
         self.assertEqual(focused_detail.key, self.attr_key2)
         self.assertEqual(focused_detail_pos, 2)
 
@@ -893,180 +873,173 @@ class TestUIDetailViewFirstContact(unittest.TestCase):
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key2, self.attr_value2])
 
-        focused_contact = self.core.ui.get_focused_contact()
-        focused_contact_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
         focused_detail = self.core.ui.get_focused_detail()
         focused_detail_pos = self.core.ui.get_focused_detail_pos()
-
-        self.assertEqual(focused_contact.name, self.name_first)
-        self.assertEqual(focused_contact_pos, 0)
         self.assertEqual(focused_detail.key, self.attr_key2)
         self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_add_last_detail_to_first_contact(self):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
-
         self.core.rdfstore.add_attribute(self.contact_first, attr_first)
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
 
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key_last, self.attr_value1])
 
-        focused_contact = self.core.ui.get_focused_contact()
-        focused_contact_pos = self.core.ui.list_view.get_contact_position(
-            focused_contact)
         focused_detail = self.core.ui.get_focused_detail()
         focused_detail_pos = self.core.ui.get_focused_detail_pos()
-
-        self.assertEqual(focused_contact.name, self.name_first)
-        self.assertEqual(focused_contact_pos, 0)
         self.assertEqual(focused_detail.key, self.attr_key_last)
         self.assertEqual(focused_detail_pos, 2)
 
     def test_focus_edit_first_to_some_detail_of_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_first)
+
+        self.core.ui.console.handle(
+            ['edit-attribute', self.attr_key2, self.attr_value2])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key2)
+        self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_edit_some_to_some_detail_of_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_last = Attribute(self.attr_key_last, self.attr_value1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_1)
+
+        self.core.ui.console.handle(
+            ['edit-attribute', self.attr_key2, self.attr_value2])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key2)
+        self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_edit_last_to_some_detail_of_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_2 = Attribute(self.attr_key1, self.attr_value2)
+        attr_last = Attribute(self.attr_key_last, self.attr_value1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_last)
+
+        self.core.ui.console.handle(
+            ['edit-attribute', self.attr_key1, self.attr_value1])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key1)
+        self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_edit_some_to_first_detail_of_first_contact(self):
-        pass
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_2 = Attribute(self.attr_key2, self.attr_value2)
+        attr_last = Attribute(self.attr_key_last, self.attr_value1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_2)
+
+        self.core.ui.console.handle(
+            ['edit-attribute', self.attr_key_first, self.attr_value1])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key_first)
+        self.assertEqual(focused_detail_pos, 0)
 
     def test_focus_edit_some_to_last_detail_of_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_2 = Attribute(self.attr_key2, self.attr_value2)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_1)
+
+        self.core.ui.console.handle(
+            ['edit-attribute', self.attr_key_last, self.attr_value1])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key_last)
+        self.assertEqual(focused_detail_pos, 2)
 
     def test_focus_delete_first_detail_from_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_first)
+
+        self.core.ui.console.handle(
+            ['delete-attribute', self.attr_key_first, self.attr_value1])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key1)
+        self.assertEqual(focused_detail_pos, 0)
 
     def test_focus_delete_some_detail_from_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_2 = Attribute(self.attr_key2, self.attr_value2)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_1)
+
+        self.core.ui.console.handle(
+            ['delete-attribute', self.attr_key1, self.attr_value1])
+
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key2)
+        self.assertEqual(focused_detail_pos, 1)
 
     def test_focus_delete_last_detail_from_first_contact(self):
-        pass
+        attr_first = Attribute(self.attr_key_first, self.attr_value1)
+        attr_1 = Attribute(self.attr_key1, self.attr_value1)
+        attr_last = Attribute(self.attr_key_last, self.attr_value2)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
 
+        self.core.update_contact_details(self.contact_first)
+        self.core.ui.set_focused_detail(attr_last)
 
-"""
-class TestTUIDetailFocusSomeContact(unittest.TestCase):
+        self.core.ui.console.handle(
+            ['delete-attribute', self.attr_key_last, self.attr_value2])
 
-    @classmethod
-    def setUp(self):
-        self.core = Core(config, True)
-        self.name1 = "Test Contact A"
-        self.contact1 = Contact(self.name1)
-        self.core.add_contact(self.contact1)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact1)
+        focused_detail = self.core.ui.get_focused_detail()
+        focused_detail_pos = self.core.ui.get_focused_detail_pos()
+        self.assertEqual(focused_detail.key, self.attr_key1)
+        self.assertEqual(focused_detail_pos, 1)
 
-    @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact1)
-
-    def test_setup(self):
-        self.ct_pos = self.core.ui.list_view.get_contact_position(
-            self.contact1)
-        self.assertNotEqual(self.ct_pos, 0)  # not first
-        contact_list_length = len(self.core.ui.list_view.body)
-        self.assertNotEqual(self.ct_pos, contact_list_length)  # not last
-
-    def test_focus_add_first_detail_to_some_contact(self):
-        pass
-
-    def test_focus_add_some_detail_to_some_contact(self):
-        pass
-
-    def test_focus_add_two_detail_to_some_contact(self):
-        pass
-
-    def test_focus_add_last_detail_to_some_contact(self):
-        pass
-
-    def test_focus_edit_first_to_some_detail_of_some_contact(self):
-        pass
-
-    def test_focus_edit_some_to_some_detail_of_some_contact(self):
-        pass
-
-    def test_focus_edit_last_to_some_detail_of_some_contact(self):
-        pass
-
-    def test_focus_edit_some_to_first_detail_of_some_contact(self):
-        pass
-
-    def test_focus_edit_some_to_last_detail_of_some_contact(self):
-        pass
-
-    def test_focus_delete_first_detail_from_some_contact(self):
-        pass
-
-    def test_focus_delete_some_detail_from_some_contact(self):
-        pass
-
-    def test_focus_delete_last_detail_from_some_contact(self):
-        pass
-
-
-class TestTUIDetailFocusLastContact(unittest.TestCase):
-
-    @classmethod
-    def setUp(self):
-        self.core = Core(config, True)
-        self.name_last = "zzz"
-        self.contact_last = Contact(self.name_last)
-        self.core.add_contact(self.contact_last)
-        self.core.ui.refresh_contact_list(Action.CONTACT_ADDED_OR_EDITED,
-                                          self.contact_last)
-
-    @classmethod
-    def tearDown(self):
-        self.core.delete_contact(self.contact_last)
-
-    def test_setup(self):
-        self.ct_pos = self.core.ui.list_view.get_contact_position(
-            self.contact_last)
-        contact_list_length = len(self.core.ui.list_view.body)
-        self.assertEqual(self.ct_pos, contact_list_length - 1)
-
-    def test_focus_add_first_detail_to_last_contact(self):
-        pass
-
-    def test_focus_add_some_detail_to_last_contact(self):
-        pass
-
-    def test_focus_add_two_detail_to_last_contact(self):
-        pass
-
-    def test_focus_add_last_detail_to_last_contact(self):
-        pass
-
-    def test_focus_edit_first_to_some_detail_of_last_contact(self):
-        pass
-
-    def test_focus_edit_some_to_some_detail_of_last_contact(self):
-        pass
-
-    def test_focus_edit_last_to_some_detail_of_last_contact(self):
-        pass
-
-    def test_focus_edit_some_to_first_detail_of_last_contact(self):
-        pass
-
-    def test_focus_edit_some_to_last_detail_of_last_contact(self):
-        pass
-
-    def test_focus_delete_first_detail_from_last_contact(self):
-        pass
-
-    def test_focus_delete_some_detail_from_last_contact(self):
-        pass
-
-    def test_focus_delete_last_detail_from_last_contact(self):
-        pass
-"""
 
 if __name__ == '__main__':
     unittest.main()
