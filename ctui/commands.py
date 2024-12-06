@@ -471,7 +471,7 @@ class DeleteGift(Command):
         gift_id = Gift.name_to_id(gift_name)
         contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact_id, gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.delete_gift(self, contact_id,
@@ -490,7 +490,7 @@ class MarkGifted(Command):
         gift_id = gift_name.replace(" ", "_")
         contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact_id, gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.mark_gifted(self, contact_id,
@@ -513,7 +513,7 @@ class UnmarkGifted(Command):
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
 
-        if self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if not self.core.textfilestore.has_gift(contact.get_id(), gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.unmark_gifted(self, contact.get_id(),
@@ -535,7 +535,7 @@ class MarkPermanent(Command):
         gift_id = gift_name.replace(" ", "_")
         contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact_id, gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.mark_permanent(self, contact_id,
@@ -557,7 +557,7 @@ class UnmarkPermanent(Command):
         gift_id = gift_name.replace(" ", "_")
         contact_id = self.focused_contact.get_id()
 
-        if self.core.textfilestore.has_gift(contact_id, gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
         self.msg = self.core.textfilestore.unmark_permanent(self, contact_id,
