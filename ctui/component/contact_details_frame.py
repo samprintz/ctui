@@ -28,7 +28,9 @@ class CDetailsFrame(urwid.Frame):
         self.core = core
         self.name = 'details_frame'
         super(CDetailsFrame, self).__init__(None)
+        self.tab_names = ['General', 'Gifts', 'Notes']
         self.tab_content = {}
+        self.current_tab = 0
 
     def on_tab_click(self, button, tab_name):
         self.body.original_widget = self.tab_content[tab_name]
@@ -40,8 +42,7 @@ class CDetailsFrame(urwid.Frame):
             'Notes': NoteDetails(contact, self.core)
         }
 
-        self.header = CDetailTabNavigation(['General', 'Gifts', 'Notes'],
-                                           self.on_tab_click)
+        self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)
 
         self.body = CDetailTabBody(self.tab_content['General'])
 
@@ -60,3 +61,32 @@ class CDetailsFrame(urwid.Frame):
 
     def set_focused_detail_pos(self, detail_pos):
         self.get_tab_body().set_focus_position(detail_pos)
+
+    def keypress(self, size, key):
+        key = super(CDetailsFrame, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        match command_id:
+            case 'move_right':
+                if self.current_tab < len(self.tab_names) - 1:
+                    self.current_tab = self.current_tab + 1
+                    tab_name = self.tab_names[self.current_tab]
+                    self.on_tab_click(None, tab_name)
+            case 'move_left':
+                if self.current_tab > 0:
+                    self.current_tab = self.current_tab - 1
+                    tab_name = self.tab_names[self.current_tab]
+                    self.on_tab_click(None, tab_name)
+                else:
+                    self.core.keybindings.set_simulating(True)
+                    key = super(CDetailsFrame, self).keypress(size, 'left')
+                    self.core.keybindings.set_simulating(False)
+                    return key
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key

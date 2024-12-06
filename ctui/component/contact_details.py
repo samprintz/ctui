@@ -82,11 +82,6 @@ class ContactDetails(CListBox):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'move_left':
-                self.core.keybindings.set_simulating(True)
-                key = super(ContactDetails, self).keypress(size, 'left')
-                self.core.keybindings.set_simulating(False)
-                return key
             case 'add_gift':
                 command = f'{AddGift.name} '
                 self.core.ui.console.show_console(command)
