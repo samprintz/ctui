@@ -144,7 +144,7 @@ class DeleteAttribute(Command):
                                                        attribute)
 
     def _update(self):
-        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
+        DetailDeletedRedraw(self.core).redraw()
 
 
 class AddNote(Command):
@@ -273,7 +273,7 @@ class DeleteNote(Command):
         self.msg = self.core.textfilestore.delete_note(contact_id, note_id)
 
     def _update(self):
-        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
+        DetailDeletedRedraw(self.core).redraw()
 
 
 class EncryptNote(Command):
@@ -478,7 +478,7 @@ class DeleteGift(Command):
                                                        gift_id)
 
     def _update(self):
-        DetailDeletedRedraw(self.core, self.focused_contact).redraw()
+        DetailDeletedRedraw(self.core).redraw()
 
 
 class MarkGifted(Command):
