@@ -209,9 +209,9 @@ class RenameNote(Command):
     names = ['rename-note']
 
     def _execute(self, new_name):
-        contact = self.core.ui.get_focused_contact()
         note = self.focused_detail
         Note.validate_name(new_name)
+        contact_id = self.focused_contact.get_id()
 
         if note.name == new_name:
             return "Warning: Gift unchanged"
@@ -219,7 +219,7 @@ class RenameNote(Command):
         if self.core.textfilestore.has_note(Note.name_to_id(new_name)):
             raise ValueError(f'Note {new_name} already exists')
 
-        self.msg = self.core.textfilestore.rename_note(contact.get_id(),
+        self.msg = self.core.textfilestore.rename_note(contact_id,
                                                        note.get_id(),
                                                        new_name)
 
@@ -237,7 +237,6 @@ class EditNote(Command):
     def _execute(self, note_name):
         Note.validate_name(note_name)
         note_id = Note.name_to_id(note_name)
-
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -415,7 +414,6 @@ class RenameGift(Command):
     names = ['rename-gift']
 
     def _execute(self, new_name):
-        contact = self.core.ui.get_focused_contact()
         gift = self.focused_detail
         Gift.validate_name(new_name)
         contact_id = self.focused_contact.get_id()
@@ -427,7 +425,7 @@ class RenameGift(Command):
                                             Gift.name_to_id(new_name)):
             raise ValueError(f'Gift {new_name} already exists')
 
-        self.msg = self.core.textfilestore.rename_gift(contact.get_id(),
+        self.msg = self.core.textfilestore.rename_gift(contact_id,
                                                        gift.get_id(),
                                                        new_name)
 
@@ -510,18 +508,17 @@ class UnmarkGifted(Command):
     names = ['unmark-gifted']
 
     def _execute(self, gift_name):
-        contact = self.core.ui.get_focused_contact()
-
         Gift.validate_name(gift_name)
         gift_id = gift_name.replace(" ", "_")
+        contact_id = self.focused_contact.get_id()
 
-        if not self.core.textfilestore.has_gift(contact.get_id(), gift_id):
+        if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.unmark_gifted(self, contact.get_id(),
+        self.msg = self.core.textfilestore.unmark_gifted(self, contact_id,
                                                          gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact.get_id(), gift_id)
+        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
         self.to_focus_detail = gift
 
     def _update(self):
