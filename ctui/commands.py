@@ -418,11 +418,13 @@ class RenameGift(Command):
         contact = self.core.ui.get_focused_contact()
         gift = self.focused_detail
         Gift.validate_name(new_name)
+        contact_id = self.focused_contact.get_id()
 
         if gift.name == new_name:
             return "Warning: Name unchanged"
 
-        if self.core.textfilestore.has_gift(Gift.name_to_id(new_name)):
+        if self.core.textfilestore.has_gift(contact_id,
+                                            Gift.name_to_id(new_name)):
             raise ValueError(f'Gift {new_name} already exists')
 
         self.msg = self.core.textfilestore.rename_gift(contact.get_id(),
