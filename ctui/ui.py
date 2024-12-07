@@ -1,3 +1,5 @@
+from typing import Union
+
 import urwid
 
 from ctui.component.console import Console
@@ -5,6 +7,10 @@ from ctui.component.contact_details_frame import CDetailsFrame
 from ctui.component.contact_frame import CFrame
 from ctui.component.contact_frame_columns import CFrameColumns
 from ctui.component.contact_list import ContactList
+from ctui.model.attribute import Attribute
+from ctui.model.contact import Contact
+from ctui.model.gift import Gift
+from ctui.model.note import Note
 
 
 class UI:
@@ -29,57 +35,57 @@ class UI:
         self.frame = CFrame(frame_columns, frame_footer, core, config)
         self.main_loop = urwid.MainLoop(self.frame, palette)
 
-    def run(self):
+    def run(self) -> None:
         self.set_contact_list(self.core.get_all_contacts())  # TODO remove
         self.main_loop.run()
 
-    def is_focus_on_details(self):
+    def is_focus_on_details(self) -> bool:
         return self.frame.body.focus_position == 1
 
-    def set_contact_list(self, contact_list):
+    def set_contact_list(self, contact_list) -> None:
         self.list_view.set_data(contact_list)
 
-    def set_contact_details(self, contact):
+    def set_contact_details(self, contact) -> None:
         self.detail_view.set_contact(contact)
 
-    def focus_list_view(self):
+    def focus_list_view(self) -> None:
         self.frame.body.focus_position = 0
 
-    def focus_detail_view(self):
+    def focus_detail_view(self) -> None:
         self.frame.body.focus_position = 1
 
-    def get_focused_contact(self):
+    def get_focused_contact(self) -> Contact:
         return self.list_view.get_focused_contact()
 
-    def set_focused_contact(self, contact):
+    def set_focused_contact(self, contact: Contact) -> None:
         self.list_view.set_focused_contact(contact)
 
-    def get_focused_contact_pos(self):
+    def get_focused_contact_pos(self) -> int:
         return self.list_view.get_focused_contact_pos()
 
-    def set_focused_contact_pos(self, contact):
+    def set_focused_contact_pos(self, contact: int) -> None:
         self.list_view.set_focused_contact_pos(contact)
 
-    def get_current_tab(self):
+    def get_current_tab(self) -> int:
         return self.detail_view.get_tab()
 
-    def set_current_tab(self, tab):
+    def set_current_tab(self, tab: int) -> None:
         self.detail_view.set_tab(tab)
 
-    def next_tab(self):
+    def next_tab(self) -> None:
         self.detail_view.next_tab()
 
-    def previous_tab(self):
+    def previous_tab(self) -> None:
         self.detail_view.previous_tab()
 
-    def get_focused_detail(self):
+    def get_focused_detail(self) -> Union[Attribute, Note, Gift]:
         return self.detail_view.get_focused_detail()
 
-    def set_focused_detail(self, detail):
+    def set_focused_detail(self, detail: Union[Attribute, Note, Gift]) -> None:
         self.detail_view.set_focused_detail(detail)
 
-    def get_focused_detail_pos(self):
+    def get_focused_detail_pos(self) -> int:
         return self.detail_view.get_focused_detail_pos()
 
-    def set_focused_detail_pos(self, detail_pos):
+    def set_focused_detail_pos(self, detail_pos: int) -> None:
         self.detail_view.set_focused_detail_pos(detail_pos)
