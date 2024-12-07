@@ -5,6 +5,7 @@ import shutil
 import gnupg
 
 from ctui.model.contact import Contact
+from ctui.model.detail import Detail
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
 from ctui.model.note import Note
@@ -383,7 +384,12 @@ class TextFileStore:
 
                 with open(file_path, "r") as f:
                     lines = f.read()
-                    gift = Gift.from_dump(gift_id, lines)
+
+                    try:
+                        gift = Gift.from_dump(gift_id, lines)
+                    except ValueError as error:
+                        gift = Detail(f'⚠️ {error}')
+
                     gifts.append(gift)
 
         return gifts

@@ -82,7 +82,7 @@ class Gift:
     def validate_name(cls, name):
         if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
             raise ValueError(
-                "Invalid gift name: contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
+                f"Invalid gift name '{name}': contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
 
     @classmethod
     def name_to_id(cls, name):
