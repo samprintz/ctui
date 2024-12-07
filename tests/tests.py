@@ -538,22 +538,24 @@ class TestKeybindings(unittest.TestCase):
         self.assertEqual(set(commands.keys()), {
             "global",
             "contact_list",
-            "contact_details",
+            'contact_note_details',
             "contact_entry",
             "attribute_entry",
             "gift_entry",
             "note_entry"
         })
         self.assertSetEqual(set(commands["global"].keys()), {
-            "t", "r", "d", "n", "gg", "G", "ctrl r", "I", "ii", "in", "ie", "q"
+            "t", "r", "d", "n", "gg", "G", "N", "D", "ctrl r", "I", "ii", "q"
         })
         self.assertSetEqual(set(commands["contact_list"].keys()), {
             "ig", "/", "zz", "Z"
         })
-        self.assertSetEqual(set(commands["contact_details"].keys()), {"ig"})
+        self.assertSetEqual(set(commands["contact_note_details"].keys()),
+                            {"ie"})
         self.assertEqual(commands["global"]["I"], "add_contact")
         self.assertEqual(commands["contact_list"]["ig"], "add_google_contact")
-        self.assertEqual(commands["contact_details"]["ig"], "add_gift")
+        self.assertEqual(commands["contact_note_details"]["ie"],
+                         "add_encrypted_note")
 
     def test_keypress(self):
         command_id, command_key, command_repeat = \
