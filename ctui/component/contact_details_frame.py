@@ -62,8 +62,10 @@ class CDetailsFrame(urwid.Frame):
         }
 
         self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)
-
         self.body = CDetailTabBody(self.tab_content['General'])
+
+        # keep the latest selected tab selected after detail updates
+        self.set_tab(self.current_tab)
 
     def get_tab_body(self):
         return self.body.original_widget
