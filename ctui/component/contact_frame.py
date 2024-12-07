@@ -1,8 +1,4 @@
-from datetime import datetime, date
-
 import urwid
-
-from ctui.commands import AddAttribute, AddNote, AddEncryptedNote
 
 
 class CFrame(urwid.Frame):
@@ -32,21 +28,10 @@ class CFrame(urwid.Frame):
             case 'add_contact':
                 command = 'add-contact '
                 self.core.ui.console.show_console(command)
-            case 'add_attribute':
-                command = f'{AddAttribute.name} '
-                self.core.ui.console.show_console(command)
             case 'next_tab':
                 self.core.ui.next_tab()
             case 'previous_tab':
                 self.core.ui.previous_tab()
-            case 'add_note':
-                note_id = datetime.strftime(date.today(), "%Y%m%d")
-                command = f'{AddNote.name} {note_id}'
-                self.core.ui.console.show_console(command)
-            case 'add_encrypted_note':
-                note_id = datetime.strftime(date.today(), "%Y%m%d")
-                command = f'{AddEncryptedNote.name} {note_id}'
-                self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set_bubbling(False)
                 if not self.core.keybindings.is_prefix(command_key):

@@ -82,7 +82,7 @@ class GiftEntry(DetailEntry):
                 command = f'{RenameGift.name} {self.gift.name}'
                 self.core.ui.console.show_console(command)
             case 'delete_gift':
-                command = f'{DeleteGift.name} {self.gift.name}'  # TODO implement DeleteGift in commands.py
+                command = f'{DeleteGift.name} {self.gift.name}'
                 self.core.ui.console.show_console(command)
             case _:
                 self.core.keybindings.set(command_key, command_repeat)

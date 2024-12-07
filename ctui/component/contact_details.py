@@ -1,6 +1,8 @@
-import urwid
-from datetime import datetime
+from datetime import datetime, date
 
+import urwid
+
+from ctui.commands import AddAttribute, AddNote, AddEncryptedNote
 from ctui.commands import AddGift
 from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
     GoogleAttributeEntry, GiftEntry, GoogleNoteEntry, NoteEntry, \
@@ -73,27 +75,11 @@ class ContactDetails(CListBox):
             pos = pos + 1
         return None
 
-    def keypress(self, size, key):
-        key = super(ContactDetails, self).keypress(size, key)
-        if key is None:
-            return
-
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        match command_id:
-            case 'add_gift':
-                command = f'{AddGift.name} '
-                self.core.ui.console.show_console(command)
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
-
 
 class GeneralDetails(ContactDetails):
     def __init__(self, contact, core):
         self.core = core
+        self.name = 'contact_general_details'
 
         entries = []
         pos = 0
@@ -160,10 +146,28 @@ class GeneralDetails(ContactDetails):
         super(GeneralDetails, self).__init__(entries, core,
                                              'contact_details_general')
 
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        match command_id:
+            case 'add_attribute':
+                command = f'{AddAttribute.name} '
+                self.core.ui.console.show_console(command)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
+
 
 class GiftDetails(ContactDetails):
     def __init__(self, contact, core):
         self.core = core
+        self.name = 'contact_gift_details'
 
         entries = []
         pos = 0
@@ -180,10 +184,28 @@ class GiftDetails(ContactDetails):
         super(GiftDetails, self).__init__(entries, core,
                                           'contact_details_gifts')
 
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        match command_id:
+            case 'add_attribute':
+                command = f'{AddGift.name} '
+                self.core.ui.console.show_console(command)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
+
 
 class NoteDetails(ContactDetails):
     def __init__(self, contact, core):
         self.core = core
+        self.name = 'contact_note_details'
 
         entries = []
         pos = 0
@@ -208,3 +230,25 @@ class NoteDetails(ContactDetails):
 
         super(NoteDetails, self).__init__(entries, core,
                                           'contact_details_notes')
+
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        match command_id:
+            case 'add_attribute':
+                note_id = datetime.strftime(date.today(), "%Y%m%d")
+                command = f'{AddNote.name} {note_id}'
+                self.core.ui.console.show_console(command)
+            case 'add_encrypted_note':
+                note_id = datetime.strftime(date.today(), "%Y%m%d")
+                command = f'{AddEncryptedNote.name} {note_id}'
+                self.core.ui.console.show_console(command)
+            case _:
+                self.core.keybindings.set(command_key, command_repeat)
+                self.core.keybindings.set_bubbling(True)
+                return key
