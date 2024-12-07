@@ -3,7 +3,8 @@ from subprocess import call
 
 
 class Editor:
-    def __init__(self, editor_name):
+    def __init__(self, core, editor_name):
+        self.core = core
         self.editor = os.environ.get('EDITOR', editor_name)
 
     def add(self, filepath):
@@ -12,6 +13,7 @@ class Editor:
         try:
             with open(temp_filepath, 'w') as tf:
                 call([self.editor, tf.name])
+                self.core.ui.main_loop.screen.clear()  # redraw screen
 
             with open(temp_filepath, 'r') as tf:
                 content = tf.read()
@@ -34,6 +36,7 @@ class Editor:
                 tf.write(old_content)
                 tf.flush()
                 call([self.editor, tf.name])
+                self.core.ui.main_loop.screen.clear()  # redraw screen
 
             with open(temp_filepath, 'r') as tf:
                 content = tf.read()

@@ -37,7 +37,7 @@ class Core:
             self.googlestore = None
 
         self.keybindings = Keybindings(config)
-        self.editor = Editor(config['editor']['editor'])
+        self.editor = Editor(self, config['editor']['editor'])
         self.last_keypress = None
 
         self.filter_string = ''
