@@ -48,12 +48,6 @@ class UI:
     def focus_detail_view(self):
         self.frame.body.focus_position = 1
 
-    def get_focused_tab(self):
-        pass  # TODO
-
-    def set_focused_tab(self):
-        pass  # TODO
-
     def get_focused_contact(self):
         return self.list_view.get_focused_contact()
 
@@ -65,6 +59,18 @@ class UI:
 
     def set_focused_contact_pos(self, contact):
         self.list_view.set_focused_contact_pos(contact)
+
+    def get_current_tab(self):
+        return self.detail_view.get_tab()
+
+    def set_current_tab(self, tab):
+        self.detail_view.set_tab(tab)
+
+    def next_tab(self):
+        self.detail_view.next_tab()
+
+    def previous_tab(self):
+        self.detail_view.previous_tab()
 
     def get_focused_detail(self):
         return self.detail_view.get_focused_detail()

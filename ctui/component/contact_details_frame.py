@@ -68,6 +68,22 @@ class CDetailsFrame(urwid.Frame):
     def get_tab_body(self):
         return self.body.original_widget
 
+    def get_tab(self):
+        return self.current_tab
+
+    def set_tab(self, tab):
+        self.current_tab = tab
+        tab_name = self.tab_names[self.current_tab]
+        self.on_tab_click(None, tab_name)
+
+    def next_tab(self):
+        tab = (self.current_tab + 1) % len(self.tab_names)
+        self.set_tab(tab)
+
+    def previous_tab(self):
+        tab = (self.current_tab - 1) % len(self.tab_names)
+        self.set_tab(tab)
+
     def get_focused_detail(self):
         return self.get_tab_body().get_focused_detail()
 
@@ -90,21 +106,11 @@ class CDetailsFrame(urwid.Frame):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'move_right':
-                if self.current_tab < len(self.tab_names) - 1:
-                    self.current_tab = self.current_tab + 1
-                    tab_name = self.tab_names[self.current_tab]
-                    self.on_tab_click(None, tab_name)
             case 'move_left':
-                if self.current_tab > 0:
-                    self.current_tab = self.current_tab - 1
-                    tab_name = self.tab_names[self.current_tab]
-                    self.on_tab_click(None, tab_name)
-                else:
-                    self.core.keybindings.set_simulating(True)
-                    key = super(CDetailsFrame, self).keypress(size, 'left')
-                    self.core.keybindings.set_simulating(False)
-                    return key
+                self.core.keybindings.set_simulating(True)
+                key = super(CDetailsFrame, self).keypress(size, 'left')
+                self.core.keybindings.set_simulating(False)
+                return key
             case _:
                 self.core.keybindings.set(command_key, command_repeat)
                 self.core.keybindings.set_bubbling(True)

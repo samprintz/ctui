@@ -35,6 +35,10 @@ class CFrame(urwid.Frame):
             case 'add_attribute':
                 command = f'{AddAttribute.name} '
                 self.core.ui.console.show_console(command)
+            case 'next_tab':
+                self.core.ui.next_tab()
+            case 'previous_tab':
+                self.core.ui.previous_tab()
             case 'add_note':
                 note_id = datetime.strftime(date.today(), "%Y%m%d")
                 command = f'{AddNote.name} {note_id}'
