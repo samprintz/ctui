@@ -15,6 +15,10 @@ def main():
                         default="~/.config/ctui/config.ini",
                         help="configuration file")
 
+    parser.add_argument("--names",
+                        action="store_true",
+                        help="print names and exit")
+
     args = parser.parse_args()
 
     config_path = os.path.expanduser(args.config)
@@ -26,6 +30,11 @@ def main():
     config = util.load_config(config_path)
 
     core = Core(config)
+
+    if args.names:
+        for name in core.contact_handler.load_contact_names():
+            print(name)
+        exit(0)
 
     UI(core, config).run()
 
