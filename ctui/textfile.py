@@ -49,7 +49,7 @@ class TextFileStore:
 
     def create_textfile_dir(self, contact_id, textfile_type):
         if not self.contains_contact_id(contact_id):
-            self.add_contact(Contact(contact_id))
+            self.add_contact_id(contact_id)
 
         path = self.get_textfile_path_by_type(contact_id, textfile_type)
 
