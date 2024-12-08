@@ -45,11 +45,10 @@ class Core:
     def register_ui(self, ui):
         self.ui = ui
 
-    """
-    Check if connected to the internet
-    """
-
     def is_connected(self):
+        """
+        Check if connected to the internet
+        """
         hostname = "one.one.one.one"
         try:
             # host name resolvable -> DNS listening
@@ -62,11 +61,10 @@ class Core:
             pass
         return False
 
-    """
-    Returns a list of all contacts without their details.
-    """
-
     def get_all_contacts(self):
+        """
+        Returns a list of all contacts without their details
+        """
         contacts = []
         for c in self.rdfstore.get_all_contact_names():
             contacts.append(Contact(c))
