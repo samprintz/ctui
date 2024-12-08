@@ -39,7 +39,7 @@ class DetailAddedOrEditedRedraw(Redraw):
 
     def redraw(self):
         contact = self.core.ui.get_focused_contact()
-        self.core.update_contact_details(contact)
+        self.core.update_contact_details(contact.get_id())
         self.core.ui.focus_detail_view()
         self.core.ui.set_focused_detail(self.detail)
 
@@ -52,7 +52,7 @@ class DetailDeletedRedraw(Redraw):
         contact = self.core.ui.get_focused_contact()
         deleted_detail_pos = self.core.ui.get_focused_detail_pos()
 
-        self.core.update_contact_details(contact)
+        self.core.update_contact_details(contact.get_id())
 
         new_detail_pos = 0
 

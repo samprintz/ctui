@@ -31,7 +31,7 @@ class ContactList(CListBox):
         self.listwalker.set_focus(0)
 
     def select_contact(self):
-        self.core.select_contact(self.focus.contact)
+        self.core.update_contact_details(self.focus.contact.get_id())
 
     def get_focused_contact(self):
         return self.focus.contact

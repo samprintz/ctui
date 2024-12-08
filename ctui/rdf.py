@@ -101,9 +101,10 @@ class RDFStore:
         triples = [po for po in self.g.predicate_objects(s)]
         return len(triples) > 1
 
-    def get_attributes(self, contact):
+    def get_attributes(self, contact_id):
+        name = Contact.id_to_name(contact_id)
         try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
+            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
         except StopIteration:
             return None
         entries = []

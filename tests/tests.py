@@ -161,9 +161,9 @@ class TestContactHandler(unittest.TestCase):
 
     def test_load_details(self):
         self.core.add_contact(self.contact)
-        self.core.contact_handler.load_details(self.contact)
-        self.assertEqual(len(self.contact.gifts), 1)
-        self.assertEqual(len(self.contact.notes), 1)
+        contact = self.core.contact_handler.load_details(self.contact.get_id())
+        self.assertEqual(len(contact.gifts), 1)
+        self.assertEqual(len(contact.notes), 1)
 
 
 class TestObjects(unittest.TestCase):
@@ -897,7 +897,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_first)
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_first)
 
         self.core.ui.console.handle(
@@ -916,7 +916,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
         self.core.rdfstore.add_attribute(self.contact_first, attr_last)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -935,7 +935,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_2)
         self.core.rdfstore.add_attribute(self.contact_first, attr_last)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_last)
 
         self.core.ui.console.handle(
@@ -954,7 +954,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_2)
         self.core.rdfstore.add_attribute(self.contact_first, attr_last)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_2)
 
         self.core.ui.console.handle(
@@ -973,7 +973,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
         self.core.rdfstore.add_attribute(self.contact_first, attr_2)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -990,7 +990,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_first)
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_first)
 
         self.core.ui.console.handle(
@@ -1009,7 +1009,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
         self.core.rdfstore.add_attribute(self.contact_first, attr_2)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -1028,7 +1028,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first, attr_1)
         self.core.rdfstore.add_attribute(self.contact_first, attr_last)
 
-        self.core.update_contact_details(self.contact_first)
+        self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_last)
 
         self.core.ui.console.handle(

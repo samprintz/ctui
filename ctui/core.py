@@ -66,9 +66,9 @@ class Core:
         contact_list = self.apply_filter(contact_list, filter_string)
         self.ui.set_contact_list(contact_list)
 
-    def update_contact_details(self, contact):
-        # augment existing contact with details (not before for performance)
-        self.contact_handler.load_details(contact)
+    def update_contact_details(self, contact_id):
+        # load contact details only when needed, not before for performance
+        contact = self.contact_handler.load_details(contact_id)
         self.ui.set_contact_details(contact)
 
     @staticmethod
@@ -100,9 +100,6 @@ class Core:
     def contains_contact_name(self, name):
         return self.rdfstore.contains_contact_name(name) or \
             self.textfilestore.contains_contact_name(name)
-
-    def select_contact(self, contact):
-        self.update_contact_details(contact)
 
     def search_contact(self, name):
         self.ui.list_view.jump_to_contact(name)
