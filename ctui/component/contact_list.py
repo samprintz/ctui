@@ -36,23 +36,23 @@ class ContactList(CListBox):
     def get_focused_contact(self):
         return self.focus.contact
 
-    def set_focused_contact(self, contact):
-        pos = self.get_contact_position(contact)
+    def set_focused_contact(self, contact_id: str) -> None:
+        pos = self.get_contact_position(contact_id)
         self.set_focus(pos)
 
-    def get_focused_contact_pos(self):
+    def get_focused_contact_pos(self) -> int:
         return self.focus_position
 
-    def set_focused_contact_pos(self, pos):
+    def set_focused_contact_pos(self, pos: int) -> None:
         self.set_focus(pos)
 
-    def get_count(self):
+    def get_count(self) -> int:
         return len(self.body)
 
-    def get_contact_position(self, contact):
+    def get_contact_position(self, contact_id: str) -> int | None:
         pos = 0
         for entry in self.body:
-            if entry.label == contact.name:
+            if entry.contact.get_id() == contact_id:
                 return pos
             pos = pos + 1
         return None

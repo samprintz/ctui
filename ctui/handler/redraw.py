@@ -12,7 +12,7 @@ class ContactAddedOrEditedRedraw(Redraw):
         self.core.update_contact_list()
         self.core.ui.focus_list_view()
 
-        self.core.ui.set_focused_contact(self.contact)
+        self.core.ui.set_focused_contact(self.contact.get_id())
         self.core.ui.set_focused_detail_pos(0)
 
 

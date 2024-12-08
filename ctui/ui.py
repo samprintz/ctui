@@ -56,14 +56,14 @@ class UI:
     def get_focused_contact(self) -> Contact:
         return self.list_view.get_focused_contact()
 
-    def set_focused_contact(self, contact: Contact) -> None:
-        self.list_view.set_focused_contact(contact)
+    def set_focused_contact(self, contact_id: str) -> None:
+        self.list_view.set_focused_contact(contact_id)
 
     def get_focused_contact_pos(self) -> int:
         return self.list_view.get_focused_contact_pos()
 
-    def set_focused_contact_pos(self, contact: int) -> None:
-        self.list_view.set_focused_contact_pos(contact)
+    def set_focused_contact_pos(self, pos: int) -> None:
+        self.list_view.set_focused_contact_pos(pos)
 
     def get_current_tab(self) -> int:
         return self.detail_view.get_tab()
