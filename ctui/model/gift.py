@@ -2,6 +2,8 @@ import re
 
 import yaml
 
+from ctui import util
+
 
 class Gift:
 
@@ -79,8 +81,8 @@ class Gift:
         return Gift.from_dict(data)
 
     @classmethod
-    def validate_name(cls, name):
-        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
+    def validate_name(cls, name: str) -> None:
+        if re.search(util.alphanumeric, name):
             raise ValueError(
                 f"Invalid gift name '{name}': contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
 

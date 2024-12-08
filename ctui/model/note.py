@@ -23,12 +23,12 @@ class Note:
         return Note(note_id, dump)
 
     @classmethod
-    def validate_name(cls, name):
+    def validate_name(cls, name: str) -> None:
         try:
             datetime.strptime(name, '%Y%m%d')
         except ValueError:
             raise ValueError(
-                f'Error: Invalid note name: "{name}". Note names match the pattern YYYYMMDD')
+                f'Error: Invalid note name: "{name}". Note names must match the pattern YYYYMMDD')
 
     @classmethod
     def name_to_id(cls, name):

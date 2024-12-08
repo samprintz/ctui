@@ -1,6 +1,7 @@
 import re
 from typing import List
 
+from ctui import util
 from ctui.model.attribute import Attribute
 from ctui.model.gift import Gift
 from ctui.model.note import Note
@@ -27,7 +28,7 @@ class Contact:
 
     @classmethod
     def validate_name(cls, name: str) -> None:
-        if re.search(r'[^a-zA-Z0-9äöüÄÖÜß -]', name):
+        if re.search(util.alphanumeric, name):
             raise ValueError(
                 f"Invalid contact name '{name}': contains invalid characters. Only alphanumeric characters spaces and hypens are allowed.")
 
