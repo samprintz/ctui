@@ -71,7 +71,7 @@ class Console(urwid.Filler):
             else:
                 super(Console, self).keypress(size, key)
                 args = self.original_widget.edit_text.split()
-                filter_string = " ".join(args[0:])
+                filter_string = " ".join(args[1:])
                 return self.core.update_contact_list(filter_string)
         else:
             if key == 'esc':
