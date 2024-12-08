@@ -58,7 +58,7 @@ class TextFileStore:
 
         return path
 
-    def get_all_contact_names(self):
+    def get_contact_names(self):
         contact_names = []
         for dirname in os.listdir(self.path):
             if dirname.endswith('.txt'): continue

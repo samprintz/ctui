@@ -27,11 +27,6 @@ class TestCore(unittest.TestCase):
     def setUp(cls):
         pass
 
-    def test_get_all_contact_names(self):
-        contact_names = self.core.get_all_contact_names()
-        self.assertIsNotNone(contact_names)
-        self.assertIsInstance(contact_names, list)
-
     def test_add_contact(self):
         res = self.core.add_contact(self.contact1)
         self.assertTrue(self.core.contains_contact(self.contact1))
@@ -158,6 +153,11 @@ class TestContactHandler(unittest.TestCase):
     @classmethod
     def setUp(cls):
         pass
+
+    def test_load_contact_names(self):
+        contact_names = self.core.contact_handler.load_contact_names()
+        self.assertIsNotNone(contact_names)
+        self.assertIsInstance(contact_names, list)
 
     def test_load_details(self):
         self.core.add_contact(self.contact)
@@ -531,7 +531,6 @@ class TestKeybindings(unittest.TestCase):
     def setUp(cls):
         cls.core = Core(config, True)
         UI(cls.core, config)
-        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
     def test_init(self):
         commands = self.core.keybindings.commands
@@ -646,7 +645,6 @@ class TestListViewUI(unittest.TestCase):
     def setUp(cls):
         cls.core = Core(config, True)
         UI(cls.core, config)
-        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
         cls.name1 = "Test Contact A"
         cls.name2 = "Test Contact B"
@@ -821,7 +819,6 @@ class TestUIDetailView(unittest.TestCase):
     def setUp(cls):
         cls.core = Core(config, True)
         UI(cls.core, config)
-        cls.core.ui.set_contact_list(cls.core.get_all_contacts())
 
         cls.name_first = "A"
         cls.attr_key_first = "aaa-key"

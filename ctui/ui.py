@@ -25,18 +25,17 @@ class UI:
 
         self.list_view = ContactList(core)
         self.detail_view = CDetailsFrame(core, config)
-
         frame_columns = CFrameColumns(self.list_view, self.detail_view, core,
                                       config)
-
         self.console = Console(self.core)
         frame_footer = urwid.BoxAdapter(self.console, height=1)
-
         self.frame = CFrame(frame_columns, frame_footer, core, config)
+
+        self.core.update_contact_list()
+
         self.main_loop = urwid.MainLoop(self.frame, palette)
 
     def run(self) -> None:
-        self.set_contact_list(self.core.get_all_contacts())  # TODO remove
         self.main_loop.run()
 
     def is_focus_on_details(self) -> bool:

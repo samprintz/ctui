@@ -27,8 +27,7 @@ def main():
 
     core = Core(config)
 
-    ui = UI(core, config)
-    ui.run()
+    UI(core, config).run()
 
 
 if __name__ == "__main__":

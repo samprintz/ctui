@@ -61,35 +61,8 @@ class Core:
             pass
         return False
 
-    def get_all_contacts(self):
-        """
-        Returns a list of all contacts without their details
-        """
-        contacts = []
-        for c in self.rdfstore.get_all_contact_names():
-            contacts.append(Contact(c))
-        for c in self.textfilestore.get_all_contact_names():
-            # check if contact already in list
-            try:
-                existing_contact = next(x for x in contacts if c == x.name)
-            except StopIteration:
-                contacts.append(Contact(c))
-        if self.googlestore is not None:
-            for contact in self.googlestore.get_all_contacts():
-                # check if contact already in list
-                try:
-                    existing_contact = next(
-                        x for x in contacts if contact.name == x.name)
-                    contacts.remove(existing_contact)
-                    contact.merge(existing_contact)
-                except StopIteration:
-                    pass
-                contacts.append(contact)
-        contacts.sort(key=lambda x: x.name)
-        return contacts
-
     def update_contact_list(self, filter_string=None):
-        contact_list = self.get_all_contacts()
+        contact_list = self.contact_handler.load_contacts()
         contact_list = self.apply_filter(contact_list, filter_string)
         self.ui.set_contact_list(contact_list)
 
@@ -109,15 +82,6 @@ class Core:
                 contacts.append(contact)
         contacts.sort(key=lambda x: x.name)
         return contacts
-
-    def get_all_contact_names(self):
-        contact_names = self.rdfstore.get_all_contact_names() \
-                        + self.textfilestore.get_all_contact_names()
-
-        if self.googlestore is not None:
-            contact_names + self.googlestore.get_all_contact_names()
-
-        return sorted(set(contact_names))
 
     def contains_contact(self, contact):
         """

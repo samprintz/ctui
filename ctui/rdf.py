@@ -25,7 +25,7 @@ class RDFStore:
     def save_file(self, path):
         self.g.serialize(format='n3', indent=True, destination=path)
 
-    def get_all_contact_names(self):
+    def get_contact_names(self):
         contact_names = []
         for o in self.g.objects(None, GIVEN_NAME_REF):
             contact_names.append(str(o))
