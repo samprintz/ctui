@@ -83,6 +83,14 @@ class Core:
         contacts.sort(key=lambda x: x.name)
         return contacts
 
+    def select_contact(self, contact_id: str) -> None:
+        if self.contains_contact_id(contact_id):
+            self.ui.set_focused_contact(contact_id)
+            self.update_contact_details(contact_id)
+        else:
+            name = Contact.id_to_name(contact_id)
+            self.ui.console.show_message(f"Contact '{name}' not found")
+
     def contains_contact(self, contact):
         """
         @deprecated use contains_contact_id

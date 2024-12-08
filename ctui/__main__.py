@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import ctui.util as util
 from ctui.core import Core
 from ctui.ui import UI
+from ctui.model.contact import Contact
 
 
 def main():
@@ -18,6 +19,10 @@ def main():
     parser.add_argument("--names",
                         action="store_true",
                         help="print names and exit")
+
+    parser.add_argument("--select",
+                        metavar="<contact_name>",
+                        help="select a contact by name")
 
     args = parser.parse_args()
 
@@ -36,7 +41,13 @@ def main():
             print(name)
         exit(0)
 
-    UI(core, config).run()
+    ui = UI(core, config)
+
+    if args.select:
+        contact_id = Contact.name_to_id(args.select)
+        core.select_contact(contact_id)
+
+    ui.run()
 
 
 if __name__ == "__main__":
