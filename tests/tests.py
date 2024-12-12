@@ -2,6 +2,7 @@ import unittest
 
 import ctui.util as util
 from ctui.component.contact_entry import ContactEntry
+from ctui.component.contact_list import ContactList
 from ctui.component.detail_entry import AttributeEntry, GiftEntry, NoteEntry
 from ctui.core import *
 from ctui.model.attribute import Attribute
@@ -1045,6 +1046,43 @@ class TestUIDetailView(unittest.TestCase):
         focused_detail_pos = self.core.ui.get_focused_detail_pos()
         self.assertEqual(focused_detail.key, self.attr_key1)
         self.assertEqual(focused_detail_pos, 1)
+
+
+class TestFilter(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def setUp(cls):
+        cls.core = Core(config, True)
+        UI(cls.core, config)
+
+    def test_filter(self):
+        pass
+
+    def test_set_contact_filter(self):
+        self.core.set_contact_filter()
+        self.core.update_contact_list("Max")
+        self.assertTrue(self.core.ui.console.filter_mode)
+        self.assertEqual(self.core.ui.list_view.get_count(), 1)
+
+    def test_set_contact_filter_not_existing(self):
+        self.core.set_contact_filter()
+        self.core.update_contact_list("Mike")
+        self.assertEqual(self.core.ui.list_view.get_count(), 1)
+        entry_label = self.core.ui.list_view.focus.label
+        self.assertEqual(entry_label, ContactList.no_result_msg)
+
+    def test_reset_contact_filter(self):
+        self.core.set_contact_filter()
+        self.core.update_contact_list("Max")
+        self.assertEqual(self.core.ui.list_view.get_count(), 1)
+        self.core.clear_contact_filter()
+        self.assertEqual(self.core.ui.list_view.get_count(), 4)
+        self.assertEqual(self.core.ui.get_focused_contact().get_id(),
+                         "Max_Mustermann")
 
 
 if __name__ == '__main__':
