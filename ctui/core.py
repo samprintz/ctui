@@ -177,7 +177,8 @@ class Core:
 
     def clear_contact_filter(self):
         self.filter_string = ''
-        # TODO show unfiltered contact list
+        focused_contact = self.ui.get_focused_contact()
+        self.update_contact_list()
         self.ui.frame.focus_position = 'body'
         self.ui.focus_list_view()
-        self.ui.set_focused_contact(None)  # TODO which was the last contact?
+        self.ui.set_focused_contact(focused_contact.get_id())
