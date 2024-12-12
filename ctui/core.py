@@ -170,12 +170,12 @@ class Core:
     def get_filter_string(self):
         return self.filter_string
 
-    def filter_contacts(self):
+    def set_contact_filter(self):
         self.filter_string = ''
         command = 'filter {}'.format(self.filter_string)
         self.ui.console.show_filter(command)
 
-    def unfilter_contacts(self):
+    def clear_contact_filter(self):
         self.filter_string = ''
         # TODO show unfiltered contact list
         self.ui.frame.focus_position = 'body'

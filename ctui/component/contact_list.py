@@ -99,9 +99,9 @@ class ContactList(CListBox):
             case 'search_contact':
                 self.core.ui.console.show_search()
             case 'set_contact_filter':
-                self.core.filter_contacts()
+                self.core.set_contact_filter()
             case 'clear_contact_filter':
-                self.core.unfilter_contacts()
+                self.core.clear_contact_filter()
             # case 'add_google_contact':
             #     self.core.add_google_contact()
             case _:

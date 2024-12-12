@@ -61,7 +61,7 @@ class Console(urwid.Filler):
             if key == 'esc':
                 self.filter_mode = False
                 self.clear()
-                self.core.unfilter_contacts()
+                self.core.clear_contact_filter()
                 return
             elif key == 'enter':
                 self.filter_mode = False
