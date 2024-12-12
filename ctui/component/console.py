@@ -34,7 +34,8 @@ class Console(urwid.Filler):
         self.core.ui.frame.focus_position = 'footer'
 
     def show_meta(self, meta):
-        self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
+        if not self.filter_mode:
+            self.body = urwid.AttrMap(urwid.Text(meta, 'right'), 'status_bar')
 
     def handle(self, args):
         command = args[0]
