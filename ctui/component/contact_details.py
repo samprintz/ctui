@@ -50,7 +50,7 @@ class ContactDetails(CListBox):
         except TypeError:
             pass
 
-    def get_count(self):
+    def get_count(self) -> int:
         count = 0
         for entry in self.body:
             if type(entry) is AttributeEntry or type(

@@ -99,6 +99,9 @@ class CDetailsFrame(urwid.Frame):
     def set_focused_detail_pos(self, detail_pos):
         self.get_tab_body().set_focus_position(detail_pos)
 
+    def get_count(self) -> int:
+        return self.get_tab_body().get_count()
+
     def keypress(self, size, key):
         key = super(CDetailsFrame, self).keypress(size, key)
         if key is None:
