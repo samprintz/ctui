@@ -1074,6 +1074,8 @@ class TestFilter(unittest.TestCase):
         self.assertEqual(self.core.ui.list_view.get_count(), 1)
         entry_label = self.core.ui.list_view.focus.label
         self.assertEqual(entry_label, ContactList.no_result_msg)
+        detail_view_count = self.core.ui.detail_view.get_count()
+        self.assertEqual(detail_view_count, 0)
 
     def test_reset_contact_filter(self):
         self.core.set_contact_filter()
