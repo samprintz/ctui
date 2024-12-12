@@ -2,9 +2,12 @@ import urwid
 
 from ctui.component.contact_entry import ContactEntry
 from ctui.component.list_box import CListBox
+from ctui.component.list_entry import CListEntry
 
 
 class ContactList(CListBox):
+    no_result_msg = "<no result>"
+
     def __init__(self, core):
         self.core = core
         self.listwalker = urwid.SimpleFocusListWalker([])
@@ -13,10 +16,17 @@ class ContactList(CListBox):
     def set_data(self, contact_list):
         contact_entry_widgets = []
         pos = 0
-        for c in contact_list:
-            entry = ContactEntry(c, pos, self.core)
+
+        is_empty = len(contact_list) == 0
+
+        if is_empty:
+            entry = CListEntry(ContactList.no_result_msg, 0, self.core)
             contact_entry_widgets.append(entry)
-            pos = pos + 1
+        else:
+            for c in contact_list:
+                entry = ContactEntry(c, pos, self.core)
+                contact_entry_widgets.append(entry)
+                pos = pos + 1
 
         urwid.disconnect_signal(self.listwalker, 'modified',
                                 self.select_contact)
@@ -26,7 +36,8 @@ class ContactList(CListBox):
 
         self.listwalker.extend(contact_entry_widgets)
 
-        urwid.connect_signal(self.body, 'modified', self.select_contact)
+        if not is_empty:
+            urwid.connect_signal(self.body, 'modified', self.select_contact)
 
         self.listwalker.set_focus(0)
 
