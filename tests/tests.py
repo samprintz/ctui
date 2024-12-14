@@ -1086,6 +1086,12 @@ class TestFilter(unittest.TestCase):
         self.assertEqual(self.core.ui.get_focused_contact().get_id(),
                          "Max_Mustermann")
 
+    def test_reset_contact_filter_not_existing(self):
+        self.core.set_contact_filter()
+        self.core.update_contact_list("Tom")
+        self.assertEqual(self.core.ui.list_view.get_count(), 1)
+        self.core.clear_contact_filter()
+
 
 if __name__ == '__main__':
     unittest.main()

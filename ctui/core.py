@@ -181,4 +181,8 @@ class Core:
         self.update_contact_list()
         self.ui.frame.focus_position = 'body'
         self.ui.focus_list_view()
-        self.ui.set_focused_contact(focused_contact.get_id())
+
+        if focused_contact:
+            self.ui.set_focused_contact(focused_contact.get_id())
+        else:
+            self.ui.set_focused_contact_pos(0)

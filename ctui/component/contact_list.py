@@ -45,7 +45,8 @@ class ContactList(CListBox):
         self.core.update_contact_details(self.focus.contact.get_id())
 
     def get_focused_contact(self):
-        return self.focus.contact
+        if hasattr(self.focus, 'contact'):
+            return self.focus.contact
 
     def set_focused_contact(self, contact_id: str) -> None:
         pos = self.get_contact_position(contact_id)
