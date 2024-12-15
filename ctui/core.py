@@ -9,8 +9,8 @@ from ctui.memory import MemoryStore
 from ctui.model.contact import Contact
 from ctui.model.google_contact import GoogleContact
 from ctui.rdf import RDFStore
-from ctui.textfile import TextFileStore
 from ctui.service.editor import Editor
+from ctui.textfile import TextFileStore
 
 
 class Core:
@@ -70,6 +70,9 @@ class Core:
         # load contact details only when needed, not before for performance
         contact = self.contact_handler.load_details(contact_id)
         self.ui.set_contact_details(contact)
+
+    def clear_contact_details(self):
+        self.ui.set_contact_details(None)
 
     @staticmethod
     def apply_filter(contact_list, filter_string=None):

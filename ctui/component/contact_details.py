@@ -84,19 +84,21 @@ class GeneralDetails(ContactDetails):
         entries = []
         pos = 0
 
-        if contact.attributes is not None:
+        if hasattr(contact, "attributes") and contact.attributes is not None:
             for a in contact.attributes:
                 entries.append(
                     AttributeEntry(contact, Attribute(a[0], a[1]), pos,
                                    self.core))
                 pos = pos + 1
 
-        if type(contact) is GoogleContact and contact.google_attributes is not None:
+        if type(contact) is GoogleContact \
+                and hasattr(contact, "google_attributes") \
+                and contact.google_attributes is not None:
             for a in contact.google_attributes:
                 entries.append(GoogleAttributeEntry(contact, a, pos, self.core))
                 pos = pos + 1
 
-        if contact.gifts is not None:
+        if hasattr(contact, "gifts") and contact.gifts is not None:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
@@ -110,7 +112,9 @@ class GeneralDetails(ContactDetails):
                         DetailEntry(contact, gift, gift.name, pos, self.core))
                 pos = pos + 1
 
-        if type(contact) is GoogleContact and len(contact.google_notes) > 0:
+        if type(contact) is GoogleContact \
+                and hasattr(contact, "google_notes") \
+                and len(contact.google_notes) > 0:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
@@ -120,7 +124,7 @@ class GeneralDetails(ContactDetails):
                 entries.append(GoogleNoteEntry(contact, note, pos, self.core))
                 pos = pos + 1
 
-        if contact.notes is not None:
+        if hasattr(contact, "notes") and contact.notes is not None:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
@@ -172,7 +176,7 @@ class GiftDetails(ContactDetails):
         entries = []
         pos = 0
 
-        if contact.gifts is not None:
+        if hasattr(contact, "gifts") and contact.gifts is not None:
             for gift in contact.gifts:
                 if isinstance(gift, Gift):
                     entries.append(GiftEntry(contact, gift, pos, self.core))
@@ -210,7 +214,7 @@ class NoteDetails(ContactDetails):
         entries = []
         pos = 0
 
-        if contact.notes is not None:
+        if hasattr(contact, "notes") and contact.notes is not None:
             for note in contact.notes:
                 if type(note) is Note:  # plain note
                     entries.append(NoteEntry(contact, note, pos, self.core))

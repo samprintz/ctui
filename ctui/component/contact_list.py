@@ -38,6 +38,9 @@ class ContactList(CListBox):
 
         if not is_empty:
             urwid.connect_signal(self.body, 'modified', self.select_contact)
+        else:
+            # TODO refactor: also connect signal here, but enable following methods to handle None
+            self.core.clear_contact_details()
 
         self.listwalker.set_focus(0)
 
