@@ -30,99 +30,107 @@ class TestCore(unittest.TestCase):
 
     def test_add_contact(self):
         res = self.core.add_contact(self.contact1)
-        self.assertTrue(self.core.contains_contact(self.contact1))
+        self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_add_contact_already_existing(self):
         self.core.add_contact(self.contact1)
         res = self.core.add_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
-        self.assertTrue(self.core.contains_contact(self.contact1))
+        self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_add_contact_already_existing_notes(self):
         self.core.textfilestore.add_contact(self.contact1)
         res = self.core.add_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
-        self.assertTrue(self.core.contains_contact(self.contact1))
+        self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_add_contact_already_existing_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
         res = self.core.add_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
-        self.assertTrue(self.core.contains_contact(self.contact1))
+        self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_rename_contact(self):
         self.core.add_contact(self.contact1)
         res = self.core.rename_contact(self.contact1, self.name2)
-        self.assertFalse(self.core.contains_contact_name(self.name1))
-        self.assertTrue(self.core.contains_contact_name(self.name2))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
+        self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
 
     def test_rename_contact_unchanged(self):
         self.core.add_contact(self.contact1)
         res = self.core.rename_contact(self.contact1, self.name1)
         self.assertTrue(res.startswith("Warning"))
-        self.assertTrue(self.core.contains_contact_name(self.name1))
+        self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_rename_contact_not_existing(self):
-        self.assertFalse(self.core.contains_contact_name(self.name1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         res = self.core.rename_contact(self.contact1, self.name2)
         self.assertTrue(res.startswith("Error"))
-        self.assertFalse(self.core.contains_contact_name(self.name2))
+        self.assertFalse(self.core.contains_contact(self.contact2.get_id()))
 
     def test_rename_contact_with_only_notes(self):
         self.core.textfilestore.add_contact(self.contact1)
-        self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
-        res = self.core.rename_contact(self.contact1, self.name2)
-        self.assertTrue(self.core.contains_contact_name(self.name2))
-        self.assertTrue(
-            self.core.textfilestore.contains_contact_name(self.name2))
-        self.assertFalse(self.core.rdfstore.contains_contact_name(self.name2))
-        self.assertFalse(self.core.contains_contact_name(self.name1))
         self.assertFalse(
-            self.core.textfilestore.contains_contact_name(self.name1))
-        self.assertFalse(self.core.rdfstore.contains_contact_name(self.name1))
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
+        res = self.core.rename_contact(self.contact1, self.name2)
+        self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
+        self.assertTrue(
+            self.core.textfilestore.contains_contact(self.contact2.get_id()))
+        self.assertFalse(
+            self.core.rdfstore.contains_contact(self.contact2.get_id()))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
 
     def test_rename_contact_with_only_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
         self.assertFalse(
-            self.core.textfilestore.contains_contact(self.contact1))
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
         res = self.core.rename_contact(self.contact1, self.name2)
-        self.assertTrue(self.core.contains_contact_name(self.name2))
-        self.assertTrue(self.core.rdfstore.contains_contact_name(self.name2))
+        self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
+        self.assertTrue(
+            self.core.rdfstore.contains_contact(self.contact2.get_id()))
         self.assertFalse(
-            self.core.textfilestore.contains_contact_name(self.name2))
-        self.assertFalse(self.core.contains_contact_name(self.name1))
-        self.assertFalse(self.core.rdfstore.contains_contact_name(self.name1))
+            self.core.textfilestore.contains_contact(self.contact2.get_id()))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
-            self.core.textfilestore.contains_contact_name(self.name1))
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
 
     def test_delete_contact(self):
         self.core.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
-        self.assertFalse(self.core.contains_contact(self.contact1))
-        self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
-            self.core.textfilestore.contains_contact(self.contact1))
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
 
     def test_delete_contact_not_existing(self):
-        self.assertFalse(self.core.contains_contact(self.contact1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         res = self.core.delete_contact(self.contact1)
         self.assertTrue(res.startswith("Error"))
 
     def test_delete_contact_with_only_notes(self):
         self.core.textfilestore.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
-        self.assertFalse(self.core.contains_contact(self.contact1))
-        self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
-            self.core.textfilestore.contains_contact(self.contact1))
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
 
     def test_delete_contact_with_only_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
         res = self.core.delete_contact(self.contact1)
-        self.assertFalse(self.core.contains_contact(self.contact1))
-        self.assertFalse(self.core.rdfstore.contains_contact(self.contact1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
-            self.core.textfilestore.contains_contact(self.contact1))
+            self.core.rdfstore.contains_contact(self.contact1.get_id()))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact1.get_id()))
 
     def test_delete_contact_with_attributes(self):
         self.core.rdfstore.add_contact(self.contact1)
@@ -130,7 +138,7 @@ class TestCore(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact1, attr)
         self.assertTrue(self.core.rdfstore.has_attribute(self.contact1, attr))
         res = self.core.delete_contact(self.contact1)
-        self.assertFalse(self.core.contains_contact(self.contact1))
+        self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(self.core.rdfstore.contains_attribute(attr))
 
     @classmethod
@@ -385,14 +393,16 @@ class TestObjects(unittest.TestCase):
     # notes
 
     def test_add_note_new_dir(self):
-        self.assertFalse(self.core.textfilestore.contains_contact(self.contact))
+        self.assertFalse(
+            self.core.textfilestore.contains_contact(self.contact.get_id()))
         self.core.textfilestore.add_note(self.contact.get_id(), self.note1)
         self.assertTrue(self.core.textfilestore.has_note(self.contact.get_id(),
                                                          self.note_id1))
 
     def test_add_note_existing_dir(self):
         self.core.textfilestore.add_contact(self.contact)
-        self.assertTrue(self.core.textfilestore.contains_contact(self.contact))
+        self.assertTrue(
+            self.core.textfilestore.contains_contact(self.contact.get_id()))
         self.core.textfilestore.add_note(self.contact.get_id(), self.note1)
         self.assertTrue(self.core.textfilestore.has_note(self.contact.get_id(),
                                                          self.note_id1))

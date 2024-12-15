@@ -3,6 +3,7 @@ import shutil
 
 import gnupg
 
+from ctui.model.contact import Contact
 from ctui.model.detail import Detail
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
@@ -46,7 +47,7 @@ class TextFileStore:
         return self.create_textfile_dir(contact_id, self.GIFTS_DIR)
 
     def create_textfile_dir(self, contact_id, textfile_type):
-        if not self.contains_contact_id(contact_id):
+        if not self.contains_contact(contact_id):
             self.add_contact_id(contact_id)
 
         path = self.get_textfile_path_by_type(contact_id, textfile_type)
@@ -63,22 +64,8 @@ class TextFileStore:
             contact_names.append(dirname.replace('_', ' '))
         return sorted(contact_names)
 
-    def contains_contact_id(self, contact_id):
-        # TODO refactor to has_contact(contact_id)
+    def contains_contact(self, contact_id):
         dirname = self.path + contact_id
-        return os.path.isdir(dirname)
-
-    def contains_contact(self, contact):
-        '''
-        @deprecated use contains_contact_id
-        '''
-        return self.contains_contact_name(contact.name)
-
-    def contains_contact_name(self, name):
-        '''
-        @deprecated use contains_contact_id
-        '''
-        dirname = self.path + name.replace(' ', '_')
         return os.path.isdir(dirname)
 
     def add_contact_id(self, contact_id):
@@ -102,7 +89,7 @@ class TextFileStore:
     def rename_contact(self, contact, new_name):
         assert self.contains_contact(contact)
         assert contact.name != new_name
-        assert not self.contains_contact_name(new_name)
+        assert not self.contains_contact(Contact.name_to_id(new_name))
 
         try:
             dirname = self.get_textfile_path(contact.get_id())
@@ -113,7 +100,7 @@ class TextFileStore:
                 .format(dirname, new_dirname)
 
     def delete_contact(self, contact_id):
-        assert self.contains_contact_id(contact_id)
+        assert self.contains_contact(contact_id)
 
         try:
             dirname = self.get_textfile_path(contact_id)

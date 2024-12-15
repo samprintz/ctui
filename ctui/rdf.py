@@ -31,19 +31,14 @@ class RDFStore:
             contact_names.append(str(o))
         return sorted(contact_names)
 
-    def contains_contact(self, contact):
-        return self.contains_contact_name(contact.name)
+    def contains_contact(self, contact_id):
+        has_contact = False
 
-    def contains_contact_id(self, contact_id):
-        name = Contact.id_to_name(contact_id)
-        return (None, GIVEN_NAME_REF, Literal(name)) in self.g
+        if contact_id:
+            name = Contact.id_to_name(contact_id)
+            has_contact = (None, GIVEN_NAME_REF, Literal(name)) in self.g
 
-    def contains_contact_name(self, name):
-        return (None, GIVEN_NAME_REF, Literal(name)) in self.g
-
-    """
-    Check any contact owns that attribute.
-    """
+        return has_contact
 
     def contains_attribute(self, attr):
         attribute_ref = URIRef(self.namespace + attr.key)
@@ -65,7 +60,7 @@ class RDFStore:
     def rename_contact(self, contact, new_name):
         assert self.contains_contact(contact)
         assert contact.name != new_name
-        assert not self.contains_contact_name(new_name)
+        assert not self.contains_contact(Contact.name_to_id(new_name))
 
         try:
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
@@ -77,7 +72,7 @@ class RDFStore:
             raise Exception  # TODO
 
     def delete_contact(self, contact_id):
-        assert self.contains_contact_id(contact_id)
+        assert self.contains_contact(contact_id)
 
         try:
             name = Contact.id_to_name(contact_id)

@@ -82,51 +82,37 @@ class Core:
         return contacts
 
     def select_contact(self, contact_id: str) -> None:
-        if self.contains_contact_id(contact_id):
+        if self.contains_contact(contact_id):
             self.ui.set_focused_contact(contact_id)
             self.update_contact_details(contact_id)
         else:
             name = Contact.id_to_name(contact_id)
             self.ui.console.show_message(f"Contact '{name}' not found")
 
-    def contains_contact(self, contact):
-        """
-        @deprecated use contains_contact_id
-        """
-        return self.rdfstore.contains_contact(contact) or \
-            self.textfilestore.contains_contact(contact)
-
-    def contains_contact_id(self, name):
-        """
-        TODO rename to contains_contact()
-        """
-        return self.rdfstore.contains_contact_id(name) or \
-            self.textfilestore.contains_contact_id(name)
-
-    def contains_contact_name(self, name):
-        return self.rdfstore.contains_contact_name(name) or \
-            self.textfilestore.contains_contact_name(name)
+    def contains_contact(self, contact_id):
+        return self.rdfstore.contains_contact(contact_id) or \
+            self.textfilestore.contains_contact(contact_id)
 
     def search_contact(self, name):
         self.ui.list_view.jump_to_contact(name)
         return ""
 
     def add_contact(self, contact):
-        if self.contains_contact(contact):
+        if self.contains_contact(contact.get_id()):
             return "Error: {} already exists.".format(contact.name)
         self.rdfstore.add_contact(contact)
         return "{} added.".format(contact.name)
 
     def rename_contact(self, contact, new_name):
-        if not self.contains_contact(contact):
+        if not self.contains_contact(contact.get_id()):
             return "Error: {} doesn't exist.".format(contact.name)
         if contact.name == new_name:
             return "Warning: Name unchanged."
-        if self.contains_contact_name(new_name):
+        if self.contains_contact(Contact.name_to_id(new_name)):
             return "Error: {} already exists.".format(new_name)
-        if self.rdfstore.contains_contact(contact):
+        if self.rdfstore.contains_contact(contact.get_id()):
             self.rdfstore.rename_contact(contact, new_name)
-        if self.textfilestore.contains_contact(contact):
+        if self.textfilestore.contains_contact(contact.get_id()):
             self.textfilestore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
@@ -138,13 +124,13 @@ class Core:
 
     def delete_contact_by_id(self, contact_id):
         name = Contact.id_to_name(contact_id)
-        if not self.contains_contact_id(contact_id):
+        if not self.contains_contact(contact_id):
             return "Error: {} doesn't exists.".format(name)
         # if type(contact_id) is GoogleContact:
         #     self.googlestore.delete_contact(contact_id)
-        if self.rdfstore.contains_contact_id(contact_id):
+        if self.rdfstore.contains_contact(contact_id):
             self.rdfstore.delete_contact(contact_id)
-        if self.textfilestore.contains_contact_id(contact_id):
+        if self.textfilestore.contains_contact(contact_id):
             self.textfilestore.delete_contact(contact_id)
         return "{} deleted.".format(name)
 
