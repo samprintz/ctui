@@ -69,9 +69,6 @@ class Core:
     def update_contact_details(self, contact_id):
         self.ui.set_contact_details(contact_id)
 
-    def clear_contact_details(self):
-        self.ui.set_contact_details(None)
-
     @staticmethod
     def apply_filter(contact_list, filter_string=None):
         if not filter_string:

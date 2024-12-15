@@ -36,16 +36,17 @@ class ContactList(CListBox):
 
         self.listwalker.extend(contact_entry_widgets)
 
-        if not is_empty:
-            urwid.connect_signal(self.body, 'modified', self.select_contact)
-        else:
-            # TODO refactor: also connect signal here, but enable following methods to handle None
-            self.core.clear_contact_details()
+        urwid.connect_signal(self.body, 'modified', self.select_contact)
 
         self.listwalker.set_focus(0)
 
     def select_contact(self):
-        self.core.update_contact_details(self.focus.contact.get_id())
+        contact_id = None
+
+        if hasattr(self.focus, 'contact'):
+            contact_id = self.focus.contact.get_id()
+
+        self.core.update_contact_details(contact_id)
 
     def get_focused_contact(self):
         if hasattr(self.focus, 'contact'):
