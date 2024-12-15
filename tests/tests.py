@@ -52,19 +52,19 @@ class TestCore(unittest.TestCase):
 
     def test_rename_contact(self):
         self.core.add_contact(self.contact1)
-        res = self.core.rename_contact(self.contact1, self.name2)
+        res = self.core.rename_contact(self.contact1.get_id(), self.name2)
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
 
     def test_rename_contact_unchanged(self):
         self.core.add_contact(self.contact1)
-        res = self.core.rename_contact(self.contact1, self.name1)
+        res = self.core.rename_contact(self.contact1.get_id(), self.name1)
         self.assertTrue(res.startswith("Warning"))
         self.assertTrue(self.core.contains_contact(self.contact1.get_id()))
 
     def test_rename_contact_not_existing(self):
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
-        res = self.core.rename_contact(self.contact1, self.name2)
+        res = self.core.rename_contact(self.contact1.get_id(), self.name2)
         self.assertTrue(res.startswith("Error"))
         self.assertFalse(self.core.contains_contact(self.contact2.get_id()))
 
@@ -72,7 +72,7 @@ class TestCore(unittest.TestCase):
         self.core.textfilestore.add_contact(self.contact1)
         self.assertFalse(
             self.core.rdfstore.contains_contact(self.contact1.get_id()))
-        res = self.core.rename_contact(self.contact1, self.name2)
+        res = self.core.rename_contact(self.contact1.get_id(), self.name2)
         self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
         self.assertTrue(
             self.core.textfilestore.contains_contact(self.contact2.get_id()))
@@ -88,7 +88,7 @@ class TestCore(unittest.TestCase):
         self.core.rdfstore.add_contact(self.contact1)
         self.assertFalse(
             self.core.textfilestore.contains_contact(self.contact1.get_id()))
-        res = self.core.rename_contact(self.contact1, self.name2)
+        res = self.core.rename_contact(self.contact1.get_id(), self.name2)
         self.assertTrue(self.core.contains_contact(self.contact2.get_id()))
         self.assertTrue(
             self.core.rdfstore.contains_contact(self.contact2.get_id()))
@@ -135,8 +135,9 @@ class TestCore(unittest.TestCase):
     def test_delete_contact_with_attributes(self):
         self.core.rdfstore.add_contact(self.contact1)
         attr = Attribute("key", "value")
-        self.core.rdfstore.add_attribute(self.contact1, attr)
-        self.assertTrue(self.core.rdfstore.has_attribute(self.contact1, attr))
+        self.core.rdfstore.add_attribute(self.contact1.get_id(), attr)
+        self.assertTrue(
+            self.core.rdfstore.has_attribute(self.contact1.get_id(), attr))
         res = self.core.delete_contact(self.contact1.get_id())
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(self.core.rdfstore.contains_attribute(attr))
@@ -202,61 +203,66 @@ class TestObjects(unittest.TestCase):
     # attributes
 
     def test_add_attr(self):
-        res = self.core.rdfstore.add_attribute(self.contact, self.attr1)
+        res = self.core.rdfstore.add_attribute(self.contact.get_id(),
+                                               self.attr1)
         self.assertIsNotNone(res)
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
 
     def test_add_attr_already_existing(self):
-        self.core.rdfstore.add_attribute(self.contact, self.attr1)
+        self.core.rdfstore.add_attribute(self.contact.get_id(), self.attr1)
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
-        res = self.core.rdfstore.add_attribute(self.contact, self.attr1)
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
+        res = self.core.rdfstore.add_attribute(self.contact.get_id(),
+                                               self.attr1)
         self.assertIsNotNone(res)
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
 
     def test_edit_attr(self):
-        self.core.rdfstore.add_attribute(self.contact, self.attr1)
-        res = self.core.rdfstore.edit_attribute(self.contact, self.attr1,
+        self.core.rdfstore.add_attribute(self.contact.get_id(), self.attr1)
+        res = self.core.rdfstore.edit_attribute(self.contact.get_id(),
+                                                self.attr1,
                                                 self.attr2)
         self.assertIsNotNone(res)
         self.assertFalse(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr2))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr2))
 
     def test_edit_attr_unchanged(self):
-        self.core.rdfstore.add_attribute(self.contact, self.attr1)
-        res = self.core.rdfstore.edit_attribute(self.contact, self.attr1,
-                                                self.attr1)
+        self.core.rdfstore.add_attribute(self.contact.get_id(), self.attr1)
+        res = self.core.rdfstore.edit_attribute(self.contact.get_id(),
+                                                self.attr1, self.attr1)
         self.assertIsNotNone(res)
         self.assertTrue(res.startswith("Warning"))
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
 
     def test_edit_attr_not_existing(self):
         self.assertFalse(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
 
         with self.assertRaises(ValueError):
-            self.core.rdfstore.edit_attribute(self.contact, self.attr1,
+            self.core.rdfstore.edit_attribute(self.contact.get_id(), self.attr1,
                                               self.attr2)
 
     def test_delete_attr(self):
-        self.core.rdfstore.add_attribute(self.contact, self.attr1)
+        self.core.rdfstore.add_attribute(self.contact.get_id(), self.attr1)
         self.assertTrue(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
-        res = self.core.rdfstore.delete_attribute(self.contact, self.attr1)
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
+        res = self.core.rdfstore.delete_attribute(self.contact.get_id(),
+                                                  self.attr1)
         self.assertIsNotNone(res)
         self.assertFalse(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
 
     def test_delete_attr_not_existing(self):
         self.assertFalse(
-            self.core.rdfstore.has_attribute(self.contact, self.attr1))
+            self.core.rdfstore.has_attribute(self.contact.get_id(), self.attr1))
         with self.assertRaises(ValueError):
-            self.core.rdfstore.delete_attribute(self.contact, self.attr1)
+            self.core.rdfstore.delete_attribute(self.contact.get_id(),
+                                                self.attr1)
 
     # gifts
 
@@ -867,9 +873,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_last = Attribute(self.attr_key_last, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key2, self.attr_value1])
@@ -893,8 +900,9 @@ class TestUIDetailView(unittest.TestCase):
     def test_focus_add_last_detail_to_first_contact(self):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
 
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key_last, self.attr_value1])
@@ -907,8 +915,9 @@ class TestUIDetailView(unittest.TestCase):
     def test_focus_edit_first_to_some_detail_of_first_contact(self):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_first)
@@ -925,9 +934,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_last = Attribute(self.attr_key_last, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
@@ -944,9 +954,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_2 = Attribute(self.attr_key1, self.attr_value2)
         attr_last = Attribute(self.attr_key_last, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_last)
@@ -963,9 +974,9 @@ class TestUIDetailView(unittest.TestCase):
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_2 = Attribute(self.attr_key2, self.attr_value2)
         attr_last = Attribute(self.attr_key_last, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_2)
@@ -982,9 +993,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_2 = Attribute(self.attr_key2, self.attr_value2)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
@@ -1000,8 +1012,9 @@ class TestUIDetailView(unittest.TestCase):
     def test_focus_delete_first_detail_from_first_contact(self):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_first)
@@ -1018,9 +1031,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_2 = Attribute(self.attr_key2, self.attr_value2)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_2)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_1)
@@ -1037,9 +1051,10 @@ class TestUIDetailView(unittest.TestCase):
         attr_first = Attribute(self.attr_key_first, self.attr_value1)
         attr_1 = Attribute(self.attr_key1, self.attr_value1)
         attr_last = Attribute(self.attr_key_last, self.attr_value2)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_first)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_1)
-        self.core.rdfstore.add_attribute(self.contact_first, attr_last)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(),
+                                         attr_first)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
+        self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
         self.core.ui.set_focused_detail(attr_last)

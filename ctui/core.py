@@ -103,18 +103,20 @@ class Core:
         self.rdfstore.add_contact(contact)
         return "{} added.".format(contact.name)
 
-    def rename_contact(self, contact, new_name):
-        if not self.contains_contact(contact.get_id()):
-            return "Error: {} doesn't exist.".format(contact.name)
-        if contact.name == new_name:
+    def rename_contact(self, contact_id, new_name):
+        name = Contact.id_to_name(contact_id)
+
+        if not self.contains_contact(contact_id):
+            return "Error: {} doesn't exist.".format(name)
+        if name == new_name:
             return "Warning: Name unchanged."
         if self.contains_contact(Contact.name_to_id(new_name)):
             return "Error: {} already exists.".format(new_name)
-        if self.rdfstore.contains_contact(contact.get_id()):
-            self.rdfstore.rename_contact(contact, new_name)
-        if self.textfilestore.contains_contact(contact.get_id()):
-            self.textfilestore.rename_contact(contact, new_name)
-        return "{} renamed to {}.".format(contact.name, new_name)
+        if self.rdfstore.contains_contact(contact_id):
+            self.rdfstore.rename_contact(contact_id, new_name)
+        if self.textfilestore.contains_contact(contact_id):
+            self.textfilestore.rename_contact(contact_id, new_name)
+        return "{} renamed to {}.".format(name, new_name)
 
     def delete_contact(self, contact_id):
         name = Contact.id_to_name(contact_id)

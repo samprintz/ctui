@@ -82,13 +82,15 @@ class TextFileStore:
         except OSError:
             return "Couldn't create directory \"{}\".".format(dirname)
 
-    def rename_contact(self, contact, new_name):
-        assert self.contains_contact(contact)
-        assert contact.name != new_name
+    def rename_contact(self, contact_id, new_name):
+        name = Contact.id_to_name(contact_id)
+
+        assert self.contains_contact(contact_id)
+        assert name != new_name
         assert not self.contains_contact(Contact.name_to_id(new_name))
 
         try:
-            dirname = self.get_textfile_path(contact.get_id())
+            dirname = self.get_textfile_path(contact_id)
             new_dirname = self.path + new_name.replace(' ', '_')
             os.rename(dirname, new_dirname)
         except OSError:

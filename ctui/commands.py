@@ -66,7 +66,8 @@ class RenameContact(Command):
     names = ['rename-contact']
 
     def _execute(self, new_name):
-        self.msg = self.core.rename_contact(self.focused_contact, new_name)
+        self.msg = self.core.rename_contact(self.focused_contact.get_id(),
+                                            new_name)
         self.to_focus_contact = Contact(new_name)
 
     def _update(self):
@@ -97,8 +98,9 @@ class AddAttribute(Command):
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
         self.to_focus_detail = attribute
-        self.msg = self.core.rdfstore.add_attribute(self.focused_contact,
-                                                    attribute)
+        self.msg = self.core.rdfstore.add_attribute(
+            self.focused_contact.get_id(),
+            attribute)
 
     def _update(self):
         DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
@@ -119,11 +121,12 @@ class EditAttribute(Command):
         self.to_focus_detail = new_attr
 
         if old_attr.key == "givenName":  # special case: rename
-            self.msg = self.core.rename_contact(self.focused_contact,
+            self.msg = self.core.rename_contact(self.focused_contact.get_id(),
                                                 new_attr.value)
         else:
-            self.msg = self.core.rdfstore.edit_attribute(self.focused_contact,
-                                                         old_attr, new_attr)
+            self.msg = self.core.rdfstore.edit_attribute(
+                self.focused_contact.get_id(),
+                old_attr, new_attr)
 
     def _update(self):
         DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
@@ -140,8 +143,9 @@ class DeleteAttribute(Command):
         key = args[0]
         value = " ".join(args[1:])
         attribute = Attribute(key, value)
-        self.msg = self.core.rdfstore.delete_attribute(self.focused_contact,
-                                                       attribute)
+        self.msg = self.core.rdfstore.delete_attribute(
+            self.focused_contact.get_id(),
+            attribute)
 
     def _update(self):
         DetailDeletedRedraw(self.core).redraw()
