@@ -46,7 +46,7 @@ class ContactHandler:
 
         return sorted(set(contact_names))
 
-    def has_details(self, contact) -> List[Union[Attribute, Note, Gift]]:
-        return self.core.rdfstore.has_attributes(contact) or \
-            self.core.textfilestore.has_gifts(contact.get_id()) or \
-            self.core.textfilestore.has_notes(contact.get_id())
+    def has_details(self, contact_id: str) -> List[Union[Attribute, Note, Gift]]:
+        return self.core.rdfstore.has_attributes(contact_id) or \
+            self.core.textfilestore.has_gifts(contact_id) or \
+            self.core.textfilestore.has_notes(contact_id)

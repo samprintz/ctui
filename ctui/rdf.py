@@ -88,13 +88,20 @@ class RDFStore:
 
     # attributes
 
-    def has_attributes(self, contact):
-        try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(contact.name)))
-        except StopIteration:
-            return False
-        triples = [po for po in self.g.predicate_objects(s)]
-        return len(triples) > 1
+    def has_attributes(self, contact_id):
+        has_attributes = False
+
+        if contact_id:
+            name = Contact.id_to_name(contact_id)
+
+            try:
+                s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
+            except StopIteration:
+                return has_attributes
+            triples = [po for po in self.g.predicate_objects(s)]
+            has_attributes = len(triples) > 1
+
+        return has_attributes
 
     def get_attributes(self, contact_id):
         attributes = []
