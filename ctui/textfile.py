@@ -1,10 +1,8 @@
-import copy
 import os
 import shutil
 
 import gnupg
 
-from ctui.model.contact import Contact
 from ctui.model.detail import Detail
 from ctui.model.encrypted_note import EncryptedNote
 from ctui.model.gift import Gift
@@ -124,9 +122,15 @@ class TextFileStore:
         except Exception:
             return "Couldn't delete directory \"{}\".".format(dirname)
 
-    def has_entries(self, contact_id, type):
-        dir_path = self.get_textfile_path_by_type(contact_id, type)
-        return os.path.isdir(dir_path) and len(os.listdir(dir_path)) > 0
+    def has_entries(self, contact_id, detail_type):
+        has_entries = False
+
+        if contact_id:
+            dir_path = self.get_textfile_path_by_type(contact_id, detail_type)
+            has_entries = os.path.isdir(dir_path) \
+                          and len(os.listdir(dir_path)) > 0
+
+        return has_entries
 
     def has_notes(self, contact_id):
         return self.has_entries(contact_id, self.NOTES_DIR)

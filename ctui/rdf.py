@@ -102,18 +102,22 @@ class RDFStore:
         return len(triples) > 1
 
     def get_attributes(self, contact_id):
-        name = Contact.id_to_name(contact_id)
-        try:
-            s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
-        except StopIteration:
-            return []
-        entries = []
-        for p, o in self.g.predicate_objects(s):
-            predicate = self.get_predicate_name(p)
-            if predicate == 'givenName': continue
-            if predicate == 'giftIdea': continue
-            entries.append([predicate, str(o)])
-        return sorted(entries)
+        attributes = []
+
+        if contact_id:
+            name = Contact.id_to_name(contact_id)
+            try:
+                s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
+            except StopIteration:
+                return attributes
+
+            for p, o in self.g.predicate_objects(s):
+                predicate = self.get_predicate_name(p)
+                if predicate == 'givenName': continue
+                if predicate == 'giftIdea': continue
+                attributes.append([predicate, str(o)])
+
+        return sorted(attributes)
 
     def has_attribute(self, contact, attribute):
         attribute_ref = URIRef(self.namespace + attribute.key)
