@@ -661,17 +661,18 @@ class TestListViewUI(unittest.TestCase):
 
     def test_init_attribute_entry(self):
         attribute = Attribute("key", "value")
-        entry = AttributeEntry(self.contact1, attribute, self.pos, self.core)
+        entry = AttributeEntry(self.contact1.get_id(), attribute, self.pos,
+                               self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_gift_entry(self):
         gift = Gift("name")
-        entry = GiftEntry(self.contact1, gift, self.pos, self.core)
+        entry = GiftEntry(self.contact1.get_id(), gift, self.pos, self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_note_entry(self):
         note = Note("20200101", "Text")
-        entry = NoteEntry(self.contact1, note, self.pos, self.core)
+        entry = NoteEntry(self.contact1.get_id(), note, self.pos, self.core)
         self.assertIsInstance(entry.label, str)
 
     def test_init_contact_entry(self):

@@ -7,16 +7,16 @@ from ctui.component.list_entry import CListEntry
 
 
 class DetailEntry(CListEntry):
-    def __init__(self, contact, detail, label, pos, core):
+    def __init__(self, contact_id, detail, label, pos, core):
         super(DetailEntry, self).__init__(label, pos, core)
-        self.contact = contact
+        self.contact_id = contact_id
         self.detail = detail
 
 
 class AttributeEntry(DetailEntry):
-    def __init__(self, contact, attribute, pos, core):
+    def __init__(self, contact_id, attribute, pos, core):
         label = attribute.key + ': ' + attribute.value
-        super(AttributeEntry, self).__init__(contact, attribute, label, pos,
+        super(AttributeEntry, self).__init__(contact_id, attribute, label, pos,
                                              core)
         self.attribute = attribute
         self.name = 'attribute_entry'
@@ -47,7 +47,7 @@ class AttributeEntry(DetailEntry):
 
 
 class GiftEntry(DetailEntry):
-    def __init__(self, contact, gift, pos, core):
+    def __init__(self, contact_id, gift, pos, core):
         label = ''
 
         if gift.gifted:
@@ -61,7 +61,7 @@ class GiftEntry(DetailEntry):
         if gift.occasions:
             label += f' ({', '.join(gift.occasions)})'
 
-        super(GiftEntry, self).__init__(contact, gift, label, pos, core)
+        super(GiftEntry, self).__init__(contact_id, gift, label, pos, core)
         self.gift = gift
         self.name = 'gift_entry'
 
@@ -91,8 +91,9 @@ class GiftEntry(DetailEntry):
 
 
 class NoteEntry(DetailEntry):
-    def __init__(self, contact, note, pos, core):
-        super(NoteEntry, self).__init__(contact, note, note.content, pos, core)
+    def __init__(self, contact_id, note, pos, core):
+        super(NoteEntry, self).__init__(contact_id, note, note.content, pos,
+                                        core)
         self.note = note
         self.name = 'note_entry'
 
@@ -131,13 +132,13 @@ class NoteEntry(DetailEntry):
 
 
 class EncryptedNoteEntry(DetailEntry):
-    def __init__(self, contact, note, pos, core, visible=False):
+    def __init__(self, contact_id, note, pos, core, visible=False):
         if visible:
             content = '🔒' + note.content
-            super(EncryptedNoteEntry, self).__init__(contact, note, content,
+            super(EncryptedNoteEntry, self).__init__(contact_id, note, content,
                                                      pos, core)
         else:
-            super(EncryptedNoteEntry, self).__init__(contact, note,
+            super(EncryptedNoteEntry, self).__init__(contact_id, note,
                                                      '🔒(encrypted)', pos, core)
         self.note = note
         self.name = 'note_entry'
@@ -175,16 +176,17 @@ class EncryptedNoteEntry(DetailEntry):
 
 
 class GoogleNoteEntry(DetailEntry):
-    def __init__(self, contact, note, pos, core):
-        super(GoogleNoteEntry, self).__init__(contact, note, note.content, pos,
+    def __init__(self, contact_id, note, pos, core):
+        super(GoogleNoteEntry, self).__init__(contact_id, note, note.content,
+                                              pos,
                                               core)
         self.note = note
 
 
 class GoogleAttributeEntry(DetailEntry):
-    def __init__(self, contact, attribute, pos, core):
+    def __init__(self, contact_id, attribute, pos, core):
         label = 'G: ' + attribute.key + ': ' + attribute.value
-        super(GoogleAttributeEntry, self).__init__(contact, attribute, label,
+        super(GoogleAttributeEntry, self).__init__(contact_id, attribute, label,
                                                    pos, core)
         self.attribute = attribute
         self.name = 'attribute_entry'

@@ -12,7 +12,7 @@ class ContactEntry(CListEntry):
         urwid.connect_signal(self, 'click', self.select)
 
     def select(self, entry):
-        self.core.update_contact_details(entry.contact.get_id())
+        self.core.update_contact_details(entry.contact_id)
 
     def keypress(self, size, key):
         if key == 'enter':
