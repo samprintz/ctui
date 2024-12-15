@@ -160,12 +160,6 @@ class TestContactHandler(unittest.TestCase):
         self.assertIsNotNone(contact_names)
         self.assertIsInstance(contact_names, list)
 
-    def test_load_details(self):
-        self.core.add_contact(self.contact)
-        contact = self.core.contact_handler.load_details(self.contact.get_id())
-        self.assertEqual(len(contact.gifts), 1)
-        self.assertEqual(len(contact.notes), 1)
-
 
 class TestObjects(unittest.TestCase):
 

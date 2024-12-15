@@ -106,14 +106,13 @@ class RDFStore:
         try:
             s = next(self.g.subjects(GIVEN_NAME_REF, Literal(name)))
         except StopIteration:
-            return None
+            return []
         entries = []
         for p, o in self.g.predicate_objects(s):
             predicate = self.get_predicate_name(p)
             if predicate == 'givenName': continue
             if predicate == 'giftIdea': continue
             entries.append([predicate, str(o)])
-        if len(entries) == 0: return None
         return sorted(entries)
 
     def has_attribute(self, contact, attribute):

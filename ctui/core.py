@@ -67,9 +67,7 @@ class Core:
         self.ui.set_contact_list(contact_list)
 
     def update_contact_details(self, contact_id):
-        # load contact details only when needed, not before for performance
-        contact = self.contact_handler.load_details(contact_id)
-        self.ui.set_contact_details(contact)
+        self.ui.set_contact_details(contact_id)
 
     def clear_contact_details(self):
         self.ui.set_contact_details(None)

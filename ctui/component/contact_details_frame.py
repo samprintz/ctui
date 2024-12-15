@@ -54,11 +54,11 @@ class CDetailsFrame(urwid.Frame):
         self.body.original_widget = self.tab_content[tab_name]
         self.header.update_selected_tab_button(self.current_tab)
 
-    def set_contact(self, contact):
+    def set_contact(self, contact_id: str) -> None:
         self.tab_content = {
-            'General': GeneralDetails(contact, self.core),
-            'Gifts': GiftDetails(contact, self.core),
-            'Notes': NoteDetails(contact, self.core)
+            'General': GeneralDetails(contact_id, self.core),
+            'Gifts': GiftDetails(contact_id, self.core),
+            'Notes': NoteDetails(contact_id, self.core)
         }
 
         self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)

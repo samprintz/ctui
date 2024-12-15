@@ -50,10 +50,3 @@ class ContactHandler:
         return self.core.rdfstore.has_attributes(contact) or \
             self.core.textfilestore.has_gifts(contact.get_id()) or \
             self.core.textfilestore.has_notes(contact.get_id())
-
-    def load_details(self, contact_id: str) -> Contact:
-        name = Contact.id_to_name(contact_id)
-        attributes = self.core.rdfstore.get_attributes(contact_id)
-        gifts = self.core.textfilestore.get_gifts(contact_id)
-        notes = self.core.textfilestore.get_notes(contact_id)
-        return Contact(name, attributes, gifts, notes)

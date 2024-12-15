@@ -44,8 +44,8 @@ class UI:
     def set_contact_list(self, contact_list) -> None:
         self.list_view.set_data(contact_list)
 
-    def set_contact_details(self, contact: Contact) -> None:
-        self.detail_view.set_contact(contact)
+    def set_contact_details(self, contact_id: str) -> None:
+        self.detail_view.set_contact(contact_id)
 
     def focus_list_view(self) -> None:
         self.frame.body.focus_position = 0

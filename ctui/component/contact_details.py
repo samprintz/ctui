@@ -10,7 +10,6 @@ from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
 from ctui.component.list_box import CListBox
 from ctui.model.attribute import Attribute
 from ctui.model.gift import Gift
-from ctui.model.google_contact import GoogleContact
 from ctui.model.note import Note
 
 
@@ -77,80 +76,81 @@ class ContactDetails(CListBox):
 
 
 class GeneralDetails(ContactDetails):
-    def __init__(self, contact, core):
+    def __init__(self, contact_id, core):
         self.core = core
         self.name = 'contact_general_details'
+
+        attributes = self.core.rdfstore.get_attributes(contact_id)
+        gifts = self.core.textfilestore.get_gifts(contact_id)
+        notes = self.core.textfilestore.get_notes(contact_id)
+        google_attributes = []  # TODO load Google attributes
+        google_notes = []  # TODO load Google attributes
 
         entries = []
         pos = 0
 
-        if hasattr(contact, "attributes") and contact.attributes is not None:
-            for a in contact.attributes:
-                entries.append(
-                    AttributeEntry(contact.get_id(), Attribute(a[0], a[1]), pos,
-                                   self.core))
-                pos = pos + 1
+        for attribute in attributes:
+            entries.append(AttributeEntry(contact_id,
+                                          # TODO use Attribute directly?
+                                          Attribute(attribute[0], attribute[1]),
+                                          pos,
+                                          self.core)
+                           )
+            pos = pos + 1
 
-        if type(contact) is GoogleContact \
-                and hasattr(contact, "google_attributes") \
-                and contact.google_attributes is not None:
-            for a in contact.google_attributes:
-                entries.append(
-                    GoogleAttributeEntry(contact.get_id(), a, pos, self.core))
-                pos = pos + 1
+        for attribute in google_attributes:
+            entries.append(
+                GoogleAttributeEntry(contact_id, attribute, pos, self.core))
+            pos = pos + 1
 
-        if hasattr(contact, "gifts") and contact.gifts is not None:
+        if len(gifts) > 0:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"GESCHENKE"))
             pos = pos + 1
-            for gift in contact.gifts:
+            for gift in gifts:
                 if isinstance(gift, Gift):
                     entries.append(
-                        GiftEntry(contact.get_id(), gift, pos, self.core))
+                        GiftEntry(contact_id, gift, pos, self.core))
                 else:
                     entries.append(
-                        DetailEntry(contact.get_id(), gift, gift.name, pos,
+                        DetailEntry(contact_id, gift, gift.name, pos,
                                     self.core))
                 pos = pos + 1
 
-        if type(contact) is GoogleContact \
-                and hasattr(contact, "google_notes") \
-                and len(contact.google_notes) > 0:
+        if len(google_notes) > 0:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN GOOGLE"))
             pos = pos + 1
-            for note in contact.google_notes:
+            for note in google_notes:
                 entries.append(
-                    GoogleNoteEntry(contact.get_id(), note, pos, self.core))
+                    GoogleNoteEntry(contact_id, note, pos, self.core))
                 pos = pos + 1
 
-        if hasattr(contact, "notes") and contact.notes is not None:
+        if len(notes) > 0:
             if len(entries) > 0:
                 entries.append(urwid.Divider())
                 pos = pos + 1
             entries.append(urwid.Text(u"NOTIZEN"))
             pos = pos + 1
-            for note in contact.notes:
+            for note in notes:
                 if type(note) is Note:  # plain note
                     entries.append(
-                        NoteEntry(contact.get_id(), note, pos, self.core))
+                        NoteEntry(contact_id, note, pos, self.core))
                 else:  # encrypted note
                     # check if made visible
-                    if self.core.memorystore.has_note(
-                            contact.get_id(), note.note_id):
+                    if self.core.memorystore.has_note(contact_id, note.note_id):
                         visible_note = self.core.memorystore.get_note(
-                            contact.get_id(), note.note_id)
+                            contact_id, note.note_id)
                         entries.append(
-                            EncryptedNoteEntry(contact.get_id(), visible_note,
-                                               pos,
-                                               self.core, visible=True))
+                            EncryptedNoteEntry(contact_id, visible_note,
+                                               pos, self.core, visible=True))
                     else:
                         entries.append(
-                            EncryptedNoteEntry(contact.get_id(), note, pos,
+                            EncryptedNoteEntry(contact_id, note, pos,
                                                self.core))
                 pos = pos + 1
 
@@ -176,23 +176,22 @@ class GeneralDetails(ContactDetails):
 
 
 class GiftDetails(ContactDetails):
-    def __init__(self, contact, core):
+    def __init__(self, contact_id, core):
         self.core = core
         self.name = 'contact_gift_details'
+
+        gifts = self.core.textfilestore.get_gifts(contact_id)
 
         entries = []
         pos = 0
 
-        if hasattr(contact, "gifts") and contact.gifts is not None:
-            for gift in contact.gifts:
-                if isinstance(gift, Gift):
-                    entries.append(
-                        GiftEntry(contact.get_id(), gift, pos, self.core))
-                else:
-                    entries.append(
-                        DetailEntry(contact.get_id(), gift, gift.name, pos,
-                                    self.core))
-                pos = pos + 1
+        for gift in gifts:
+            if isinstance(gift, Gift):
+                entries.append(GiftEntry(contact_id, gift, pos, self.core))
+            else:
+                entries.append(
+                    DetailEntry(contact_id, gift, gift.name, pos, self.core))
+            pos = pos + 1
 
         super(GiftDetails, self).__init__(entries, core,
                                           'contact_details_gifts')
@@ -216,33 +215,34 @@ class GiftDetails(ContactDetails):
 
 
 class NoteDetails(ContactDetails):
-    def __init__(self, contact, core):
+    def __init__(self, contact_id, core):
         self.core = core
         self.name = 'contact_note_details'
+
+        notes = self.core.textfilestore.get_notes(contact_id)
 
         entries = []
         pos = 0
 
-        if hasattr(contact, "notes") and contact.notes is not None:
-            for note in contact.notes:
-                if type(note) is Note:  # plain note
+        for note in notes:
+            if type(note) is Note:  # plain note
+                entries.append(
+                    NoteEntry(contact_id, note, pos, self.core))
+            else:  # encrypted note
+                # check if made visible
+                if self.core.memorystore.has_note(
+                        contact_id, note.note_id):
+                    visible_note = self.core.memorystore.get_note(
+                        contact_id, note.note_id)
                     entries.append(
-                        NoteEntry(contact.get_id(), note, pos, self.core))
-                else:  # encrypted note
-                    # check if made visible
-                    if self.core.memorystore.has_note(
-                            contact.get_id(), note.note_id):
-                        visible_note = self.core.memorystore.get_note(
-                            contact.get_id(), note.note_id)
-                        entries.append(
-                            EncryptedNoteEntry(contact.get_id(), visible_note,
-                                               pos,
-                                               self.core, visible=True))
-                    else:
-                        entries.append(
-                            EncryptedNoteEntry(contact.get_id(), note, pos,
-                                               self.core))
-                pos = pos + 1
+                        EncryptedNoteEntry(contact_id, visible_note,
+                                           pos,
+                                           self.core, visible=True))
+                else:
+                    entries.append(
+                        EncryptedNoteEntry(contact_id, note, pos,
+                                           self.core))
+            pos = pos + 1
 
         super(NoteDetails, self).__init__(entries, core,
                                           'contact_details_notes')
