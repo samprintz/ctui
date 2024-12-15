@@ -116,13 +116,7 @@ class Core:
             self.textfilestore.rename_contact(contact, new_name)
         return "{} renamed to {}.".format(contact.name, new_name)
 
-    def delete_contact(self, contact):
-        """
-        @deprecated
-        """
-        return self.delete_contact_by_id(contact.get_id())
-
-    def delete_contact_by_id(self, contact_id):
+    def delete_contact(self, contact_id):
         name = Contact.id_to_name(contact_id)
         if not self.contains_contact(contact_id):
             return "Error: {} doesn't exists.".format(name)

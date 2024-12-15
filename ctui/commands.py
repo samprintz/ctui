@@ -79,7 +79,7 @@ class DeleteContact(Command):
 
     def _execute(self, name):
         contact_id = Contact.name_to_id(name)
-        self.msg = self.core.delete_contact_by_id(contact_id)
+        self.msg = self.core.delete_contact(contact_id)
 
     def _update(self):
         ContactDeletedRedraw(self.core).redraw()

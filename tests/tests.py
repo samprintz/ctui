@@ -102,7 +102,7 @@ class TestCore(unittest.TestCase):
 
     def test_delete_contact(self):
         self.core.add_contact(self.contact1)
-        res = self.core.delete_contact(self.contact1)
+        res = self.core.delete_contact(self.contact1.get_id())
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
             self.core.rdfstore.contains_contact(self.contact1.get_id()))
@@ -111,12 +111,12 @@ class TestCore(unittest.TestCase):
 
     def test_delete_contact_not_existing(self):
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
-        res = self.core.delete_contact(self.contact1)
+        res = self.core.delete_contact(self.contact1.get_id())
         self.assertTrue(res.startswith("Error"))
 
     def test_delete_contact_with_only_notes(self):
         self.core.textfilestore.add_contact(self.contact1)
-        res = self.core.delete_contact(self.contact1)
+        res = self.core.delete_contact(self.contact1.get_id())
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
             self.core.rdfstore.contains_contact(self.contact1.get_id()))
@@ -125,7 +125,7 @@ class TestCore(unittest.TestCase):
 
     def test_delete_contact_with_only_rdf(self):
         self.core.rdfstore.add_contact(self.contact1)
-        res = self.core.delete_contact(self.contact1)
+        res = self.core.delete_contact(self.contact1.get_id())
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(
             self.core.rdfstore.contains_contact(self.contact1.get_id()))
@@ -137,14 +137,14 @@ class TestCore(unittest.TestCase):
         attr = Attribute("key", "value")
         self.core.rdfstore.add_attribute(self.contact1, attr)
         self.assertTrue(self.core.rdfstore.has_attribute(self.contact1, attr))
-        res = self.core.delete_contact(self.contact1)
+        res = self.core.delete_contact(self.contact1.get_id())
         self.assertFalse(self.core.contains_contact(self.contact1.get_id()))
         self.assertFalse(self.core.rdfstore.contains_attribute(attr))
 
     @classmethod
     def tearDown(cls):
-        cls.core.delete_contact(cls.contact1)
-        cls.core.delete_contact(cls.contact2)
+        cls.core.delete_contact(cls.contact1.get_id())
+        cls.core.delete_contact(cls.contact2.get_id())
 
     @classmethod
     def tearDownClass(cls):
@@ -519,7 +519,7 @@ class TestObjects(unittest.TestCase):
 
     @classmethod
     def tearDown(cls):
-        cls.core.delete_contact(cls.contact)
+        cls.core.delete_contact(cls.contact.get_id())
 
     @classmethod
     def tearDownClass(cls):
@@ -812,10 +812,10 @@ class TestListViewUI(unittest.TestCase):
 
     @classmethod
     def tearDown(cls):
-        cls.core.delete_contact(cls.contact1)
-        cls.core.delete_contact(cls.contact2)
-        cls.core.delete_contact(cls.contact_first)
-        cls.core.delete_contact(cls.contact_last)
+        cls.core.delete_contact(cls.contact1.get_id())
+        cls.core.delete_contact(cls.contact2.get_id())
+        cls.core.delete_contact(cls.contact_first.get_id())
+        cls.core.delete_contact(cls.contact_last.get_id())
 
     @classmethod
     def tearDownClass(cls):
@@ -847,7 +847,7 @@ class TestUIDetailView(unittest.TestCase):
 
     @classmethod
     def tearDown(cls):
-        cls.core.delete_contact(cls.contact_first)
+        cls.core.delete_contact(cls.contact_first.get_id())
 
     def test_setup(self):
         self.ct_pos = self.core.ui.list_view.get_contact_position(
