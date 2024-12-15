@@ -40,6 +40,13 @@ class TextFileStore:
         filename = Gift.id_to_filename(gift_id)
         return os.path.join(dirname, filename)
 
+    def create_contact_dir(self, contact_id):
+        dirname = self.get_textfile_path(contact_id)
+        try:
+            os.makedirs(dirname)
+        except OSError:
+            return "Couldn't create directory \"{}\".".format(dirname)
+
     def create_note_dir(self, contact_id):
         return self.create_textfile_dir(contact_id, self.NOTES_DIR)
 
@@ -48,7 +55,7 @@ class TextFileStore:
 
     def create_textfile_dir(self, contact_id, textfile_type):
         if not self.contains_contact(contact_id):
-            self.add_contact_id(contact_id)
+            self.create_contact_dir(contact_id)
 
         path = self.get_textfile_path_by_type(contact_id, textfile_type)
 
@@ -68,18 +75,7 @@ class TextFileStore:
         dirname = self.path + contact_id
         return os.path.isdir(dirname)
 
-    def add_contact_id(self, contact_id):
-        # rename to add_contact(_dir?)
-        dirname = self.get_textfile_path(contact_id)
-        try:
-            os.makedirs(dirname)
-        except OSError:
-            return "Couldn't create directory \"{}\".".format(dirname)
-
     def add_contact(self, contact):
-        '''
-        @deprecated use add_contact_id
-        '''
         dirname = self.get_textfile_path(contact.get_id())
         try:
             os.makedirs(dirname)
