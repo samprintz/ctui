@@ -64,8 +64,8 @@ class Gift:
         return cls(
             name=data.get("name"),
             desc=data.get("desc"),
-            permanent=data.get("permanent"),
-            gifted=data.get("gifted"),
+            permanent=data.get("permanent", False),
+            gifted=data.get("gifted", False),
             occasions=data.get("occasions", [])
         )
 
