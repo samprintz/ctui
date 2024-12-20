@@ -46,7 +46,7 @@ class CDetailsFrame(urwid.Frame):
         self.core = core
         self.name = 'details_frame'
         super(CDetailsFrame, self).__init__(None)
-        self.tab_names = ['Attributes', 'Gifts', 'Notes']
+        self.tab_names = ['Notes', 'Gifts', 'Attributes']
         self.tab_content = {}
         self.current_tab = 0
 
@@ -56,9 +56,9 @@ class CDetailsFrame(urwid.Frame):
 
     def set_contact(self, contact_id: str) -> None:
         self.tab_content = {
-            'Attributes': AttributeDetails(contact_id, self.core),
+            'Notes': NoteDetails(contact_id, self.core),
             'Gifts': GiftDetails(contact_id, self.core),
-            'Notes': NoteDetails(contact_id, self.core)
+            'Attributes': AttributeDetails(contact_id, self.core),
         }
 
         self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)
