@@ -78,7 +78,6 @@ class ContactDetails(CListBox):
 class AttributeDetails(ContactDetails):
     def __init__(self, contact_id, core):
         self.core = core
-        self.name = 'contact_attribute_details'
 
         attributes = self.core.rdfstore.get_attributes(contact_id)
         google_attributes = []  # TODO load Google attributes
@@ -101,7 +100,7 @@ class AttributeDetails(ContactDetails):
             pos = pos + 1
 
         super(AttributeDetails, self).__init__(entries, core,
-                                             'contact_details_attribute')
+                                             'contact_attribute_details')
 
     def keypress(self, size, key):
         key = super(ContactDetails, self).keypress(size, key)
@@ -124,7 +123,6 @@ class AttributeDetails(ContactDetails):
 class GiftDetails(ContactDetails):
     def __init__(self, contact_id, core):
         self.core = core
-        self.name = 'contact_gift_details'
 
         gifts = self.core.textfilestore.get_gifts(contact_id)
         gifts_sorted = sorted(gifts, key=lambda g: (
@@ -144,7 +142,7 @@ class GiftDetails(ContactDetails):
             pos = pos + 1
 
         super(GiftDetails, self).__init__(entries, core,
-                                          'contact_details_gifts')
+                                          'contact_gift_details')
 
     def keypress(self, size, key):
         key = super(ContactDetails, self).keypress(size, key)
@@ -167,7 +165,6 @@ class GiftDetails(ContactDetails):
 class NoteDetails(ContactDetails):
     def __init__(self, contact_id, core):
         self.core = core
-        self.name = 'contact_note_details'
 
         notes = self.core.textfilestore.get_notes(contact_id)
         google_notes = []  # TODO load Google attributes
@@ -198,7 +195,7 @@ class NoteDetails(ContactDetails):
             pos = pos + 1
 
         super(NoteDetails, self).__init__(entries, core,
-                                          'contact_details_notes')
+                                          'contact_note_details')
 
     def keypress(self, size, key):
         key = super(ContactDetails, self).keypress(size, key)
