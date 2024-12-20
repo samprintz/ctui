@@ -181,11 +181,12 @@ class GiftDetails(ContactDetails):
         self.name = 'contact_gift_details'
 
         gifts = self.core.textfilestore.get_gifts(contact_id)
+        gifts_sorted = sorted(gifts, key=lambda g: ((g.gifted and not g.permanent), g.name.lower()))
 
         entries = []
         pos = 0
 
-        for gift in gifts:
+        for gift in gifts_sorted:
             if isinstance(gift, Gift):
                 entries.append(GiftEntry(contact_id, gift, pos, self.core))
             else:

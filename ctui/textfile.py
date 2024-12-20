@@ -361,7 +361,7 @@ class TextFileStore:
     def has_gifts(self, contact_id):
         return self.has_entries(contact_id, self.GIFTS_DIR)
 
-    def get_gifts(self, contact_id):
+    def get_gifts(self, contact_id: str) -> list[Gift]:
         gifts = []
 
         if self.has_gifts(contact_id):
