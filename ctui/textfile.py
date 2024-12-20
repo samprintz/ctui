@@ -381,7 +381,10 @@ class TextFileStore:
 
                     gifts.append(gift)
 
-        return gifts
+        return sorted(gifts, key=lambda g: (
+            g.gifted and not g.permanent,
+            g.name.lower()
+        ))
 
     def has_gift(self, contact_id, gift_id):
         filepath = self.get_gift_filepath(contact_id, gift_id)
