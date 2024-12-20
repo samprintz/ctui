@@ -224,6 +224,7 @@ class NoteDetails(ContactDetails):
         self.name = 'contact_note_details'
 
         notes = self.core.textfilestore.get_notes(contact_id)
+        google_notes = []  # TODO load Google attributes
 
         entries = []
         pos = 0
@@ -239,13 +240,15 @@ class NoteDetails(ContactDetails):
                     visible_note = self.core.memorystore.get_note(
                         contact_id, note.note_id)
                     entries.append(
-                        EncryptedNoteEntry(contact_id, visible_note,
-                                           pos,
+                        EncryptedNoteEntry(contact_id, visible_note, pos,
                                            self.core, visible=True))
                 else:
                     entries.append(
-                        EncryptedNoteEntry(contact_id, note, pos,
-                                           self.core))
+                        EncryptedNoteEntry(contact_id, note, pos, self.core))
+            pos = pos + 1
+
+        for note in google_notes:
+            entries.append(GoogleNoteEntry(contact_id, note, pos, self.core))
             pos = pos + 1
 
         super(NoteDetails, self).__init__(entries, core,
