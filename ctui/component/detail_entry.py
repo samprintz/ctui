@@ -50,11 +50,14 @@ class GiftEntry(DetailEntry):
     def __init__(self, contact_id, gift, pos, core):
         label = ''
 
-        if gift.gifted:
-            label += 'x '
-
-        if gift.permanent:
-            label += '+ '
+        if gift.gifted and gift.permanent:
+            label += '↻🗹 '
+        elif gift.gifted and not gift.permanent:
+            label += ' 🗹 '
+        elif not gift.gifted and gift.permanent:
+            label += '↻  '
+        elif not gift.gifted and not gift.permanent:
+            label += '   '
 
         label += gift.name
 
