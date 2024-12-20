@@ -20,6 +20,9 @@ class Gift:
     def __str__(self):
         return f'Gift({self.name})'
 
+    def __repr__(self):
+        return f'Gift({self.name}, gifted={self.gifted}, permanent={self.permanent},occasions={len(self.occasions)})'
+
     def __eq__(self, other):
         return self.name == other.name \
             and self.desc == other.desc \
