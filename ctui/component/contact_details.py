@@ -75,10 +75,10 @@ class ContactDetails(CListBox):
         return None
 
 
-class GeneralDetails(ContactDetails):
+class AttributeDetails(ContactDetails):
     def __init__(self, contact_id, core):
         self.core = core
-        self.name = 'contact_general_details'
+        self.name = 'contact_attribute_details'
 
         attributes = self.core.rdfstore.get_attributes(contact_id)
         google_attributes = []  # TODO load Google attributes
@@ -100,8 +100,8 @@ class GeneralDetails(ContactDetails):
                 GoogleAttributeEntry(contact_id, attribute, pos, self.core))
             pos = pos + 1
 
-        super(GeneralDetails, self).__init__(entries, core,
-                                             'contact_details_general')
+        super(AttributeDetails, self).__init__(entries, core,
+                                             'contact_details_attribute')
 
     def keypress(self, size, key):
         key = super(ContactDetails, self).keypress(size, key)

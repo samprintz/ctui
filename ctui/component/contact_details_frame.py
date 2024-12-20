@@ -1,6 +1,6 @@
 import urwid
 
-from ctui.component.contact_details import GeneralDetails, GiftDetails, \
+from ctui.component.contact_details import AttributeDetails, GiftDetails, \
     NoteDetails
 
 
@@ -46,7 +46,7 @@ class CDetailsFrame(urwid.Frame):
         self.core = core
         self.name = 'details_frame'
         super(CDetailsFrame, self).__init__(None)
-        self.tab_names = ['General', 'Gifts', 'Notes']
+        self.tab_names = ['Attributes', 'Gifts', 'Notes']
         self.tab_content = {}
         self.current_tab = 0
 
@@ -56,13 +56,13 @@ class CDetailsFrame(urwid.Frame):
 
     def set_contact(self, contact_id: str) -> None:
         self.tab_content = {
-            'General': GeneralDetails(contact_id, self.core),
+            'Attributes': AttributeDetails(contact_id, self.core),
             'Gifts': GiftDetails(contact_id, self.core),
             'Notes': NoteDetails(contact_id, self.core)
         }
 
         self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)
-        self.body = CDetailTabBody(self.tab_content['General'])
+        self.body = CDetailTabBody(self.tab_content['Attributes'])
 
         # keep the latest selected tab selected after detail updates
         self.set_tab(self.current_tab)
