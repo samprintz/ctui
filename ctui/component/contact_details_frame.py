@@ -46,23 +46,26 @@ class CDetailsFrame(urwid.Frame):
         self.core = core
         self.name = 'details_frame'
         super(CDetailsFrame, self).__init__(None)
-        self.tab_names = ['Notes', 'Gifts', 'Attributes']
-        self.tab_content = {}
+        self.tabs = []
+
         self.current_tab = 0
 
     def on_tab_click(self, button, tab_name):
-        self.body.original_widget = self.tab_content[tab_name]
+        # TODO merge with set_tab?
+        tab_pos = self.get_tab_pos_by_name(tab_name)
+        self.body.original_widget = self.tabs[tab_pos]
         self.header.update_selected_tab_button(self.current_tab)
 
     def set_contact(self, contact_id: str) -> None:
-        self.tab_content = {
-            'Notes': NoteDetails(contact_id, self.core),
-            'Gifts': GiftDetails(contact_id, self.core),
-            'Attributes': AttributeDetails(contact_id, self.core),
-        }
+        self.tabs = [
+            NoteDetails(contact_id, self.core),
+            GiftDetails(contact_id, self.core),
+            AttributeDetails(contact_id, self.core),
+        ]
 
-        self.header = CDetailTabNavigation(self.tab_names, self.on_tab_click)
-        self.body = CDetailTabBody(self.tab_content['Attributes'])
+        self.header = CDetailTabNavigation(self.get_tab_names(),
+                                           self.on_tab_click)
+        self.body = CDetailTabBody(self.tabs[0])
 
         # keep the latest selected tab selected after detail updates
         self.set_tab(self.current_tab)
@@ -70,20 +73,54 @@ class CDetailsFrame(urwid.Frame):
     def get_tab_body(self):
         return self.body.original_widget
 
-    def get_tab(self):
+    def get_tab_names(self):
+        return [tab.tab_name for tab in self.tabs]
+
+    def get_tab_pos_by_id(self, tab_id: str) -> int:
+        for idx, tab in enumerate(self.tabs):
+            if tab.tab_id == tab_id:
+                return idx
+        return -1
+
+    def get_tab_id_by_pos(self, tab_pos: int) -> str:
+        if 0 <= tab_pos < len(self.tabs):
+            return self.tabs[tab_pos].tab_id
+        return ""
+
+    def get_tab_pos_by_name(self, tab_name: str) -> int:
+        for idx, tab in enumerate(self.tabs):
+            if tab.tab_name == tab_name:
+                return idx
+        return -1
+
+    def get_tab_name_by_pos(self, tab_pos: int) -> str:
+        if 0 <= tab_pos < len(self.tabs):
+            return self.tabs[tab_pos].tab_name
+        return ""
+
+    def get_tab(self) -> int:
         return self.current_tab
 
-    def set_tab(self, tab):
+    def set_tab(self, tab: int) -> None:
+        # TODO merge with on_tab_click?
         self.current_tab = tab
-        tab_name = self.tab_names[self.current_tab]
+        tab_name = self.get_tab_name_by_pos(self.current_tab)
         self.on_tab_click(None, tab_name)
 
     def next_tab(self):
-        tab = (self.current_tab + 1) % len(self.tab_names)
+        tab = (self.current_tab + 1) % len(self.tabs)
         self.set_tab(tab)
 
     def previous_tab(self):
-        tab = (self.current_tab - 1) % len(self.tab_names)
+        tab = (self.current_tab - 1) % len(self.tabs)
+        self.set_tab(tab)
+
+    def get_current_tab_id(self) -> str:
+        tab = self.get_tab()
+        return self.get_tab_id_by_pos(tab)
+
+    def set_current_tab_id(self, tab_id: str) -> None:
+        tab = self.get_tab_pos_by_id(tab_id)
         self.set_tab(tab)
 
     def get_focused_detail(self):

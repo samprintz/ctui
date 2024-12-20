@@ -76,6 +76,10 @@ class ContactDetails(CListBox):
 
 
 class AttributeDetails(ContactDetails):
+
+    tab_id = "attributes"
+    tab_name = "Attributes"
+
     def __init__(self, contact_id, core):
         self.core = core
 
@@ -117,6 +121,10 @@ class AttributeDetails(ContactDetails):
 
 
 class GiftDetails(ContactDetails):
+
+    tab_id = "gifts"
+    tab_name = "Gifts"
+
     def __init__(self, contact_id, core):
         self.core = core
 
@@ -155,6 +163,10 @@ class GiftDetails(ContactDetails):
 
 
 class NoteDetails(ContactDetails):
+
+    tab_id = "notes"
+    tab_name = "Notes"
+
     def __init__(self, contact_id, core):
         self.core = core
 
