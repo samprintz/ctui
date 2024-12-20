@@ -103,7 +103,8 @@ class AddAttribute(Command):
             attribute)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "attributes").redraw()
 
 
 class EditAttribute(Command):
@@ -129,7 +130,8 @@ class EditAttribute(Command):
                 old_attr, new_attr)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "attributes").redraw()
 
 
 class DeleteAttribute(Command):
@@ -175,7 +177,8 @@ class AddNote(Command):
         self.msg = self.core.textfilestore.add_note(contact_id, note)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class AddEncryptedNote(Command):
@@ -205,7 +208,8 @@ class AddEncryptedNote(Command):
         self.to_focus_detail = note
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class RenameNote(Command):
@@ -231,7 +235,8 @@ class RenameNote(Command):
         self.to_focus_detail = note
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class EditNote(Command):
@@ -258,7 +263,8 @@ class EditNote(Command):
         self.to_focus_detail = note
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class DeleteNote(Command):
@@ -294,7 +300,8 @@ class EncryptNote(Command):
         self.msg = self.core.textfilestore.encrypt_note(contact_id, note_id)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class DecryptNote(Command):
@@ -312,7 +319,8 @@ class DecryptNote(Command):
         self.msg = self.core.textfilestore.decrypt_note(contact_id, note_id)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class ToggleNoteEncryption(Command):
@@ -341,7 +349,8 @@ class ToggleNoteEncryption(Command):
                 raise Exception("Failed to show encrypted note content")
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class ShowAllEncryptedNotes(Command):
@@ -366,7 +375,8 @@ class ShowAllEncryptedNotes(Command):
 
     def _update(self):
         # TODO
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class HideAllEncryptedNotes(Command):
@@ -384,7 +394,8 @@ class HideAllEncryptedNotes(Command):
 
     def _update(self):
         # TODO
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "notes").redraw()
 
 
 class AddGift(Command):
@@ -410,7 +421,8 @@ class AddGift(Command):
         self.msg = self.core.textfilestore.add_gift(contact_id, gift)
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class RenameGift(Command):
@@ -437,7 +449,8 @@ class RenameGift(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class EditGift(Command):
@@ -464,7 +477,8 @@ class EditGift(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class DeleteGift(Command):
@@ -504,7 +518,8 @@ class MarkGifted(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class UnmarkGifted(Command):
@@ -526,7 +541,8 @@ class UnmarkGifted(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class MarkPermanent(Command):
@@ -548,7 +564,8 @@ class MarkPermanent(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()
 
 
 class UnmarkPermanent(Command):
@@ -570,4 +587,5 @@ class UnmarkPermanent(Command):
         self.to_focus_detail = gift
 
     def _update(self):
-        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail).redraw()
+        DetailAddedOrEditedRedraw(self.core, self.to_focus_detail,
+                                  "gifts").redraw()

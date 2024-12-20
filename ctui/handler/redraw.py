@@ -33,14 +33,16 @@ class ContactDeletedRedraw(Redraw):
 
 
 class DetailAddedOrEditedRedraw(Redraw):
-    def __init__(self, core, detail):
+    def __init__(self, core, detail, tab_id):
         self.detail = detail
+        self.tab_id = tab_id
         self.core = core
 
     def redraw(self):
         contact = self.core.ui.get_focused_contact()
         self.core.update_contact_details(contact.get_id())
         self.core.ui.focus_detail_view()
+        self.core.ui.set_current_tab(self.tab_id)
         self.core.ui.set_focused_detail(self.detail)
 
 
