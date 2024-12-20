@@ -1,6 +1,7 @@
 from rdflib import *
 from rdflib.resource import *
 
+from ctui.model.attribute import Attribute
 from ctui.model.contact import Contact
 
 GIVEN_NAME_REF = URIRef('http://hiea.de/contact#givenName')
@@ -102,7 +103,7 @@ class RDFStore:
 
         return False
 
-    def get_attributes(self, contact_id):
+    def get_attributes(self, contact_id: str) -> list[Attribute]:
         attributes = []
 
         if contact_id:
@@ -116,7 +117,8 @@ class RDFStore:
                 predicate = self.get_predicate_name(p)
                 if predicate == 'givenName': continue
                 if predicate == 'giftIdea': continue
-                attributes.append([predicate, str(o)])
+                attribute = Attribute(predicate, str(o))
+                attributes.append(attribute)
 
         return sorted(attributes)
 

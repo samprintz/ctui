@@ -86,12 +86,8 @@ class AttributeDetails(ContactDetails):
         pos = 0
 
         for attribute in attributes:
-            entries.append(AttributeEntry(contact_id,
-                                          # TODO use Attribute directly?
-                                          Attribute(attribute[0], attribute[1]),
-                                          pos,
-                                          self.core)
-                           )
+            entries.append(
+                AttributeEntry(contact_id, attribute, pos, self.core))
             pos = pos + 1
 
         for attribute in google_attributes:
@@ -100,7 +96,7 @@ class AttributeDetails(ContactDetails):
             pos = pos + 1
 
         super(AttributeDetails, self).__init__(entries, core,
-                                             'contact_attribute_details')
+                                               'contact_attribute_details')
 
     def keypress(self, size, key):
         key = super(ContactDetails, self).keypress(size, key)
