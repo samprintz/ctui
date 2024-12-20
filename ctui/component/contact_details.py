@@ -181,7 +181,10 @@ class GiftDetails(ContactDetails):
         self.name = 'contact_gift_details'
 
         gifts = self.core.textfilestore.get_gifts(contact_id)
-        gifts_sorted = sorted(gifts, key=lambda g: ((g.gifted and not g.permanent), g.name.lower()))
+        gifts_sorted = sorted(gifts, key=lambda g: (
+            g.gifted and not g.permanent,
+            g.name.lower()
+        ))
 
         entries = []
         pos = 0
