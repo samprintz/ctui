@@ -244,8 +244,13 @@ class EditNote(Command):
     names = ['edit-note']
 
     def _execute(self, note_name):
-        Note.validate_name(note_name)
-        note_id = Note.name_to_id(note_name)
+        if not note_name:
+            note = self.focused_detail
+            note_id = note.get_id()
+        else:
+            Note.validate_name(note_name)
+            note_id = Note.name_to_id(note_name)
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -272,8 +277,13 @@ class DeleteNote(Command):
     names = ['delete-note']
 
     def _execute(self, note_name):
-        Note.validate_name(note_name)
-        note_id = Note.name_to_id(note_name)
+        if not note_name:
+            note = self.focused_detail
+            note_id = note.get_id()
+        else:
+            Note.validate_name(note_name)
+            note_id = Note.name_to_id(note_name)
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -290,8 +300,13 @@ class EncryptNote(Command):
     names = ['encrypt-note']
 
     def _execute(self, note_name):
-        Note.validate_name(note_name)
-        note_id = Note.name_to_id(note_name)
+        if not note_name:
+            note = self.focused_detail
+            note_id = note.get_id()
+        else:
+            Note.validate_name(note_name)
+            note_id = Note.name_to_id(note_name)
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -309,8 +324,13 @@ class DecryptNote(Command):
     names = ['decrypt-note']
 
     def _execute(self, note_name):
-        Note.validate_name(note_name)
-        note_id = Note.name_to_id(note_name)
+        if not note_name:
+            note = self.focused_detail
+            note_id = note.get_id()
+        else:
+            Note.validate_name(note_name)
+            note_id = Note.name_to_id(note_name)
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -328,8 +348,13 @@ class ToggleNoteEncryption(Command):
     names = ['toggle-note-encryption']
 
     def _execute(self, note_name):
-        Note.validate_name(note_name)
-        note_id = Note.name_to_id(note_name)
+        if not note_name:
+            note = self.focused_detail
+            note_id = note.get_id()
+        else:
+            Note.validate_name(note_name)
+            note_id = Note.name_to_id(note_name)
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_note(contact_id, note_id):
@@ -458,8 +483,13 @@ class EditGift(Command):
     names = ['edit-gift']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = Gift.name_to_id(gift_name)
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
@@ -486,8 +516,13 @@ class DeleteGift(Command):
     names = ['delete-gift']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = Gift.name_to_id(gift_name)
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
@@ -504,8 +539,13 @@ class MarkGifted(Command):
     names = ['mark-gifted']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
@@ -526,17 +566,21 @@ class UnmarkGifted(Command):
     names = ['unmark-gifted']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.unmark_gifted(self, contact_id,
-                                                         gift_id)
+        self.msg = self.core.textfilestore.unmark_gifted(contact_id, gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        gift = self.core.textfilestore.get_gift(contact_id, gift_id)
         self.to_focus_detail = gift
 
     def _update(self):
@@ -549,8 +593,13 @@ class MarkPermanent(Command):
     names = ['mark-permanent']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
@@ -571,8 +620,13 @@ class UnmarkPermanent(Command):
     names = ['unmark-permanent']
 
     def _execute(self, gift_name):
-        Gift.validate_name(gift_name)
-        gift_id = gift_name.replace(" ", "_")
+        if not gift_name:
+            gift = self.focused_detail
+            gift_id = gift.get_id()
+        else:
+            Gift.validate_name(gift_name)
+            gift_id = gift_name.replace(" ", "_")
+
         contact_id = self.focused_contact.get_id()
 
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
