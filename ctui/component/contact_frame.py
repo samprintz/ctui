@@ -11,6 +11,9 @@ class CFrame(urwid.Frame):
         if key == 'esc':
             self.core.keybindings.reset()
             return super(CFrame, self).keypress(size, key)
+        if key == ':':
+            self.core.ui.console.show_console()
+            return
 
         key = super(CFrame, self).keypress(size, key)
         if key is None:
