@@ -11,9 +11,6 @@ class CFrame(urwid.Frame):
         if key == 'esc':
             self.core.keybindings.reset()
             return super(CFrame, self).keypress(size, key)
-        if key == ':':
-            self.core.ui.console.show_console()
-            return
 
         key = super(CFrame, self).keypress(size, key)
         if key is None:
@@ -28,6 +25,8 @@ class CFrame(urwid.Frame):
                 raise urwid.ExitMainLoop()
             case 'reload':
                 self.core.update_contact_list()
+            case 'open_console':
+                self.core.ui.console.show_console()
             case 'add_contact':
                 command = 'add-contact '
                 self.core.ui.console.show_console(command)
