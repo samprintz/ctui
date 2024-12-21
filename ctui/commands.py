@@ -511,10 +511,9 @@ class MarkGifted(Command):
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.mark_gifted(self, contact_id,
-                                                       gift_id)
+        self.msg = self.core.textfilestore.mark_gifted(contact_id, gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        gift = self.core.textfilestore.get_gift(contact_id, gift_id)
         self.to_focus_detail = gift
 
     def _update(self):
@@ -557,10 +556,9 @@ class MarkPermanent(Command):
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.mark_permanent(self, contact_id,
-                                                          gift_id)
+        self.msg = self.core.textfilestore.mark_permanent(contact_id, gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        gift = self.core.textfilestore.get_gift(contact_id, gift_id)
         self.to_focus_detail = gift
 
     def _update(self):
@@ -580,10 +578,9 @@ class UnmarkPermanent(Command):
         if not self.core.textfilestore.has_gift(contact_id, gift_id):
             raise ValueError(f'Gift "{gift_id}" not existing')
 
-        self.msg = self.core.textfilestore.unmark_permanent(self, contact_id,
-                                                            gift_id)
+        self.msg = self.core.textfilestore.unmark_permanent(contact_id, gift_id)
 
-        gift = self.core.textfilestore.get_gift(self, contact_id, gift_id)
+        gift = self.core.textfilestore.get_gift(contact_id, gift_id)
         self.to_focus_detail = gift
 
     def _update(self):
