@@ -111,7 +111,7 @@ class AttributeDetails(ContactDetails):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'add_attribute':
+            case 'add_detail':
                 command = f'{AddAttribute.name} '
                 self.core.ui.console.show_console(command)
             case _:
@@ -153,7 +153,7 @@ class GiftDetails(ContactDetails):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'add_attribute':
+            case 'add_detail':
                 command = f'{AddGift.name} '
                 self.core.ui.console.show_console(command)
             case _:
@@ -210,7 +210,7 @@ class NoteDetails(ContactDetails):
             = self.core.keybindings.keypress(key, self.name)
 
         match command_id:
-            case 'add_attribute':
+            case 'add_detail':
                 note_id = datetime.strftime(date.today(), "%Y%m%d")
                 command = f'{AddNote.name} {note_id}'
                 self.core.ui.console.show_console(command)
