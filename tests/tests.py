@@ -555,7 +555,8 @@ class TestKeybindings(unittest.TestCase):
             "note_entry"
         })
         self.assertSetEqual(set(commands["global"].keys()), {
-            "t", "r", "d", "n", "gg", "G", "N", "D", "ctrl r", "I", "ii", "q"
+            "t", "r", "d", "n", "gg", "G", "N", "D", "ctrl r", "I", "ii", "q",
+            ":"
         })
         self.assertSetEqual(set(commands["contact_list"].keys()), {
             "ig", "/", "zz", "Z"
@@ -643,7 +644,6 @@ class TestKeybindings(unittest.TestCase):
         self.core.ui.frame.keypress([50, 50], "i")
         console_command = self.core.ui.console.body.text
         self.assertTrue("add-gift" in console_command)
-
 
     @classmethod
     def tearDown(cls):
