@@ -71,6 +71,7 @@ class CDetailsFrame(urwid.Frame):
         self.set_tab(self.current_tab)
 
     def get_tab_body(self):
+        # TODO rename to get_current_tab()? and get_current_tab() to get_current_tab_id()?
         return self.body.original_widget
 
     def get_tab_names(self):

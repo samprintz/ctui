@@ -2,15 +2,15 @@ import socket
 
 from httplib2 import ServerNotFoundError
 
-from ctui.google_contacts import GoogleStore
+from ctui.repository.google_contacts import GoogleStore
 from ctui.handler.contact_handler import ContactHandler
 from ctui.keybindings import Keybindings
-from ctui.memory import MemoryStore
+from ctui.repository.memory import MemoryStore
 from ctui.model.contact import Contact
 from ctui.model.google_contact import GoogleContact
-from ctui.rdf import RDFStore
+from ctui.repository.rdf import RDFStore
 from ctui.service.editor import Editor
-from ctui.textfile import TextFileStore
+from ctui.repository.textfile import TextFileStore
 
 
 class Core:
