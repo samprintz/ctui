@@ -1,8 +1,10 @@
 import urwid
+from pyfzf.pyfzf import FzfPrompt
 
 from ctui.component.contact_entry import ContactEntry
 from ctui.component.list_box import CListBox
 from ctui.component.list_entry import CListEntry
+from ctui.model.contact import Contact
 
 
 class ContactList(CListBox):
@@ -125,7 +127,17 @@ class ContactList(CListBox):
             return key
 
         def search_contact(command_repeat, size):
-            self.core.ui.console.show_search()
+            fzf = FzfPrompt()
+            contact_list = self.core.contact_handler.load_contact_names()
+            options='--color=hl:red,fg+:#000000,bg+:white,hl+:red,spinner:black,prompt:black,info:grey --pointer="" --marker=""'
+            selected = fzf.prompt(contact_list, options)
+
+            if selected:
+                contact_name = selected[0]  # fzf returns list
+                contact_id = Contact.name_to_id(contact_name)
+                self.core.ui.set_focused_contact(contact_id)
+
+            self.core.ui.main_loop.screen.clear()  # redraw screen
 
         def set_contact_filter(command_repeat, size):
             self.core.set_contact_filter()
