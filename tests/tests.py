@@ -637,6 +637,14 @@ class TestKeybindings(unittest.TestCase):
         self.core.ui.frame.keypress([50, 50], "z")
         self.assertTrue(self.core.ui.console.filter_mode)
 
+    def test_command_redirect(self):
+        self.core.ui.frame.keypress([50, 50], "N")
+        self.core.ui.frame.keypress([50, 50], "i")
+        self.core.ui.frame.keypress([50, 50], "i")
+        console_command = self.core.ui.console.body.text
+        self.assertTrue("add-gift" in console_command)
+
+
     @classmethod
     def tearDown(cls):
         pass

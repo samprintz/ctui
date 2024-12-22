@@ -30,6 +30,9 @@ class CFrame(urwid.Frame):
             case 'add_contact':
                 command = 'add-contact '
                 self.core.ui.console.show_console(command)
+            case 'add_detail':
+                self.core.ui.detail_view.get_tab_body().execute_command(
+                    command_id, command_key, command_repeat)
             case 'next_tab':
                 self.core.ui.next_tab()
             case 'previous_tab':
