@@ -74,30 +74,9 @@ class ContactDetails(CListBox):
             pos = pos + 1
         return None
 
-    def keypress(self, size, key):
-        key = super(CListBox, self).keypress(size, key)
-        if key is None:
-            return
-
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
-            return key
-
-    def get_command_map(self):
-        raise NotImplementedError()
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
-
 
 class AttributeDetails(ContactDetails):
+
     tab_id = "attributes"
     tab_name = "Attributes"
 
@@ -122,6 +101,21 @@ class AttributeDetails(ContactDetails):
 
         super(AttributeDetails, self).__init__(entries, core,
                                                'contact_attribute_details')
+
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
 
     def get_command_map(self):
         def add_detail(command_repeat, size):
@@ -154,6 +148,21 @@ class GiftDetails(ContactDetails):
 
         super(GiftDetails, self).__init__(entries, core,
                                           'contact_gift_details')
+
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
 
     def get_command_map(self):
         def add_detail(command_repeat, size):
@@ -201,6 +210,21 @@ class NoteDetails(ContactDetails):
 
         super(NoteDetails, self).__init__(entries, core,
                                           'contact_note_details')
+
+    def keypress(self, size, key):
+        key = super(ContactDetails, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
 
     def get_command_map(self):
         def add_detail(command_repeat, size):

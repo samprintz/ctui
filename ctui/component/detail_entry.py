@@ -12,8 +12,21 @@ class DetailEntry(CListEntry):
         self.contact_id = contact_id
         self.detail = detail
 
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
+
+
+class AttributeEntry(DetailEntry):
+    def __init__(self, contact_id, attribute, pos, core):
+        label = attribute.key + ': ' + attribute.value
+        super(AttributeEntry, self).__init__(contact_id, attribute, label, pos,
+                                             core)
+        self.attribute = attribute
+        self.name = 'attribute_entry'
+
     def keypress(self, size, key):
-        key = super(CListEntry, self).keypress(size, key)
+        key = super(DetailEntry, self).keypress(size, key)
         if key is None:
             return
 
@@ -27,21 +40,9 @@ class DetailEntry(CListEntry):
             self.core.keybindings.set_bubbling(True)
             return key
 
-    def get_command_map(self):
-        raise NotImplementedError()
-
     def execute_command(self, command_id, command_repeat, size):
         command = self.get_command_map()[command_id]
         return command(command_repeat, size)
-
-
-class AttributeEntry(DetailEntry):
-    def __init__(self, contact_id, attribute, pos, core):
-        label = attribute.key + ': ' + attribute.value
-        super(AttributeEntry, self).__init__(contact_id, attribute, label, pos,
-                                             core)
-        self.attribute = attribute
-        self.name = 'attribute_entry'
 
     def get_command_map(self):
         def edit_attribute(command_repeat, size):
@@ -65,7 +66,6 @@ class AttributeEntry(DetailEntry):
 
 
 class GiftEntry(DetailEntry):
-
     def __init__(self, contact_id, gift, pos, core):
         label = ''
 
@@ -92,7 +92,23 @@ class GiftEntry(DetailEntry):
             EditGift(self.core).execute([self.gift.name])
             return
 
-        return super(GiftEntry, self).keypress(size, key)
+        key = super(GiftEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
 
     def get_command_map(self):
         def rename_gift(command_repeat, size):
@@ -121,7 +137,23 @@ class NoteEntry(DetailEntry):
             EditNote(self.core).execute([self.note.note_id])
             return
 
-        return super(NoteEntry, self).keypress(size, key)
+        key = super(NoteEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
 
     def get_command_map(self):
         def edit_note(command_repeat, size):
@@ -170,6 +202,25 @@ class EncryptedNoteEntry(DetailEntry):
                                                      '🔒(encrypted)', pos, core)
         self.note = note
         self.name = 'note_entry'
+
+    def keypress(self, size, key):
+        key = super(EncryptedNoteEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
 
     def get_command_map(self):
         def edit_note(command_repeat, size):
@@ -222,6 +273,25 @@ class GoogleAttributeEntry(DetailEntry):
                                                    pos, core)
         self.attribute = attribute
         self.name = 'attribute_entry'
+
+    def keypress(self, size, key):
+        key = super(GoogleAttributeEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
 
     def get_command_map(self):
         def copy_attribute(command_repeat, size):
