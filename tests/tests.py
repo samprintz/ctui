@@ -872,7 +872,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.ui.console.handle(
             ['add-attribute', self.attr_key1, self.attr_value1])
 
-        focused_detail_tab = self.core.ui.get_current_tab()
+        focused_detail_tab = self.core.ui.get_focused_tab()
         focused_detail = self.core.ui.get_focused_detail()
         self.assertEqual(focused_detail_tab, "attributes")
         self.assertEqual(focused_detail.key, self.attr_key1)
@@ -961,7 +961,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")
+        self.core.ui.set_focused_tab("attributes")
         self.core.ui.set_focused_detail(attr_first)
 
         self.core.ui.console.handle(
@@ -982,7 +982,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")
+        self.core.ui.set_focused_tab("attributes")
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -1003,7 +1003,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")
+        self.core.ui.set_focused_tab("attributes")
         self.core.ui.set_focused_detail(attr_last)
 
         self.core.ui.console.handle(
@@ -1023,7 +1023,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")
+        self.core.ui.set_focused_tab("attributes")
         self.core.ui.set_focused_detail(attr_2)
 
         self.core.ui.console.handle(
@@ -1044,7 +1044,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")
+        self.core.ui.set_focused_tab("attributes")
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -1063,7 +1063,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_1)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")  # should not be necessary
+        self.core.ui.set_focused_tab("attributes")  # should not be necessary
         self.core.ui.set_focused_detail(attr_first)
 
         self.core.ui.console.handle(
@@ -1084,7 +1084,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_2)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")  # should not be necessary
+        self.core.ui.set_focused_tab("attributes")  # should not be necessary
         self.core.ui.set_focused_detail(attr_1)
 
         self.core.ui.console.handle(
@@ -1105,7 +1105,7 @@ class TestUIDetailView(unittest.TestCase):
         self.core.rdfstore.add_attribute(self.contact_first.get_id(), attr_last)
 
         self.core.update_contact_details(self.contact_first.get_id())
-        self.core.ui.set_current_tab("attributes")  # should not be necessary
+        self.core.ui.set_focused_tab("attributes")  # should not be necessary
         self.core.ui.set_focused_detail(attr_last)
 
         self.core.ui.console.handle(

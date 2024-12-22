@@ -50,7 +50,7 @@ class CDetailsFrame(urwid.Frame):
         super(CDetailsFrame, self).__init__(None)
         self.tabs = []
 
-        self.current_tab = 0
+        self.focused_tab_pos = 0
 
     def set_contact(self, contact_id: str) -> None:
         self.tabs = [
@@ -63,10 +63,9 @@ class CDetailsFrame(urwid.Frame):
         self.body = CDetailTabBody(self.tabs[0])
 
         # keep the latest selected tab selected after detail updates
-        self.set_tab(self.current_tab)
+        self.set_tab_pos(self.focused_tab_pos)
 
     def get_tab_body(self):
-        # TODO rename to get_current_tab()? and get_current_tab() to get_current_tab_id()?
         return self.body.original_widget
 
     def get_tab_pos_by_id(self, tab_id: str) -> int:
@@ -80,29 +79,29 @@ class CDetailsFrame(urwid.Frame):
             return self.tabs[tab_pos].tab_id
         return ""
 
-    def get_tab(self) -> int:
-        return self.current_tab
+    def get_tab_pos(self) -> int:
+        return self.focused_tab_pos
 
-    def set_tab(self, tab_pos: int) -> None:
+    def set_tab_pos(self, tab_pos: int) -> None:
         self.header.update_selected_tab_button(tab_pos)
         self.body.original_widget = self.tabs[tab_pos]
-        self.current_tab = tab_pos
+        self.focused_tab_pos = tab_pos
 
-    def next_tab(self):
-        tab = (self.current_tab + 1) % len(self.tabs)
-        self.set_tab(tab)
+    def next_tab(self) -> None:
+        tab_pos = (self.focused_tab_pos + 1) % len(self.tabs)
+        self.set_tab_pos(tab_pos)
 
-    def previous_tab(self):
-        tab = (self.current_tab - 1) % len(self.tabs)
-        self.set_tab(tab)
+    def previous_tab(self) -> None:
+        tab_pos = (self.focused_tab_pos - 1) % len(self.tabs)
+        self.set_tab_pos(tab_pos)
 
-    def get_current_tab_id(self) -> str:
-        tab = self.get_tab()
-        return self.get_tab_id_by_pos(tab)
+    def get_tab_id(self) -> str:
+        tab_pos = self.get_tab_pos()
+        return self.get_tab_id_by_pos(tab_pos)
 
-    def set_current_tab_id(self, tab_id: str) -> None:
-        tab = self.get_tab_pos_by_id(tab_id)
-        self.set_tab(tab)
+    def set_tab_id(self, tab_id: str) -> None:
+        tab_pos = self.get_tab_pos_by_id(tab_id)
+        self.set_tab_pos(tab_pos)
 
     def get_focused_detail(self):
         return self.get_tab_body().get_focused_detail()
@@ -122,7 +121,7 @@ class CDetailsFrame(urwid.Frame):
 
     def on_tab_click(self, button, tab_id):
         tab_pos = self.get_tab_pos_by_id(tab_id)
-        self.set_tab(tab_pos)
+        self.set_tab_pos(tab_pos)
 
     def keypress(self, size, key):
         key = super(CDetailsFrame, self).keypress(size, key)

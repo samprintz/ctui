@@ -42,7 +42,7 @@ class DetailAddedOrEditedRedraw(Redraw):
         contact = self.core.ui.get_focused_contact()
         self.core.update_contact_details(contact.get_id())
         self.core.ui.focus_detail_view()
-        self.core.ui.set_current_tab(self.tab_id)
+        self.core.ui.set_focused_tab(self.tab_id)
         self.core.ui.set_focused_detail(self.detail)
 
 
