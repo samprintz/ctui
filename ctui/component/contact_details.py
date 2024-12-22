@@ -83,7 +83,7 @@ class ContactDetails(CListBox):
             = self.core.keybindings.keypress(key, self.name)
 
         if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_key, command_repeat)
+            return self.execute_command(command_id, command_repeat, size)
         else:
             self.core.keybindings.set(command_key, command_repeat)
             self.core.keybindings.set_bubbling(True)
@@ -92,9 +92,9 @@ class ContactDetails(CListBox):
     def get_command_map(self):
         raise NotImplementedError()
 
-    def execute_command(self, command_id, command_key, command_repeat):
+    def execute_command(self, command_id, command_repeat, size):
         command = self.get_command_map()[command_id]
-        return command(command_id, command_key, command_repeat)
+        return command(command_repeat, size)
 
 
 class AttributeDetails(ContactDetails):
@@ -124,7 +124,7 @@ class AttributeDetails(ContactDetails):
                                                'contact_attribute_details')
 
     def get_command_map(self):
-        def add_detail(command_id, command_key, command_repeat):
+        def add_detail(command_repeat, size):
             self.core.ui.console.show_console(f'{AddAttribute.name} ')
 
         return {
@@ -156,7 +156,7 @@ class GiftDetails(ContactDetails):
                                           'contact_gift_details')
 
     def get_command_map(self):
-        def add_detail(command_id, command_key, command_repeat):
+        def add_detail(command_repeat, size):
             self.core.ui.console.show_console(f'{AddGift.name} ')
 
         return {
@@ -203,12 +203,12 @@ class NoteDetails(ContactDetails):
                                           'contact_note_details')
 
     def get_command_map(self):
-        def add_detail(command_id, command_key, command_repeat):
+        def add_detail(command_repeat, size):
             note_id = datetime.strftime(date.today(), "%Y%m%d")
             command = f'{AddNote.name} {note_id}'
             self.core.ui.console.show_console(command)
 
-        def add_encrypted_note(command_id, command_key, command_repeat):
+        def add_encrypted_note(command_repeat, size):
             note_id = datetime.strftime(date.today(), "%Y%m%d")
             command = f'{AddEncryptedNote.name} {note_id}'
             self.core.ui.console.show_console(command)

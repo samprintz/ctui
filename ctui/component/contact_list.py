@@ -106,21 +106,36 @@ class ContactList(CListBox):
         command_id, command_key, command_repeat \
             = self.core.keybindings.keypress(key, self.name)
 
-        match command_id:
-            case 'move_right':
-                self.core.keybindings.set_simulating(True)
-                key = super(ContactList, self).keypress(size, 'right')
-                self.core.keybindings.set_simulating(False)
-                return key
-            case 'search_contact':
-                self.core.ui.console.show_search()
-            case 'set_contact_filter':
-                self.core.set_contact_filter()
-            case 'clear_contact_filter':
-                self.core.clear_contact_filter()
-            # case 'add_google_contact':
-            #     self.core.add_google_contact()
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
+
+    def get_command_map(self):
+        def move_right(command_repeat, size):
+            self.core.keybindings.set_simulating(True)
+            key = super(ContactList, self).keypress(size, 'right')
+            self.core.keybindings.set_simulating(False)
+            return key
+
+        def search_contact(command_repeat, size):
+            self.core.ui.console.show_search()
+
+        def set_contact_filter(command_repeat, size):
+            self.core.set_contact_filter()
+
+        def clear_contact_filter(command_repeat, size):
+            self.core.clear_contact_filter()
+
+        return {
+            'move_right': move_right,
+            'search_contact': search_contact,
+            'set_contact_filter': set_contact_filter,
+            'clear_contact_filter': clear_contact_filter,
+        }

@@ -12,6 +12,28 @@ class DetailEntry(CListEntry):
         self.contact_id = contact_id
         self.detail = detail
 
+    def keypress(self, size, key):
+        key = super(CListEntry, self).keypress(size, key)
+        if key is None:
+            return
+
+        command_id, command_key, command_repeat \
+            = self.core.keybindings.keypress(key, self.name)
+
+        if command_id in self.get_command_map():
+            return self.execute_command(command_id, command_repeat, size)
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+            return key
+
+    def get_command_map(self):
+        raise NotImplementedError()
+
+    def execute_command(self, command_id, command_repeat, size):
+        command = self.get_command_map()[command_id]
+        return command(command_repeat, size)
+
 
 class AttributeEntry(DetailEntry):
     def __init__(self, contact_id, attribute, pos, core):
@@ -21,32 +43,29 @@ class AttributeEntry(DetailEntry):
         self.attribute = attribute
         self.name = 'attribute_entry'
 
-    def keypress(self, size, key):
-        key = super(DetailEntry, self).keypress(size, key)
-        if key is None:
-            return
+    def get_command_map(self):
+        def edit_attribute(command_repeat, size):
+            command = f'{EditAttribute.name} {self.attribute.key} {self.attribute.value}'
+            self.core.ui.console.show_console(command)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+        def delete_attribute(command_repeat, size):
+            command = f'{DeleteAttribute.name} {self.attribute.key} {self.attribute.value}'
+            self.core.ui.console.show_console(command)
 
-        match command_id:
-            case 'edit_attribute':
-                command = f'{EditAttribute.name} {self.attribute.key} {self.attribute.value}'
-                self.core.ui.console.show_console(command)
-            case 'delete_attribute':
-                command = f'{DeleteAttribute.name} {self.attribute.key} {self.attribute.value}'
-                self.core.ui.console.show_console(command)
-            case 'copy_attribute':
-                pyperclip.copy(self.attribute.value)
-                msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-                self.core.ui.console.show_message(msg)
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        def copy_attribute(command_repeat, size):
+            pyperclip.copy(self.attribute.value)
+            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+            self.core.ui.console.show_message(msg)
+
+        return {
+            'edit_attribute': edit_attribute,
+            'delete_attribute': delete_attribute,
+            'copy_attribute': copy_attribute,
+        }
 
 
 class GiftEntry(DetailEntry):
+
     def __init__(self, contact_id, gift, pos, core):
         label = ''
 
@@ -73,24 +92,21 @@ class GiftEntry(DetailEntry):
             EditGift(self.core).execute([self.gift.name])
             return
 
-        key = super(GiftEntry, self).keypress(size, key)
-        if key is None:
-            return
+        return super(GiftEntry, self).keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+    def get_command_map(self):
+        def rename_gift(command_repeat, size):
+            command = f'{RenameGift.name} {self.gift.name}'
+            self.core.ui.console.show_console(command)
 
-        match command_id:
-            case 'rename_gift':
-                command = f'{RenameGift.name} {self.gift.name}'
-                self.core.ui.console.show_console(command)
-            case 'delete_gift':
-                command = f'{DeleteGift.name} {self.gift.name}'
-                self.core.ui.console.show_console(command)
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        def delete_gift(command_repeat, size):
+            command = f'{DeleteGift.name} {self.gift.name}'
+            self.core.ui.console.show_console(command)
+
+        return {
+            'rename_gift': rename_gift,
+            'delete_gift': delete_gift,
+        }
 
 
 class NoteEntry(DetailEntry):
@@ -105,33 +121,42 @@ class NoteEntry(DetailEntry):
             EditNote(self.core).execute([self.note.note_id])
             return
 
-        key = super(NoteEntry, self).keypress(size, key)
-        if key is None:
-            return
+        return super(NoteEntry, self).keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+    def get_command_map(self):
+        def edit_note(command_repeat, size):
+            command = f'{EditNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
 
-        match command_id:
-            case 'edit_note':
-                command = f'{EditNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'rename_note':
-                command = f'{RenameNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'delete_note':
-                command = f'{DeleteNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'encrypt_note':
-                EncryptNote(self.core).execute([self.note.note_id])
-            case 'show_all_encrypted_notes':
-                ShowAllEncryptedNotes(self.core).execute()
-            case 'hide_all_encrypted_notes':
-                HideAllEncryptedNotes(self.core).execute()
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        def rename_note(command_repeat, size):
+            command = f'{RenameNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
+
+        def delete_note(command_repeat, size):
+            command = f'{DeleteNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
+
+        def encrypt_note(command_repeat, size):
+            EncryptNote(self.core).execute([self.note.note_id])
+
+        def toggle_note_encryption(command_repeat, size):
+            ToggleNoteEncryption(self.core).execute([self.note.note_id])
+
+        def show_all_encrypted_notes(command_repeat, size):
+            ShowAllEncryptedNotes(self.core).execute()
+
+        def hide_all_encrypted_notes(command_repeat, size):
+            HideAllEncryptedNotes(self.core).execute()
+
+        return {
+            'edit_note': edit_note,
+            'rename_note': rename_note,
+            'delete_note': delete_note,
+            'encrypt_note': encrypt_note,
+            'toggle_note_encryption': toggle_note_encryption,
+            'show_all_encrypted_notes': show_all_encrypted_notes,
+            'hide_all_encrypted_notes': hide_all_encrypted_notes,
+        }
 
 
 class EncryptedNoteEntry(DetailEntry):
@@ -146,36 +171,40 @@ class EncryptedNoteEntry(DetailEntry):
         self.note = note
         self.name = 'note_entry'
 
-    def keypress(self, size, key):
-        key = super(EncryptedNoteEntry, self).keypress(size, key)
-        if key is None:
-            return
+    def get_command_map(self):
+        def edit_note(command_repeat, size):
+            command = f'{EditNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+        def rename_note(command_repeat, size):
+            command = f'{RenameNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
 
-        match command_id:
-            case 'edit_note':
-                command = f'{EditNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'rename_note':
-                command = f'{RenameNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'delete_note':
-                command = f'{DeleteNote.name} {self.note.note_id}'
-                self.core.ui.console.show_console(command)
-            case 'decrypt_note':
-                DecryptNote(self.core).execute([self.note.note_id])
-            case 'toggle_note_encryption':
-                ToggleNoteEncryption(self.core).execute([self.note.note_id])
-            case 'show_all_encrypted_notes':
-                ShowAllEncryptedNotes(self.core).execute()
-            case 'hide_all_encrypted_notes':
-                HideAllEncryptedNotes(self.core).execute()
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        def delete_note(command_repeat, size):
+            command = f'{DeleteNote.name} {self.note.note_id}'
+            self.core.ui.console.show_console(command)
+
+        def decrypt_note(command_repeat, size):
+            DecryptNote(self.core).execute([self.note.note_id])
+
+        def toggle_note_encryption(command_repeat, size):
+            ToggleNoteEncryption(self.core).execute([self.note.note_id])
+
+        def show_all_encrypted_notes(command_repeat, size):
+            ShowAllEncryptedNotes(self.core).execute()
+
+        def hide_all_encrypted_notes(command_repeat, size):
+            HideAllEncryptedNotes(self.core).execute()
+
+        return {
+            'edit_note': edit_note,
+            'rename_note': rename_note,
+            'delete_note': delete_note,
+            'decrypt_note': decrypt_note,
+            'toggle_note_encryption': toggle_note_encryption,
+            'show_all_encrypted_notes': show_all_encrypted_notes,
+            'hide_all_encrypted_notes': hide_all_encrypted_notes,
+        }
 
 
 class GoogleNoteEntry(DetailEntry):
@@ -194,20 +223,12 @@ class GoogleAttributeEntry(DetailEntry):
         self.attribute = attribute
         self.name = 'attribute_entry'
 
-    def keypress(self, size, key):
-        key = super(GoogleAttributeEntry, self).keypress(size, key)
-        if key is None:
-            return
+    def get_command_map(self):
+        def copy_attribute(command_repeat, size):
+            pyperclip.copy(self.attribute.value)
+            msg = "Copied \"" + self.attribute.value + "\" to clipboard."
+            self.core.ui.console.show_message(msg)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        match command_id:
-            case 'copy_attribute':
-                pyperclip.copy(self.attribute.value)
-                msg = "Copied \"" + self.attribute.value + "\" to clipboard."
-                self.core.ui.console.show_message(msg)
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+        return {
+            'copy_attribute': copy_attribute,
+        }
