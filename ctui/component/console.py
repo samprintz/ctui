@@ -65,7 +65,9 @@ class Console(urwid.Filler):
                 return
             elif key == 'enter':
                 self.filter_mode = False
-                msg = 'f={}'.format(self.core.filter_string)
+                args = self.original_widget.edit_text.split()
+                filter_string = " ".join(args[1:])
+                msg = 'f={}'.format(filter_string)
                 self.show_message(msg)
                 self.core.ui.frame.focus_position = 'body'
                 return
