@@ -37,7 +37,9 @@ class CFrame(urwid.Frame):
             raise urwid.ExitMainLoop()
 
         def reload(command_repeat, size):
+            focused_contact = self.core.ui.get_focused_contact()
             self.core.update_contact_list()
+            self.core.ui.set_focused_contact(focused_contact.get_id())
 
         def open_console(command_repeat, size):
             self.core.ui.console.show_console()
