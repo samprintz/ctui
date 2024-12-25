@@ -2,12 +2,13 @@ import urwid
 from pyfzf.pyfzf import FzfPrompt
 
 from ctui.component.contact_entry import ContactEntry
+from ctui.component.keypress_mixin import KeypressMixin
 from ctui.component.list_box import CListBox
 from ctui.component.list_entry import CListEntry
 from ctui.model.contact import Contact
 
 
-class ContactList(CListBox):
+class ContactList(CListBox, KeypressMixin):
     no_result_msg = "<no result>"
 
     def __init__(self, core):
@@ -101,23 +102,7 @@ class ContactList(CListBox):
         return False
 
     def keypress(self, size, key):
-        key = super(ContactList, self).keypress(size, key)
-        if key is None:
-            return
-
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
-            return key
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
+        return self.handle_keypress(size, key)
 
     def get_command_map(self):
         def move_right(command_repeat, size):
