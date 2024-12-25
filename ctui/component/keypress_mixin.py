@@ -1,4 +1,17 @@
 class KeypressMixin:
+
+    def get_command_map(self):
+        """
+        Collect all methods of urwid components with @KeybindingCommand decorator.
+        """
+        command_map = {}
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            if callable(attr) and hasattr(attr, "_keybinding_command"):
+                keybinding_command = getattr(attr, "_keybinding_command")
+                command_map[keybinding_command] = attr
+        return command_map
+
     def handle_keypress(self, size, key):
         """
         Shared keypress logic for all urwid components.
@@ -18,7 +31,9 @@ class KeypressMixin:
         command_id, command_key, command_repeat = self.core.keybindings.keypress(
             key, self.name)
 
-        if command_id in self.get_command_map():
+        # TODO reference self instead of KeypressMixin
+        if command_id in KeypressMixin.get_command_map(self):
+            # TODO reference self instead of KeypressMixin
             return KeypressMixin.execute_command(self, command_id,
                                                  command_repeat, size)
 
@@ -27,5 +42,20 @@ class KeypressMixin:
         return key
 
     def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
+        # TODO reference self instead of KeypressMixin
+        command = KeypressMixin.get_command_map(self)[command_id]
         return command(command_repeat, size)
+
+
+def KeybindingCommand(keybinding_command):
+    """
+    Decorator to assign keybindings to urwid component functions by specifying a
+    command name.
+    """
+
+    def decorator(func):
+        if not hasattr(func, "_keybinding_command"):
+            func._keybinding_command = keybinding_command
+        return func
+
+    return decorator

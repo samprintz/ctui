@@ -2,7 +2,7 @@ import urwid
 from pyfzf.pyfzf import FzfPrompt
 
 from ctui.component.contact_entry import ContactEntry
-from ctui.component.keypress_mixin import KeypressMixin
+from ctui.component.keypress_mixin import KeypressMixin, KeybindingCommand
 from ctui.component.list_box import CListBox
 from ctui.component.list_entry import CListEntry
 from ctui.model.contact import Contact
@@ -104,35 +104,31 @@ class ContactList(CListBox, KeypressMixin):
     def keypress(self, size, key):
         return self.handle_keypress(size, key)
 
-    def get_command_map(self):
-        def move_right(command_repeat, size):
-            self.core.keybindings.set_simulating(True)
-            key = super(ContactList, self).keypress(size, 'right')
-            self.core.keybindings.set_simulating(False)
-            return key
+    @KeybindingCommand("move_right")
+    def move_right(self, command_repeat, size):
+        self.core.keybindings.set_simulating(True)
+        key = super(ContactList, self).keypress(size, 'right')
+        self.core.keybindings.set_simulating(False)
+        return key
 
-        def search_contact(command_repeat, size):
-            fzf = FzfPrompt()
-            contact_list = self.core.contact_handler.load_contact_names()
-            options='--color=hl:red,fg+:#000000,bg+:white,hl+:red,spinner:black,prompt:black,info:grey --pointer="" --marker=""'
-            selected = fzf.prompt(contact_list, options)
+    @KeybindingCommand("search_contact")
+    def search_contact(self, command_repeat, size):
+        fzf = FzfPrompt()
+        contact_list = self.core.contact_handler.load_contact_names()
+        options='--color=hl:red,fg+:#000000,bg+:white,hl+:red,spinner:black,prompt:black,info:grey --pointer="" --marker=""'
+        selected = fzf.prompt(contact_list, options)
 
-            if selected:
-                contact_name = selected[0]  # fzf returns list
-                contact_id = Contact.name_to_id(contact_name)
-                self.core.ui.set_focused_contact(contact_id)
+        if selected:
+            contact_name = selected[0]  # fzf returns list
+            contact_id = Contact.name_to_id(contact_name)
+            self.core.ui.set_focused_contact(contact_id)
 
-            self.core.ui.main_loop.screen.clear()  # redraw screen
+        self.core.ui.main_loop.screen.clear()  # redraw screen
 
-        def set_contact_filter(command_repeat, size):
-            self.core.set_contact_filter()
+    @KeybindingCommand("set_contact_filter")
+    def set_contact_filter(self, command_repeat, size):
+        self.core.set_contact_filter()
 
-        def clear_contact_filter(command_repeat, size):
-            self.core.clear_contact_filter()
-
-        return {
-            'move_right': move_right,
-            'search_contact': search_contact,
-            'set_contact_filter': set_contact_filter,
-            'clear_contact_filter': clear_contact_filter,
-        }
+    @KeybindingCommand("clear_contact_filter")
+    def clear_contact_filter(self, command_repeat, size):
+        self.core.clear_contact_filter()
