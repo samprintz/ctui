@@ -6,20 +6,32 @@ class KeypressMixin:
         """
         command_map = {}
         for attr_name in dir(self):
-            attr = getattr(self, attr_name)
-            if callable(attr) and hasattr(attr, "_keybinding_command"):
-                keybinding_command = getattr(attr, "_keybinding_command")
-                command_map[keybinding_command] = attr
+            try:
+                attr = getattr(self, attr_name)
+                if callable(attr) and hasattr(attr, "_keybinding_command"):
+                    keybinding_command = getattr(attr, "_keybinding_command")
+                    command_map[keybinding_command] = attr
+            except IndexError:
+                # ignore Exception for missing focus_position of empty Listbox
+                pass
         return command_map
 
-    def handle_keypress(self, size, key):
+    def handle_keypress(self, size, key, current_type=None):
         """
         Shared keypress logic for all urwid components.
+
+        Args:
+            size (tuple): Size of the widget
+            key (str): Key that was pressed
+            current_type (type, optional): The class to use as the base for the
+            `super` call. Required for keybindings of base class components
+            (like CListBox).
         """
 
         # Call the parent's keypress explicitly
-        if hasattr(super(type(self), self), 'keypress'):
-            key = super(type(self), self).keypress(size, key)
+        base_class = current_type if current_type else type(self)
+        if hasattr(super(base_class, self), 'keypress'):
+            key = super(base_class, self).keypress(size, key)
         else:
             raise NotImplementedError(
                 f"Base class for {type(self).__name__} must implement `keypress`."

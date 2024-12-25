@@ -7,6 +7,7 @@ from ctui.commands import AddGift
 from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
     GoogleAttributeEntry, GiftEntry, GoogleNoteEntry, NoteEntry, \
     EncryptedNoteEntry
+from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
 from ctui.component.list_box import CListBox
 from ctui.model.attribute import Attribute
 from ctui.model.gift import Gift
@@ -75,8 +76,7 @@ class ContactDetails(CListBox):
         return None
 
 
-class AttributeDetails(ContactDetails):
-
+class AttributeDetails(ContactDetails, KeypressMixin):
     tab_id = "attributes"
     tab_name = "Attributes"
 
@@ -103,34 +103,14 @@ class AttributeDetails(ContactDetails):
                                                'contact_attribute_details')
 
     def keypress(self, size, key):
-        key = super(ContactDetails, self).keypress(size, key)
-        if key is None:
-            return
+        return self.handle_keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
-            return key
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
-
-    def get_command_map(self):
-        def add_detail(command_repeat, size):
-            self.core.ui.console.show_console(f'{AddAttribute.name} ')
-
-        return {
-            'add_detail': add_detail,
-        }
+    @KeybindingCommand("add_detail")
+    def add_detail(self, command_repeat, size):
+        self.core.ui.console.show_console(f'{AddAttribute.name} ')
 
 
-class GiftDetails(ContactDetails):
+class GiftDetails(ContactDetails, KeypressMixin):
     tab_id = "gifts"
     tab_name = "Gifts"
 
@@ -154,34 +134,14 @@ class GiftDetails(ContactDetails):
                                           'contact_gift_details')
 
     def keypress(self, size, key):
-        key = super(ContactDetails, self).keypress(size, key)
-        if key is None:
-            return
+        return self.handle_keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
-            return key
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
-
-    def get_command_map(self):
-        def add_detail(command_repeat, size):
-            self.core.ui.console.show_console(f'{AddGift.name} ')
-
-        return {
-            'add_detail': add_detail,
-        }
+    @KeybindingCommand("add_detail")
+    def add_detail(self, command_repeat, size):
+        self.core.ui.console.show_console(f'{AddGift.name} ')
 
 
-class NoteDetails(ContactDetails):
+class NoteDetails(ContactDetails, KeypressMixin):
     tab_id = "notes"
     tab_name = "Notes"
 
@@ -220,36 +180,16 @@ class NoteDetails(ContactDetails):
                                           'contact_note_details')
 
     def keypress(self, size, key):
-        key = super(ContactDetails, self).keypress(size, key)
-        if key is None:
-            return
+        return self.handle_keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+    @KeybindingCommand("add_detail")
+    def add_detail(self, command_repeat, size):
+        note_id = datetime.strftime(date.today(), "%Y%m%d")
+        command = f'{AddNote.name} {note_id}'
+        self.core.ui.console.show_console(command)
 
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
-            return key
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
-
-    def get_command_map(self):
-        def add_detail(command_repeat, size):
-            note_id = datetime.strftime(date.today(), "%Y%m%d")
-            command = f'{AddNote.name} {note_id}'
-            self.core.ui.console.show_console(command)
-
-        def add_encrypted_note(command_repeat, size):
-            note_id = datetime.strftime(date.today(), "%Y%m%d")
-            command = f'{AddEncryptedNote.name} {note_id}'
-            self.core.ui.console.show_console(command)
-
-        return {
-            'add_detail': add_detail,
-            'add_encrypted_note': add_encrypted_note,
-        }
+    @KeybindingCommand("add_encrypted_note")
+    def add_encrypted_note(self, command_repeat, size):
+        note_id = datetime.strftime(date.today(), "%Y%m%d")
+        command = f'{AddEncryptedNote.name} {note_id}'
+        self.core.ui.console.show_console(command)

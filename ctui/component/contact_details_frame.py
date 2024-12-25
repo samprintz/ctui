@@ -2,6 +2,7 @@ import urwid
 
 from ctui.component.contact_details import AttributeDetails, GiftDetails, \
     NoteDetails
+from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
 
 
 class CDetailTabNavigation(urwid.Columns):
@@ -43,7 +44,7 @@ class CDetailTabBody(urwid.WidgetPlaceholder):
         super().__init__(initial_widget)
 
 
-class CDetailsFrame(urwid.Frame):
+class CDetailsFrame(urwid.Frame, KeypressMixin):
     def __init__(self, core, config):
         self.core = core
         self.name = 'details_frame'
@@ -124,20 +125,11 @@ class CDetailsFrame(urwid.Frame):
         self.set_tab_pos(tab_pos)
 
     def keypress(self, size, key):
-        key = super(CDetailsFrame, self).keypress(size, key)
-        if key is None:
-            return
+        return self.handle_keypress(size, key)
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
-
-        match command_id:
-            case 'move_left':
-                self.core.keybindings.set_simulating(True)
-                key = super(CDetailsFrame, self).keypress(size, 'left')
-                self.core.keybindings.set_simulating(False)
-                return key
-            case _:
-                self.core.keybindings.set(command_key, command_repeat)
-                self.core.keybindings.set_bubbling(True)
-                return key
+    @KeybindingCommand("move_left")
+    def move_left(self, command_repeat, size):
+        self.core.keybindings.set_simulating(True)
+        key = super(CDetailsFrame, self).keypress(size, 'left')
+        self.core.keybindings.set_simulating(False)
+        return key
