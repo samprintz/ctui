@@ -11,8 +11,9 @@ class KeypressMixin:
                 if callable(attr) and hasattr(attr, "_keybinding_command"):
                     keybinding_command = getattr(attr, "_keybinding_command")
                     command_map[keybinding_command] = attr
-            except IndexError:
-                # ignore Exception for missing focus_position of empty Listbox
+            except (IndexError, AttributeError):
+                # Ignore IndexError for missing focus_position of empty Listbox
+                # Ignore AttributeError for missing get_pref_col of SelectableIcon
                 pass
         return command_map
 
