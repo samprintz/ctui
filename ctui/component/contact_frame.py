@@ -1,69 +1,45 @@
 import urwid
 
+from ctui.component.keypress_mixin import KeypressMixin, KeybindingCommand
 
-class CFrame(urwid.Frame):
+
+class CFrame(urwid.Frame, KeypressMixin):
     def __init__(self, body, footer, core, config):
         super(CFrame, self).__init__(body=body, footer=footer)
         self.core = core
         self.name = 'frame'
 
     def keypress(self, size, key):
-        if key == 'esc':
-            self.core.keybindings.reset()
-            return super(CFrame, self).keypress(size, key)
+        return self.handle_keypress(size, key, None, True)
 
-        key = super(CFrame, self).keypress(size, key)
-        if key is None:
-            self.core.keybindings.reset()
-            return
+    @KeybindingCommand("quit")
+    def quit_app(self, command_repeat, size):
+        raise urwid.ExitMainLoop()
 
-        command_id, command_key, command_repeat \
-            = self.core.keybindings.keypress(key, self.name)
+    @KeybindingCommand("reload")
+    def reload(self, command_repeat, size):
+        focused_contact = self.core.ui.get_focused_contact()
+        self.core.update_contact_list()
+        self.core.ui.set_focused_contact(focused_contact.get_id())
 
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
-        else:
-            self.core.keybindings.set_bubbling(False)
-            if not self.core.keybindings.is_prefix(command_key):
-                self.core.keybindings.reset()
-            return key
+    @KeybindingCommand("open_console")
+    def open_console(self, command_repeat, size):
+        self.core.ui.console.show_console()
 
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
+    @KeybindingCommand("add_contact")
+    def add_contact(self, command_repeat, size):
+        command = 'add-contact '
+        self.core.ui.console.show_console(command)
 
-    def get_command_map(self):
-        def quit_app(command_repeat, size):
-            raise urwid.ExitMainLoop()
+    @KeybindingCommand("add_detail")
+    def add_detail(self, command_repeat, size):
+        self.core.ui.detail_view.get_tab_body().execute_command(
+            "add_detail", command_repeat, size)
 
-        def reload(command_repeat, size):
-            focused_contact = self.core.ui.get_focused_contact()
-            self.core.update_contact_list()
-            self.core.ui.set_focused_contact(focused_contact.get_id())
+    @KeybindingCommand("next_tab")
+    def next_tab(self, command_repeat, size):
+        self.core.ui.next_tab()
 
-        def open_console(command_repeat, size):
-            self.core.ui.console.show_console()
-
-        def add_contact(command_repeat, size):
-            command = 'add-contact '
-            self.core.ui.console.show_console(command)
-
-        def add_detail(command_repeat, size):
-            self.core.ui.detail_view.get_tab_body().execute_command(
-                "add_detail", command_repeat, size)
-
-        def next_tab(command_repeat, size):
-            self.core.ui.next_tab()
-
-        def previous_tab(command_repeat, size):
-            self.core.ui.previous_tab()
-
-        return {
-            'quit': quit_app,
-            'reload': reload,
-            'open_console': open_console,
-            'add_contact': add_contact,
-            'add_detail': add_detail,
-            'next_tab': next_tab,
-            'previous_tab': previous_tab,
-        }
+    @KeybindingCommand("previous_tab")
+    def previous_tab(self, command_repeat, size):
+        self.core.ui.previous_tab()

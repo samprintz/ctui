@@ -17,7 +17,8 @@ class KeypressMixin:
                 pass
         return command_map
 
-    def handle_keypress(self, size, key, current_type=None):
+    def handle_keypress(self, size, key, current_type=None,
+                        is_final_component=False):
         """
         Shared keypress logic for all urwid components.
 
@@ -27,6 +28,8 @@ class KeypressMixin:
             current_type (type, optional): The class to use as the base for the
             `super` call. Required for keybindings of base class components
             (like CListBox).
+            is_final_component (boolean, optional): Set True if this is final
+            (last, most outer) component that could handle a keybinding.
         """
 
         # Call the parent's keypress explicitly
@@ -39,6 +42,9 @@ class KeypressMixin:
             )
 
         if key is None:
+            if is_final_component:
+                self.core.keybindings.reset()
+
             return None
 
         command_id, command_key, command_repeat = self.core.keybindings.keypress(
@@ -50,8 +56,14 @@ class KeypressMixin:
             return KeypressMixin.execute_command(self, command_id,
                                                  command_repeat, size)
 
-        self.core.keybindings.set(command_key, command_repeat)
-        self.core.keybindings.set_bubbling(True)
+        if is_final_component:
+            self.core.keybindings.set_bubbling(False)
+            if not self.core.keybindings.is_prefix(command_key):
+                self.core.keybindings.reset()
+        else:
+            self.core.keybindings.set(command_key, command_repeat)
+            self.core.keybindings.set_bubbling(True)
+
         return key
 
     def execute_command(self, command_id, command_repeat, size):
