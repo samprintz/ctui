@@ -33,8 +33,7 @@ class CFrame(urwid.Frame, KeypressMixin):
 
     @KeybindingCommand("add_detail")
     def add_detail(self, command_repeat, size):
-        self.core.ui.detail_view.get_tab_body().execute_command(
-            "add_detail", command_repeat, size)
+        self.core.ui.detail_view.get_tab_body().add_detail(command_repeat, size)
 
     @KeybindingCommand("next_tab")
     def next_tab(self, command_repeat, size):
