@@ -44,14 +44,15 @@ class KeypressMixin:
             return None
 
         command_map = self.get_command_map()
+
         command_id, command_key, command_repeat = self.core.keybindings.keypress(
             key, self.name)
+        self.core.keybindings.after_keypress(command_key, command_repeat,
+                                             is_final_component)
 
         if command_id in command_map:
             return command_map[command_id](command_repeat, size)
 
-        self._handle_keybinding_state(command_key, command_repeat,
-                                      is_final_component)
         return key
 
     def _call_parent_keypress(self,
@@ -68,22 +69,6 @@ class KeypressMixin:
         raise NotImplementedError(
             f"Base class for {type(self).__name__} must implement `keypress`."
         )
-
-    def _handle_keybinding_state(self,
-                                 command_key: str,
-                                 command_repeat: int,
-                                 is_final_component: bool
-                                 ) -> None:
-        """
-        Manages the keybinding state based on the context.
-        """
-        if is_final_component:
-            self.core.keybindings.set_bubbling(False)
-            if not self.core.keybindings.is_prefix(command_key):
-                self.core.keybindings.reset()
-        else:
-            self.core.keybindings.set(command_key, command_repeat)
-            self.core.keybindings.set_bubbling(True)
 
 
 def KeybindingCommand(keybinding_command):

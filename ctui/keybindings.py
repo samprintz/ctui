@@ -65,6 +65,15 @@ class Keybindings:
 
         return command_id, current_keys, current_repeat
 
+    def after_keypress(self, key, current_repeat, is_final_component):
+        if is_final_component:
+            self.set_bubbling(False)
+            if not self.is_prefix(key):
+                self.reset()
+        else:
+            self.set(key, current_repeat)
+            self.set_bubbling(True)
+
     def is_prefix(self, keys):
         key_sequence = ''.join(keys)
         for context in self.commands.keys():
