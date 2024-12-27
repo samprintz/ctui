@@ -1,3 +1,6 @@
+from typing import Tuple, Optional
+
+
 class KeypressMixin:
 
     def get_command_map(self):
@@ -17,34 +20,27 @@ class KeypressMixin:
                 pass
         return command_map
 
-    def handle_keypress(self, size, key, current_type=None,
-                        is_final_component=False):
+    def handle_keypress(self,
+                        size: Tuple[int, int],
+                        key: str,
+                        base_class_type: Optional[type] = None,
+                        is_final_component: bool = False
+                        ) -> Optional[str]:
         """
         Shared keypress logic for all urwid components.
 
         Args:
             size (tuple): Size of the widget
             key (str): Key that was pressed
-            current_type (type, optional): The class to use as the base for the
-            `super` call. Required for keybindings of base class components
-            (like CListBox).
+            base_class_type (type, optional): Required for keybindings of base
+            class components (like CListBox).
             is_final_component (boolean, optional): Set True if this is final
             (last, most outer) component that could handle a keybinding.
         """
-
-        # Call the parent's keypress explicitly
-        base_class = current_type if current_type else type(self)
-        if hasattr(super(base_class, self), 'keypress'):
-            key = super(base_class, self).keypress(size, key)
-        else:
-            raise NotImplementedError(
-                f"Base class for {type(self).__name__} must implement `keypress`."
-            )
-
+        key = self._call_parent_keypress(size, key, base_class_type)
         if key is None:
             if is_final_component:
                 self.core.keybindings.reset()
-
             return None
 
         command_map = self.get_command_map()
@@ -52,9 +48,35 @@ class KeypressMixin:
             key, self.name)
 
         if command_id in command_map:
-            command = command_map[command_id]
-            return command(command_repeat, size)
+            return command_map[command_id](command_repeat, size)
 
+        self._handle_keybinding_state(command_key, command_repeat,
+                                      is_final_component)
+        return key
+
+    def _call_parent_keypress(self,
+                              size: Tuple[int, int],
+                              key: str,
+                              base_class_type: Optional[type]
+                              ) -> Optional[str]:
+        """
+        Calls the parent's keypress explicitly.
+        """
+        base_class = base_class_type if base_class_type else type(self)
+        if hasattr(super(base_class, self), 'keypress'):
+            return super(base_class, self).keypress(size, key)
+        raise NotImplementedError(
+            f"Base class for {type(self).__name__} must implement `keypress`."
+        )
+
+    def _handle_keybinding_state(self,
+                                 command_key: str,
+                                 command_repeat: int,
+                                 is_final_component: bool
+                                 ) -> None:
+        """
+        Manages the keybinding state based on the context.
+        """
         if is_final_component:
             self.core.keybindings.set_bubbling(False)
             if not self.core.keybindings.is_prefix(command_key):
@@ -62,8 +84,6 @@ class KeypressMixin:
         else:
             self.core.keybindings.set(command_key, command_repeat)
             self.core.keybindings.set_bubbling(True)
-
-        return key
 
 
 def KeybindingCommand(keybinding_command):
