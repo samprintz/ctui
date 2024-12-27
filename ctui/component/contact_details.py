@@ -7,7 +7,7 @@ from ctui.commands import AddGift
 from ctui.component.detail_entry import DetailEntry, AttributeEntry, \
     GoogleAttributeEntry, GiftEntry, GoogleNoteEntry, NoteEntry, \
     EncryptedNoteEntry
-from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.component.list_box import CListBox
 from ctui.model.attribute import Attribute
 from ctui.model.gift import Gift
@@ -76,7 +76,7 @@ class ContactDetails(CListBox):
         return None
 
 
-class AttributeDetails(ContactDetails, KeypressMixin):
+class AttributeDetails(ContactDetails, KeybindingMixin):
     tab_id = "attributes"
     tab_name = "Attributes"
 
@@ -110,7 +110,7 @@ class AttributeDetails(ContactDetails, KeypressMixin):
         self.core.ui.console.show_console(f'{AddAttribute.name} ')
 
 
-class GiftDetails(ContactDetails, KeypressMixin):
+class GiftDetails(ContactDetails, KeybindingMixin):
     tab_id = "gifts"
     tab_name = "Gifts"
 
@@ -141,7 +141,7 @@ class GiftDetails(ContactDetails, KeypressMixin):
         self.core.ui.console.show_console(f'{AddGift.name} ')
 
 
-class NoteDetails(ContactDetails, KeypressMixin):
+class NoteDetails(ContactDetails, KeybindingMixin):
     tab_id = "notes"
     tab_name = "Notes"
 

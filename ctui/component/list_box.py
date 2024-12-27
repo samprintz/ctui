@@ -1,9 +1,9 @@
 import urwid
 
-from ctui.component.keypress_mixin import KeypressMixin, KeybindingCommand
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 
 
-class CListBox(urwid.ListBox, KeypressMixin):
+class CListBox(urwid.ListBox, KeybindingMixin):
     def __init__(self, listwalker, core, name):
         super(CListBox, self).__init__(listwalker)
         self.core = core

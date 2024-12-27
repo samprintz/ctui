@@ -1,9 +1,9 @@
 import urwid
 
-from ctui.component.keypress_mixin import KeypressMixin, KeybindingCommand
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 
 
-class CFrame(urwid.Frame, KeypressMixin):
+class CFrame(urwid.Frame, KeybindingMixin):
     def __init__(self, body, footer, core, config):
         super(CFrame, self).__init__(body=body, footer=footer)
         self.core = core

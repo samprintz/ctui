@@ -2,13 +2,13 @@ import urwid
 from pyfzf.pyfzf import FzfPrompt
 
 from ctui.component.contact_entry import ContactEntry
-from ctui.component.keypress_mixin import KeypressMixin, KeybindingCommand
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.component.list_box import CListBox
 from ctui.component.list_entry import CListEntry
 from ctui.model.contact import Contact
 
 
-class ContactList(CListBox, KeypressMixin):
+class ContactList(CListBox, KeybindingMixin):
     no_result_msg = "<no result>"
 
     def __init__(self, core):

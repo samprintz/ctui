@@ -2,7 +2,7 @@ import urwid
 
 from ctui.component.contact_details import AttributeDetails, GiftDetails, \
     NoteDetails
-from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 
 
 class CDetailTabNavigation(urwid.Columns):
@@ -44,7 +44,7 @@ class CDetailTabBody(urwid.WidgetPlaceholder):
         super().__init__(initial_widget)
 
 
-class CDetailsFrame(urwid.Frame, KeypressMixin):
+class CDetailsFrame(urwid.Frame, KeybindingMixin):
     def __init__(self, core, config):
         self.core = core
         self.name = 'details_frame'

@@ -3,11 +3,11 @@ import pyperclip
 from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift, \
     EditNote, RenameNote, DeleteNote, DeleteGift, EncryptNote, DecryptNote, \
     ToggleNoteEncryption, ShowAllEncryptedNotes, HideAllEncryptedNotes
-from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.component.list_entry import CListEntry
 
 
-class DetailEntry(CListEntry, KeypressMixin):
+class DetailEntry(CListEntry, KeybindingMixin):
     def __init__(self, contact_id, detail, label, pos, core):
         super(DetailEntry, self).__init__(label, pos, core)
         self.contact_id = contact_id

@@ -1,10 +1,10 @@
 import urwid
 
-from ctui.component.keypress_mixin import KeybindingCommand, KeypressMixin
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.component.list_entry import CListEntry
 
 
-class ContactEntry(CListEntry, KeypressMixin):
+class ContactEntry(CListEntry, KeybindingMixin):
     def __init__(self, contact, pos, core):
         super(ContactEntry, self).__init__(contact.name, pos, core)
         self.name = 'contact_entry'
