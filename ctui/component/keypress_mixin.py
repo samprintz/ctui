@@ -47,11 +47,13 @@ class KeypressMixin:
 
             return None
 
+        command_map = self.get_command_map()
         command_id, command_key, command_repeat = self.core.keybindings.keypress(
             key, self.name)
 
-        if command_id in self.get_command_map():
-            return self.execute_command(command_id, command_repeat, size)
+        if command_id in command_map:
+            command = command_map[command_id]
+            return command(command_repeat, size)
 
         if is_final_component:
             self.core.keybindings.set_bubbling(False)
@@ -62,10 +64,6 @@ class KeypressMixin:
             self.core.keybindings.set_bubbling(True)
 
         return key
-
-    def execute_command(self, command_id, command_repeat, size):
-        command = self.get_command_map()[command_id]
-        return command(command_repeat, size)
 
 
 def KeybindingCommand(keybinding_command):
