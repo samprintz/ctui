@@ -55,7 +55,9 @@ class Gift:
 
         gift_dict = self.to_dict()
         if gift_dict:
-            dump = yaml.dump(gift_dict, default_flow_style=False)
+            dump = yaml.dump(gift_dict,
+                             default_flow_style=False,
+                             allow_unicode=True)
 
         return dump.strip()
 

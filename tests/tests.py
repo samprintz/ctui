@@ -274,6 +274,18 @@ class TestObjects(unittest.TestCase):
             self.core.textfilestore.has_gift(self.contact.get_id(),
                                              self.gift1.get_id()))
 
+    def test_add_gift_with_umlaut(self):
+        desc_with_umlaut = "Brötchen"
+        gift = Gift("Umlaut Gift", desc_with_umlaut)
+        self.core.textfilestore.add_gift(self.contact.get_id(), gift)
+
+        filepath = self.core.textfilestore.get_gift_filepath(
+            self.contact.get_id(), gift.get_id())
+
+        with open(filepath, "r") as f:
+            content = f.read()
+            self.assertTrue(desc_with_umlaut in content)
+
     def test_add_gift_already_existing(self):
         self.core.textfilestore.add_gift(self.contact.get_id(), self.gift1)
         self.assertTrue(
