@@ -19,9 +19,22 @@ class UI:
         self.core.register_ui(self)
         self.name = 'frame'
 
-        palette = [
-            ('selected', '', 'white')
-        ]
+        self.color_scheme = 'light'
+        if config['display']['color_scheme'] == 'dark':
+            self.color_scheme = 'dark'
+
+        if self.color_scheme == "dark":
+            palette = [
+                (None,  'white', 'black'),
+                ('options', 'white', 'black'),
+                ('focus options', 'black', 'white'),
+                ('selected', 'black', 'white'),
+                ('status_bar', 'white', 'black')
+            ]
+        else:
+            palette = [
+                ('selected', '', 'white'),
+            ]
 
         self.list_view = ContactList(core)
         self.detail_view = CDetailsFrame(core, config)
