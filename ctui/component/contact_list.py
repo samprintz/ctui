@@ -1,11 +1,11 @@
 import urwid
-from pyfzf.pyfzf import FzfPrompt
 
 from ctui.component.contact_entry import ContactEntry
-from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.component.list_box import CListBox
 from ctui.component.list_entry import CListEntry
+from ctui.keybindings import KeybindingMixin, KeybindingCommand
 from ctui.model.contact import Contact
+from ctui.service.fzf import FZF
 
 
 class ContactList(CListBox, KeybindingMixin):
@@ -113,10 +113,8 @@ class ContactList(CListBox, KeybindingMixin):
 
     @KeybindingCommand("search_contact")
     def search_contact(self, command_repeat, size):
-        fzf = FzfPrompt()
         contact_list = self.core.contact_handler.load_contact_names()
-        options='--color=hl:red,fg+:#000000,bg+:white,hl+:red,spinner:black,prompt:black,info:grey --pointer="" --marker=""'
-        selected = fzf.prompt(contact_list, options)
+        selected = FZF(self.core).prompt(contact_list)
 
         if selected:
             contact_name = selected[0]  # fzf returns list
