@@ -22,6 +22,9 @@ class AttributeEntry(DetailEntry):
         self.attribute = attribute
         self.name = 'attribute_entry'
 
+    def keypress(self, size, key):
+        return self.handle_keypress(size, key)
+
     @KeybindingCommand("edit_attribute")
     def edit_attribute(self, command_repeat, size):
         command = f'{EditAttribute.name} {self.attribute.key} {self.attribute.value}'
