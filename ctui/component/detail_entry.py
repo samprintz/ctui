@@ -1,4 +1,4 @@
-import pyperclip
+import pyclip
 
 from ctui.commands import EditAttribute, DeleteAttribute, RenameGift, EditGift, \
     EditNote, RenameNote, DeleteNote, DeleteGift, EncryptNote, DecryptNote, \
@@ -37,7 +37,7 @@ class AttributeEntry(DetailEntry):
 
     @KeybindingCommand("copy_attribute")
     def copy_attribute(self, command_repeat, size):
-        pyperclip.copy(self.attribute.value)
+        pyclip.copy(self.attribute.value)
         msg = "Copied \"" + self.attribute.value + "\" to clipboard."
         self.core.ui.console.show_message(msg)
 
