@@ -34,7 +34,10 @@ class Command:
         if self._is_custom_input_handling():
             arg = args
 
-        self._execute(arg)
+        try:
+            self._execute(arg)
+        except Exception as e:
+            self.msg = str(e)
         self._update()
         self.core.ui.console.show_message(self.msg)
 
