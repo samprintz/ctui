@@ -79,7 +79,7 @@ class Gift:
             data = yaml.safe_load(dump)
 
         if not isinstance(data, dict):
-            raise ValueError(f'Invalid gift file "{gift_id}"')
+            raise ValueError(f'Invalid gift file content "{gift_id}"')
 
         data['name'] = Gift.id_to_name(gift_id)
 
