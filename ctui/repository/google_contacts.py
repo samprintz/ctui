@@ -4,7 +4,9 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from ctui.objects import GoogleContact, GoogleAttribute, GoogleNote
+from ctui.model.google_attribute import GoogleAttribute
+from ctui.model.google_contact import GoogleContact
+from ctui.model.google_note import GoogleNote
 
 
 class GoogleStore:
@@ -38,7 +40,7 @@ class GoogleStore:
 
         self.service = build('people', 'v1', credentials=creds)
 
-    def get_all_contact_names(self):
+    def load_contact_names(self):
         results = self.service.people().connections().list(
             resourceName='people/me', pageSize=1000,
             personFields='names').execute()
@@ -53,7 +55,7 @@ class GoogleStore:
                 contact_names.append(name)
         return sorted(contact_names)
 
-    def get_all_contacts(self):
+    def load_contacts(self):
         results = self.service.people().connections().list(
             resourceName='people/me', pageSize=1000,
             personFields='names,birthdays,addresses,emailAddresses,phoneNumbers,biographies').execute()

@@ -9,7 +9,7 @@ Notes can be managed in text files.
 
 ### Create encryption key
 
-1. Run <code>gpg --full-generate-keys</code> and follow the dialog
+1. Run <code>gpg --full-generate-key</code> and follow the dialog
 2. Run <code>gpg --list-keys --keyid-format long</code> to get the key ID. The key are in place of the bold "X" in an output similar to this:
 
 ```bash
